@@ -1,0 +1,107 @@
+/* src/components/admin/styles/Students.css */
+.card {
+  transition: all 0.3s ease;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.year-stats .card {
+  background-color: #f8f9fa;
+  border: none;
+}
+
+.btn-success {
+  background-color: #03A64A;
+  border-color: #03A64A;
+  color: #ffffff;
+}
+
+.btn-success:hover {
+  background-color: #038f41;
+  border-color: #038f41;
+  color: #ffffff;
+}
+
+/* Text colors for better contrast */
+.text-dark {
+  color: #333333 !important;
+}
+
+.text-muted {
+  color: #6c757d !important;
+}
+
+/* DataTable custom styles */
+.rdt_TableHeader {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  color: #333333;
+}
+
+.rdt_TableRow {
+  color: #333333;
+}
+
+.rdt_TableRow:hover {
+  background-color: #f8f9fa !important;
+}
+
+/* Card stats custom styles */
+.stats-card {
+  border-radius: 0.5rem;
+}
+
+.stats-number {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #333333;
+}
+
+/* Custom shadows */
+.shadow-sm {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+}
+
+/* Button styles */
+.btn {
+  font-weight: 500;
+}
+
+.btn-info {
+  color: #ffffff !important;
+}
+
+/* Form control styles */
+.form-select {
+  color: #333333;
+  background-color: #ffffff;
+}
+
+.form-label {
+  font-weight: 500;
+}
+
+/* Responsive padding */
+@media (max-width: 768px) {
+  .container-fluid {
+    padding: 1rem !important;
+  }
+}
+
+/* Add any additional custom styles here */
+.modal.show {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-dialog {
+  margin-top: 10vh;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}

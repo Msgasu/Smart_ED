@@ -1,0 +1,20 @@
+.illustration-side {
+  flex: 1;
+  padding: 40px;
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .illustration-side {
+    padding: 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .illustration-side {
+    padding: 20px;
+  }
+}

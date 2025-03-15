@@ -1,0 +1,52 @@
+.roles-side {
+  flex: 1;
+  padding: 40px;
+  background: #f8f9fa;
+}
+
+.roles-side h3 {
+  font-size: 20px;
+  margin-bottom: 30px;
+  color: #000;
+}
+
+.role-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.role-option {
+  display: flex;
+  align-items: center;
+  padding: 15px 25px;
+  border: 1px solid #e0e0e0;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.role-option:hover {
+  border-color: #006B5E;
+  background-color: #f8f9fa;
+}
+
+.role-option input[type="radio"] {
+  margin-right: 15px;
+}
+
+.role-option span {
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .roles-side {
+    padding: 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .roles-side {
+    padding: 20px;
+  }
+}
