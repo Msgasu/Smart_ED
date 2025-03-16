@@ -1,16 +1,23 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import LogoutButton from '../auth/logoutbutton.jsx';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabase';
+import { FaHome, FaUsers, FaChartBar, FaCog, FaSignOutAlt } from 'react-icons/fa';
 import './styles/AdminLayout.css';
 
 const Sidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const path = location.pathname;
+  
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/signin');
+  };
   
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
-        <img src="/path/to/logo.png" alt="LIC" height="40" />
+        <img src="/logo.png" alt="LIC" height="40" />
       </div>
       <nav className="sidebar-nav">
         <div className="nav-item">
@@ -18,8 +25,7 @@ const Sidebar = () => {
             className={`nav-link ${path === "/admin/dashboard" ? "active" : ""}`}
             to="/admin/dashboard"
           >
-            <i className="bi bi-house-door"></i>
-            Dashboard
+            <FaHome /> <span>Dashboard</span>
           </Link>
         </div>
         <div className="nav-item">
@@ -27,8 +33,7 @@ const Sidebar = () => {
             className={`nav-link ${path === "/admin/Students" ? "active" : ""}`}
             to="/admin/Students"
           >
-            <i className="bi bi-people"></i>
-            Students
+            <FaUsers /> <span>Students</span>
           </Link>
         </div>
         {/* <div className="nav-item">
@@ -45,8 +50,7 @@ const Sidebar = () => {
             className={`nav-link ${path === "/admin/reports" ? "active" : ""}`}
             to="/admin/reports"
           >
-            <i className="bi bi-file-text"></i>
-            Reports
+            <FaChartBar /> <span>Reports</span>
           </Link>
         </div>
         <div className="nav-item">
@@ -54,12 +58,13 @@ const Sidebar = () => {
             className={`nav-link ${path === "/admin/settings" ? "active" : ""}`}
             to="/admin/settings"
           >
-            <i className="bi bi-gear"></i>
-            Settings
+            <FaCog /> <span>Settings</span>
           </Link>
         </div>
         <div className="nav-item logout-container">
-          <LogoutButton />
+          <button className="logout-btn" onClick={handleLogout}>
+            <FaSignOutAlt /> <span>Logout</span>
+          </button>
         </div>
       </nav>
     </aside>
