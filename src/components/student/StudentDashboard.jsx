@@ -14,6 +14,8 @@ const StudentDashboard = () => {
   const [showCoursesSidebar, setShowCoursesSidebar] = useState(false);
   const [studentData, setStudentData] = useState(null);
   const [courses, setCourses] = useState([]);
+  const [assignmentsResponse, setAssignmentsResponse] = useState(null);
+  const [submissionsResponse, setSubmissionsResponse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -31,70 +33,91 @@ const StudentDashboard = () => {
           throw new Error('User not authenticated');
         }
         
-        // Fetch student profile
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-          
-        if (profileError) throw profileError;
+        // Fetch student profile and courses in parallel
+        const [profileResponse, coursesResponse] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single(),
+          supabase
+            .from('student_courses')
+            .select(`
+              course_id,
+              courses (
+                id,
+                code,
+                name,
+                description
+              )
+            `)
+            .eq('student_id', user.id)
+        ]);
         
-        setStudentData(profileData);
+        if (profileResponse.error) throw profileResponse.error;
+        if (coursesResponse.error) throw coursesResponse.error;
         
-        // Fetch student's courses
-        const { data: studentCourses, error: coursesError } = await supabase
-          .from('student_courses')
-          .select(`
-            course_id,
-            courses (
-              id,
-              code,
-              name,
-              description
-            )
-          `)
-          .eq('student_id', user.id);
-          
-        if (coursesError) throw coursesError;
+        setStudentData(profileResponse.data);
         
-        // Fetch additional course data (assignments, grades, etc.)
-        const enhancedCourses = [];
+        // Fetch all assignments and submissions in a single batch
+        const courseIds = coursesResponse.data.map(course => course.course_id);
         
-        for (const course of studentCourses || []) {
-          // Get assignments for this course
-          const { data: assignments, error: assignmentsError } = await supabase
+        if (courseIds.length === 0) {
+          setCourses([]);
+          setLoading(false);
+          return;
+        }
+        
+        const [assignmentsResponse, submissionsResponse] = await Promise.all([
+          supabase
             .from('assignments')
             .select('*')
-            .eq('course_id', course.course_id);
-            
-          if (assignmentsError) throw assignmentsError;
-          
-          // Get student's submissions for this course
-          const { data: submissions, error: submissionsError } = await supabase
+            .in('course_id', courseIds),
+          supabase
             .from('student_assignments')
             .select('*')
             .eq('student_id', user.id)
-            .in('assignment_id', assignments.map(a => a.id) || []);
-            
-          if (submissionsError) throw submissionsError;
+        ]);
+        
+        if (assignmentsResponse.error) throw assignmentsResponse.error;
+        if (submissionsResponse.error) throw submissionsResponse.error;
+        
+        // Store the responses for use in chart data
+        setAssignmentsResponse(assignmentsResponse);
+        setSubmissionsResponse(submissionsResponse);
+        
+        // Process course data with assignments and submissions
+        const enhancedCourses = coursesResponse.data.map(course => {
+          // Filter assignments for this course
+          const courseAssignments = assignmentsResponse.data.filter(
+            assignment => assignment.course_id === course.course_id
+          );
+          
+          // Filter submissions for this course's assignments
+          const assignmentIds = courseAssignments.map(a => a.id);
+          const courseSubmissions = submissionsResponse.data.filter(
+            submission => assignmentIds.includes(submission.assignment_id)
+          );
           
           // Calculate course statistics
-          const totalAssignments = assignments?.length || 0;
-          const completedAssignments = submissions?.filter(s => s.status === 'submitted' || s.status === 'graded').length || 0;
+          const totalAssignments = courseAssignments.length;
+          const completedAssignments = courseSubmissions.filter(
+            s => s.status === 'submitted' || s.status === 'graded'
+          ).length;
           
-          // Calculate overall grade if there are graded assignments
-          const gradedSubmissions = submissions?.filter(s => s.status === 'graded' && s.score !== null) || [];
+          // Calculate overall grade
+          const gradedSubmissions = courseSubmissions.filter(
+            s => s.status === 'graded' && s.score !== null
+          );
+          
           let overallGrade = 0;
+          let letterGrade = 'N/A';
           
           if (gradedSubmissions.length > 0) {
             const totalScore = gradedSubmissions.reduce((sum, submission) => sum + submission.score, 0);
             overallGrade = Math.round(totalScore / gradedSubmissions.length);
-          }
-          
-          // Determine letter grade
-          let letterGrade = 'N/A';
-          if (gradedSubmissions.length > 0) {
+            
+            // Determine letter grade
             if (overallGrade >= 90) letterGrade = 'A';
             else if (overallGrade >= 80) letterGrade = 'B';
             else if (overallGrade >= 70) letterGrade = 'C';
@@ -109,7 +132,7 @@ const StudentDashboard = () => {
             }
           }
           
-          enhancedCourses.push({
+          return {
             id: course.course_id,
             code: course.courses.code,
             name: course.courses.name,
@@ -118,11 +141,11 @@ const StudentDashboard = () => {
             overallGrade: overallGrade || 'N/A',
             completedAssignments,
             totalAssignments,
-            attendance: 90, // Placeholder - would need attendance data from backend
-            term: '24-25-SEM1', // Placeholder - would need term data from backend
+            attendance: 90, // Placeholder
+            term: '24-25-SEM1', // Placeholder
             completedItems: completedAssignments
-          });
-        }
+          };
+        });
         
         setCourses(enhancedCourses);
         setLoading(false);
@@ -141,14 +164,62 @@ const StudentDashboard = () => {
     navigate(`/student/courses/${courseId}`);
   };
   
-  // Sample data for chart - would be dynamic in production
+  // Get chart data from actual graded assignments
   const getChartData = (courseId) => {
-    // In a real app, this would fetch assessment data for the specific course
+    // Find the course
+    const course = courses.find(c => c.id === courseId);
+    if (!course) return null;
+    
+    // Get assignments and submissions for this course
+    const courseAssignments = assignmentsResponse?.data?.filter(
+      assignment => assignment.course_id === courseId
+    ) || [];
+    
+    const assignmentIds = courseAssignments.map(a => a.id);
+    const courseSubmissions = submissionsResponse?.data?.filter(
+      submission => assignmentIds.includes(submission.assignment_id)
+    ) || [];
+    
+    // Get graded submissions
+    const gradedSubmissions = courseSubmissions.filter(
+      s => s.status === 'graded' && s.score !== null
+    );
+    
+    // If no graded submissions, return sample data
+    if (gradedSubmissions.length === 0) {
+      return {
+        labels: ['No graded assignments yet'],
+        datasets: [{
+          label: 'Assessment Scores',
+          data: [0],
+          borderColor: '#0ea5e9',
+          tension: 0.4,
+          fill: true,
+          backgroundColor: 'rgba(14, 165, 233, 0.1)'
+        }]
+      };
+    }
+    
+    // Sort submissions by assignment due date
+    const sortedSubmissions = [...gradedSubmissions].sort((a, b) => {
+      const assignmentA = courseAssignments.find(assignment => assignment.id === a.assignment_id);
+      const assignmentB = courseAssignments.find(assignment => assignment.id === b.assignment_id);
+      return new Date(assignmentA?.due_date || 0) - new Date(assignmentB?.due_date || 0);
+    });
+    
+    // Get assignment names and scores
+    const labels = sortedSubmissions.map(submission => {
+      const assignment = courseAssignments.find(a => a.id === submission.assignment_id);
+      return assignment?.title || 'Assignment';
+    });
+    
+    const scores = sortedSubmissions.map(submission => submission.score);
+    
     return {
-      labels: ['Quiz 1', 'Assignment 1', 'Midterm', 'Quiz 2', 'Assignment 2', 'Final'],
+      labels,
       datasets: [{
         label: 'Assessment Scores',
-        data: [85, 88, 82, 90, 87, 85],
+        data: scores,
         borderColor: '#0ea5e9',
         tension: 0.4,
         fill: true,
@@ -212,7 +283,11 @@ const StudentDashboard = () => {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
-        <p>Loading student dashboard...</p>
+        <div className="loading-skeleton title"></div>
+        <div className="loading-skeleton"></div>
+        <div className="loading-skeleton"></div>
+        <div className="loading-skeleton card"></div>
+        <div className="loading-skeleton card"></div>
       </div>
     );
   }
