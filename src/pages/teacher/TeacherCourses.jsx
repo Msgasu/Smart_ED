@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Link } from 'react-router-dom';
 import CourseList from '../../components/teacher/CourseList';
+import TeacherLayout from '../../components/teacher/TeacherLayout';
+import { getTeacherCourses } from '../../backend/teachers/courses';
 
 const TeacherCourses = () => {
   const [courses, setCourses] = useState([]);
@@ -13,18 +15,8 @@ const TeacherCourses = () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         
-        const { data, error } = await supabase
-          .from('faculty_courses')
-          .select(`
-            course_id,
-            courses (
-              id,
-              code,
-              name,
-              description
-            )
-          `)
-          .eq('faculty_id', user.id);
+        // Use the backend service to get teacher courses
+        const { data, error } = await getTeacherCourses(user.id);
 
         if (error) throw error;
         setCourses(data || []);
@@ -39,16 +31,15 @@ const TeacherCourses = () => {
   }, []);
 
   return (
-    <div>
-      <h1>My Courses</h1>
-      <Link to="/teacher/dashboard">Back to Dashboard</Link>
+    <TeacherLayout>
+      <h1 className="page-title">My Courses</h1>
+      
       {loading ? (
-        <p>Loading courses...</p>
+        <div className="loading-spinner">Loading courses...</div>
       ) : (
         <CourseList courses={courses} />
-        
       )}
-    </div>
+    </TeacherLayout>
   );
 };
 
