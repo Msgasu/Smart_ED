@@ -1,10 +1,15 @@
-import Sidebar from '../../components/admin/Sidebar';
+import React from 'react';
+import Students from '../../components/admin/Students';
+import '../../components/admin/styles/Students.css';
+import '../../components/admin/styles/AdminLayout.css';
+import AdminLayout from '../../components/admin/AdminLayout';
 
-return (
-  <div className="admin-layout">
-    <Sidebar />
-    <div className="main-content">
-      {/* Your existing content */}
-    </div>
-  </div>
-);
+const StudentsPage = () => {
+  return (
+    <AdminLayout>
+      <Students />
+    </AdminLayout>
+  );
+};
+
+export default StudentsPage;
