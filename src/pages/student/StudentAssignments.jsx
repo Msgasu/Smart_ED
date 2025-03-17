@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { getStudentAssignments } from '../../backend/students/assignments';
 
 const StudentAssignments = () => {
   const [assignments, setAssignments] = useState([]);
@@ -12,66 +13,11 @@ const StudentAssignments = () => {
         // Get current user
         const { data: { user } } = await supabase.auth.getUser();
         
-        // First get the courses the student is enrolled in
-        const { data: studentCourses, error: coursesError } = await supabase
-          .from('student_courses')
-          .select('course_id')
-          .eq('student_id', user.id);
-          
-        if (coursesError) throw coursesError;
+        // Use the backend service to get student assignments
+        const { data, error } = await getStudentAssignments(user.id);
         
-        if (!studentCourses || studentCourses.length === 0) {
-          setAssignments([]);
-          return;
-        }
-        
-        // Get course IDs
-        const courseIds = studentCourses.map(sc => sc.course_id);
-        
-        // Fetch all assignments for these courses
-        const { data: assignmentsData, error: assignmentsError } = await supabase
-          .from('assignments')
-          .select(`
-            *,
-            courses (
-              code,
-              name
-            ),
-            student_assignments (
-              id,
-              score,
-              status,
-              submitted_at
-            )
-          `)
-          .in('course_id', courseIds)
-          .order('due_date', { ascending: false });
-          
-        if (assignmentsError) throw assignmentsError;
-        
-        // Filter to only include assignments with student_assignments records
-        // or create placeholder records for assignments without submissions
-        const processedAssignments = assignmentsData.map(assignment => {
-          // Find student's submission for this assignment
-          const studentSubmission = assignment.student_assignments.find(
-            sa => sa.student_id === user.id
-          );
-          
-          // If no submission exists, create a placeholder
-          if (!studentSubmission) {
-            assignment.student_submission = {
-              status: 'not_submitted',
-              score: null,
-              submitted_at: null
-            };
-          } else {
-            assignment.student_submission = studentSubmission;
-          }
-          
-          return assignment;
-        });
-        
-        setAssignments(processedAssignments);
+        if (error) throw error;
+        setAssignments(data || []);
       } catch (error) {
         console.error('Error fetching assignments:', error);
       } finally {
