@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Link } from 'react-router-dom';
+import { getStudentCourses } from '../../backend/students/courses';
 
 const StudentCourses = () => {
   const [courses, setCourses] = useState([]);
@@ -11,18 +12,8 @@ const StudentCourses = () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         
-        const { data, error } = await supabase
-          .from('student_courses')
-          .select(`
-            course_id,
-            courses (
-              id,
-              code,
-              name,
-              description
-            )
-          `)
-          .eq('student_id', user.id);
+        // Use the backend service to get student courses
+        const { data, error } = await getStudentCourses(user.id);
 
         if (error) throw error;
         setCourses(data || []);
