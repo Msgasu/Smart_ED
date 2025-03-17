@@ -5,6 +5,8 @@ import AssignmentList from '../../components/student/AssignmentList';
 import PerformanceChart from '../../components/shared/PerformanceChart';
 import { FaArrowLeft, FaBook, FaUser, FaCalendarAlt, FaClock, FaClipboardList } from 'react-icons/fa';
 import './styles/CourseDetails.css';
+import { getCourseDetails } from '../../backend/students/courses';
+import { calculateCourseGrade } from '../../backend/students/performance';
 
 const CourseDetails = () => {
   const { courseId } = useParams();
@@ -20,34 +22,12 @@ const CourseDetails = () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
 
-        // Fetch course details with instructor information
-        const { data: courseData, error: courseError } = await supabase
-          .from('courses')
-          .select(`
-            *,
-            faculty_courses (
-              faculty_id
-            )
-          `)
-          .eq('id', courseId)
-          .single();
-          
+        // Use the backend service to get course details
+        const { data: courseData, error: courseError } = await getCourseDetails(courseId);
         if (courseError) throw courseError;
-
-        // Fetch instructor details if available
-        if (courseData.faculty_courses && courseData.faculty_courses.length > 0) {
-          const facultyId = courseData.faculty_courses[0].faculty_id;
-          
-          const { data: instructorData, error: instructorError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', facultyId)
-            .single();
-            
-          if (!instructorError) {
-            setInstructor(instructorData);
-          }
-        }
+        
+        setCourse(courseData.course);
+        setInstructor(courseData.instructor);
 
         // Fetch all assignments for this course and student submissions in parallel
         const [assignmentsResponse, submissionsResponse] = await Promise.all([
@@ -81,7 +61,6 @@ const CourseDetails = () => {
           };
         });
 
-        setCourse(courseData);
         setAssignments(assignmentsWithSubmissions);
       } catch (error) {
         console.error('Error:', error);
@@ -92,6 +71,25 @@ const CourseDetails = () => {
 
     fetchCourseDetails();
   }, [courseId]);
+
+  // Use the backend service to calculate course grade
+  const fetchCourseGrade = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: gradeData, error } = await calculateCourseGrade(courseId, user.id);
+      
+      if (error) throw error;
+      return gradeData;
+    } catch (error) {
+      console.error('Error calculating course grade:', error);
+      return {
+        overallGrade: 0,
+        letterGrade: 'N/A',
+        gradedAssignments: 0,
+        totalAssignments: assignments.length
+      };
+    }
+  };
 
   if (loading) {
     return (
