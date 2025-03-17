@@ -20,7 +20,7 @@ import { Toaster } from 'react-hot-toast'
 import Students from './components/admin/Students';
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
 import TeacherCourses from './pages/teacher/TeacherCourses';
-import TeacherStudents from './pages/teacher/TeacherStudents';
+// import TeacherStudents from './pages/teacher/TeacherStudents';
 import TeacherAssignments from './pages/teacher/TeacherAssignments';
 import StudentAnalysis from './pages/teacher/StudentsAnalysis';
 import GradeAssignment from './pages/teacher/GradeAssignment';
@@ -61,7 +61,7 @@ function App() {
         {/* Teacher routes */}
         <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
         <Route path="/teacher/courses" element={<TeacherCourses />} />
-        <Route path="/teacher/courses/:courseId/students" element={<TeacherStudents />} />
+        {/* <Route path="/teacher/courses/:courseId/students" element={<TeacherStudents />} /> */}
         <Route path="/teacher/courses/:courseId/assignments" element={<TeacherAssignments />} />
         <Route path="/teacher/students/:studentId" element={<StudentAnalysis />} />
         <Route path="/teacher/assignments/:assignmentId/grade" element={<GradeAssignment />} />
