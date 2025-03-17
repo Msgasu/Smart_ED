@@ -3,6 +3,8 @@ import { Line } from 'react-chartjs-2';
 import './style/StudentDashboard.css';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { getStudentProfile, getStudentCourses } from '../../backend/students';
+import { getChartData } from '../../backend/students/performance';
 
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import { FaHome, FaBook, FaChartLine, FaCalendarAlt, FaCog, FaCheckCircle, FaTimes, FaSignOutAlt } from 'react-icons/fa';
@@ -33,34 +35,17 @@ const StudentDashboard = () => {
           throw new Error('User not authenticated');
         }
         
-        // Fetch student profile and courses in parallel
-        const [profileResponse, coursesResponse] = await Promise.all([
-          supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single(),
-          supabase
-            .from('student_courses')
-            .select(`
-              course_id,
-              courses (
-                id,
-                code,
-                name,
-                description
-              )
-            `)
-            .eq('student_id', user.id)
-        ]);
+        // Fetch student profile
+        const { data: profileData, error: profileError } = await getStudentProfile(user.id);
+        if (profileError) throw profileError;
+        setStudentData(profileData);
         
-        if (profileResponse.error) throw profileResponse.error;
-        if (coursesResponse.error) throw coursesResponse.error;
-        
-        setStudentData(profileResponse.data);
+        // Fetch student courses
+        const { data: coursesData, error: coursesError } = await getStudentCourses(user.id);
+        if (coursesError) throw coursesError;
         
         // Fetch all assignments and submissions in a single batch
-        const courseIds = coursesResponse.data.map(course => course.course_id);
+        const courseIds = coursesData.map(course => course.course_id);
         
         if (courseIds.length === 0) {
           setCourses([]);
@@ -87,7 +72,7 @@ const StudentDashboard = () => {
         setSubmissionsResponse(submissionsResponse);
         
         // Process course data with assignments and submissions
-        const enhancedCourses = coursesResponse.data.map(course => {
+        const enhancedCourses = coursesData.map(course => {
           // Filter assignments for this course
           const courseAssignments = assignmentsResponse.data.filter(
             assignment => assignment.course_id === course.course_id
@@ -165,6 +150,27 @@ const StudentDashboard = () => {
   };
   
   // Get chart data from actual graded assignments
+  const fetchChartData = async (courseId) => {
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return null;
+    }
+    
+    // Use the backend service to get chart data
+    const { data: chartData, error } = await getChartData(courseId, user.id);
+    
+    if (error) {
+      console.error('Error fetching chart data:', error);
+      return null;
+    }
+    
+    return chartData;
+  };
+  
+  // For backward compatibility, keep the original getChartData function
+  // but have it use the cached data
   const getChartData = (courseId) => {
     // Find the course
     const course = courses.find(c => c.id === courseId);
