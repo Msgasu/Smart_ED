@@ -2,6 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { FaChartBar, FaUserGraduate, FaBook, FaClipboardList, FaArrowLeft } from 'react-icons/fa';
+import { Bar, Line, Pie } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Title, Tooltip, Legend } from 'chart.js';
+import TeacherLayout from '../../components/teacher/TeacherLayout';
+
+// Register ChartJS components
+ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Title, Tooltip, Legend);
 
 const StudentAnalysis = () => {
   const { studentId } = useParams();
@@ -70,11 +77,17 @@ const StudentAnalysis = () => {
   if (!student) return <div>Student not found</div>;
 
   return (
-    <div>
-      <h1>Student Analysis</h1>
-      <Link to="/teacher/dashboard">Back to Dashboard</Link>
-      <hr />
-
+    <TeacherLayout>
+      <h1 className="page-title">
+        {student ? `Analysis for ${student.first_name} ${student.last_name}` : 'Student Analysis'}
+      </h1>
+      
+      <div className="mb-3">
+        <Link to="/teacher/dashboard" className="btn btn-outline-primary">
+          <FaArrowLeft /> Back to Dashboard
+        </Link>
+      </div>
+      
       <div>
         <h2>Student Information</h2>
         <p>Name: {student.first_name} {student.last_name}</p>
@@ -119,7 +132,7 @@ const StudentAnalysis = () => {
           </table>
         )}
       </div>
-    </div>
+    </TeacherLayout>
   );
 };
 
