@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
+import TeacherLayout from '../../components/teacher/TeacherLayout';
+import { getAssignmentDetails } from '../../backend/teachers/assignments';
+import { getSubmissionsByAssignment, bulkGradeSubmissions } from '../../backend/teachers/grading';
+import { FaSave, FaArrowLeft, FaFilter, FaSearch } from 'react-icons/fa';
 
 const GradeAssignment = () => {
   const { assignmentId } = useParams();
@@ -10,63 +14,34 @@ const GradeAssignment = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [grades, setGrades] = useState({});
+  const [filter, setFilter] = useState('all'); // 'all', 'graded', 'ungraded'
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchAssignmentDetails = async () => {
       try {
-        // Get assignment details
-        const { data: assignmentData, error: assignmentError } = await supabase
-          .from('assignments')
-          .select(`
-            *,
-            courses (
-              id,
-              code,
-              name
-            )
-          `)
-          .eq('id', assignmentId)
-          .single();
-          
+        // Use the backend service to get assignment details
+        const { data: assignmentData, error: assignmentError } = await getAssignmentDetails(assignmentId);
         if (assignmentError) throw assignmentError;
         setAssignment(assignmentData);
         
-        // Get students enrolled in this course
-        const { data: enrolledStudents, error: enrollmentError } = await supabase
-          .from('student_courses')
-          .select(`
-            student_id,
-            profiles:student_id (
-              id,
-              first_name,
-              last_name,
-              email
-            )
-          `)
-          .eq('course_id', assignmentData.course_id);
-          
-        if (enrollmentError) throw enrollmentError;
-        
-        // Get existing grades for this assignment
-        const { data: existingGrades, error: gradesError } = await supabase
-          .from('student_assignments')
-          .select('*')
-          .eq('assignment_id', assignmentId);
-          
-        if (gradesError) throw gradesError;
+        // Use the backend service to get submissions by assignment
+        const { data: submissionsData, error: submissionsError } = await getSubmissionsByAssignment(assignmentId);
+        if (submissionsError) throw submissionsError;
         
         // Initialize grades object with existing grades
         const gradesObj = {};
-        existingGrades?.forEach(grade => {
-          gradesObj[grade.student_id] = {
-            score: grade.score,
-            status: grade.status,
-            id: grade.id
+        submissionsData.students.forEach(student => {
+          gradesObj[student.id] = {
+            score: student.submission.score,
+            feedback: student.submission.feedback,
+            status: student.submission.status,
+            id: student.submission.id
           };
         });
         
         setGrades(gradesObj);
-        setStudents(enrolledStudents);
+        setStudents(submissionsData.students);
       } catch (error) {
         console.error('Error fetching data:', error);
         toast.error('Failed to load assignment data');
@@ -89,125 +64,218 @@ const GradeAssignment = () => {
     }));
   };
 
+  const handleFeedbackChange = (studentId, feedback) => {
+    setGrades(prev => ({
+      ...prev,
+      [studentId]: {
+        ...prev[studentId],
+        feedback,
+        status: 'graded'
+      }
+    }));
+  };
+
   const saveGrades = async () => {
     try {
-      // Log the data we're about to save for debugging
-      console.log("Saving grades:", grades);
-      
-      // Create an array of grade objects to save
+      // Prepare grades for bulk update
       const gradesToSave = [];
       
       for (const [studentId, data] of Object.entries(grades)) {
-        // Create a grade object without the id field (let Supabase generate it)
-        const gradeData = {
-          student_id: studentId,
-          assignment_id: assignmentId,
-          score: data.score || 0,
-          status: 'graded'
-        };
-        
-        // If this is an update (has an id), include it
-        if (data.id) {
-          gradeData.id = data.id;
-        }
-        
-        gradesToSave.push(gradeData);
-      }
-      
-      console.log("Formatted grades to save:", gradesToSave);
-      
-      // Save each grade individually to better handle errors
-      for (const grade of gradesToSave) {
-        let result;
-        
-        if (grade.id) {
-          // Update existing grade
-          result = await supabase
-            .from('student_assignments')
-            .update({
-              score: grade.score,
-              status: grade.status
-            })
-            .eq('id', grade.id);
-        } else {
-          // Insert new grade
-          result = await supabase
-            .from('student_assignments')
-            .insert([{
-              student_id: grade.student_id,
-              assignment_id: grade.assignment_id,
-              score: grade.score,
-              status: grade.status
-            }]);
-        }
-        
-        if (result.error) {
-          console.error("Error saving grade:", result.error);
-          throw result.error;
+        // Only save if there's a score
+        if (data.score !== null && data.score !== undefined) {
+          gradesToSave.push({
+            studentId,
+            assignmentId,
+            gradeData: {
+              score: data.score,
+              feedback: data.feedback || ''
+            }
+          });
         }
       }
       
-      toast.success('Grades saved successfully');
-      navigate(`/teacher/courses/${assignment.course_id}/assignments`);
+      // Use the backend service to bulk grade submissions
+      const { data, error } = await bulkGradeSubmissions(gradesToSave);
+      
+      if (error) throw error;
+      
+      toast.success(`Successfully graded ${data.totalSuccess} submissions`);
+      
+      // Refresh data
+      const { data: refreshData, error: refreshError } = await getSubmissionsByAssignment(assignmentId);
+      if (refreshError) throw refreshError;
+      
+      // Update students with fresh data
+      setStudents(refreshData.students);
     } catch (error) {
       console.error('Error saving grades:', error);
-      toast.error('Failed to save grades: ' + error.message);
+      toast.error('Failed to save grades');
     }
   };
 
-  if (loading) return <div>Loading assignment details...</div>;
-  if (!assignment) return <div>Assignment not found</div>;
+  // Filter students based on filter and search term
+  const filteredStudents = students.filter(student => {
+    // Apply status filter
+    if (filter === 'graded' && student.submission.status !== 'graded') return false;
+    if (filter === 'ungraded' && student.submission.status === 'graded') return false;
+    
+    // Apply search filter
+    if (searchTerm) {
+      const fullName = `${student.first_name} ${student.last_name}`.toLowerCase();
+      return fullName.includes(searchTerm.toLowerCase());
+    }
+    
+    return true;
+  });
+
+  if (loading) {
+    return (
+      <TeacherLayout>
+        <div className="loading-spinner">Loading assignment details...</div>
+      </TeacherLayout>
+    );
+  }
 
   return (
-    <div>
-      <h1>Grade Assignment: {assignment.title}</h1>
-      <p>Course: {assignment.courses.code} - {assignment.courses.name}</p>
-      <p>Max Score: {assignment.max_score}</p>
-      <p>Due Date: {new Date(assignment.due_date).toLocaleString()}</p>
-      
-      <Link to={`/teacher/courses/${assignment.course_id}/assignments`}>
-        Back to Assignments
-      </Link>
-      
-      <div>
-        <h2>Student Grades</h2>
-        {students.length === 0 ? (
-          <p>No students enrolled in this course</p>
-        ) : (
-          <table>
+    <TeacherLayout>
+      <div className="grading-page">
+        <div className="page-header">
+          <h1 className="page-title">
+            {assignment ? `Grade: ${assignment.title}` : 'Grade Assignment'}
+          </h1>
+          <button 
+            className="btn-primary save-grades-btn"
+            onClick={saveGrades}
+          >
+            <FaSave /> Save All Grades
+          </button>
+        </div>
+        
+        <div className="back-link">
+          <Link to={`/teacher/assignments/${assignment?.course_id}`}>
+            <FaArrowLeft /> Back to Assignments
+          </Link>
+        </div>
+        
+        <div className="assignment-details-card">
+          <h2>Assignment Details</h2>
+          {assignment && (
+            <>
+              <p><strong>Course:</strong> {assignment.courses.code} - {assignment.courses.name}</p>
+              <p><strong>Title:</strong> {assignment.title}</p>
+              <p><strong>Type:</strong> {assignment.type}</p>
+              <p><strong>Due Date:</strong> {new Date(assignment.due_date).toLocaleString()}</p>
+              <p><strong>Max Score:</strong> {assignment.max_score}</p>
+            </>
+          )}
+        </div>
+        
+        <div className="grading-filters">
+          <div className="filter-group">
+            <label><FaFilter /> Filter:</label>
+            <select 
+              value={filter} 
+              onChange={(e) => setFilter(e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">All Students</option>
+              <option value="graded">Graded</option>
+              <option value="ungraded">Ungraded</option>
+            </select>
+          </div>
+          
+          <div className="search-group">
+            <FaSearch />
+            <input
+              type="text"
+              placeholder="Search students..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+          </div>
+        </div>
+        
+        <div className="submission-stats">
+          <div className="stat-item">
+            <span className="stat-label">Total Students:</span>
+            <span className="stat-value">{students.length}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Graded:</span>
+            <span className="stat-value">
+              {students.filter(s => s.submission.status === 'graded').length}
+            </span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Ungraded:</span>
+            <span className="stat-value">
+              {students.filter(s => s.submission.status !== 'graded').length}
+            </span>
+          </div>
+        </div>
+        
+        <div className="grading-table-container">
+          <table className="grading-table">
             <thead>
               <tr>
-                <th>Student Name</th>
-                <th>Email</th>
-                <th>Score (out of {assignment.max_score})</th>
+                <th>Student</th>
+                <th>Status</th>
+                <th>Score</th>
+                <th>Feedback</th>
               </tr>
             </thead>
             <tbody>
-              {students.map(enrollment => (
-                <tr key={enrollment.student_id}>
-                  <td>{enrollment.profiles.first_name} {enrollment.profiles.last_name}</td>
-                  <td>{enrollment.profiles.email}</td>
-                  <td>
-                    <input
-                      type="number"
-                      min="0"
-                      max={assignment.max_score}
-                      value={grades[enrollment.student_id]?.score || 0}
-                      onChange={(e) => handleScoreChange(
-                        enrollment.student_id, 
-                        e.target.value
-                      )}
-                    />
-                  </td>
+              {filteredStudents.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="no-results">No students match the current filters</td>
                 </tr>
-              ))}
+              ) : (
+                filteredStudents.map(student => (
+                  <tr key={student.id}>
+                    <td>{student.first_name} {student.last_name}</td>
+                    <td>
+                      <span className={`status-badge status-${student.submission.status}`}>
+                        {student.submission.status === 'graded' ? 'Graded' : 
+                         student.submission.status === 'submitted' ? 'Submitted' : 'Not Submitted'}
+                      </span>
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        min="0"
+                        max={assignment?.max_score || 100}
+                        value={grades[student.id]?.score || ''}
+                        onChange={(e) => handleScoreChange(student.id, e.target.value)}
+                        className="score-input"
+                      />
+                      <span className="max-score">/ {assignment?.max_score || 100}</span>
+                    </td>
+                    <td>
+                      <textarea
+                        value={grades[student.id]?.feedback || ''}
+                        onChange={(e) => handleFeedbackChange(student.id, e.target.value)}
+                        placeholder="Add feedback..."
+                        className="feedback-input"
+                      />
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
-        )}
+        </div>
         
-        <button onClick={saveGrades}>Save Grades</button>
+        <div className="save-button-container">
+          <button 
+            className="btn-primary save-grades-btn"
+            onClick={saveGrades}
+          >
+            <FaSave /> Save All Grades
+          </button>
+        </div>
       </div>
-    </div>
+    </TeacherLayout>
   );
 };
 
