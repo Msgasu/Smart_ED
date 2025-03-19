@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaChalkboardTeacher, FaBook, FaUserGraduate, FaClipboardList, FaChartBar } from 'react-icons/fa';
+import { FaChalkboardTeacher, FaBook, FaUserGraduate, FaClipboardList, FaChartBar, FaTasks, FaArrowRight } from 'react-icons/fa';
 import { supabase } from '../../lib/supabase';
 import TeacherLayout from '../../components/teacher/TeacherLayout';
 import { Link } from 'react-router-dom';
@@ -73,11 +73,14 @@ const TeacherDashboard = () => {
         
         <div className="stat-card">
           <div className="stat-icon">
-            <FaClipboardList />
+            <FaTasks />
           </div>
           <div className="stat-content">
             <h3>{stats.assignments}</h3>
-            <p>Assignments</p>
+            <p>Active Assignments</p>
+            <Link to="/teacher/assignments" className="stat-link">
+              View Assignments <FaArrowRight />
+            </Link>
           </div>
         </div>
         
