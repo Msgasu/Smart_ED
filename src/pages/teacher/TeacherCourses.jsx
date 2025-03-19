@@ -2,13 +2,16 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Link } from 'react-router-dom';
+import { FaPlus, FaSearch } from 'react-icons/fa';
 import CourseList from '../../components/teacher/CourseList';
 import TeacherLayout from '../../components/teacher/TeacherLayout';
 import { getTeacherCourses } from '../../backend/teachers/courses';
+import '../../components/teacher/styles/CourseList.css';
 
 const TeacherCourses = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchTeacherCourses = async () => {
@@ -30,14 +33,41 @@ const TeacherCourses = () => {
     fetchTeacherCourses();
   }, []);
 
+  const filteredCourses = courses.filter(course => 
+    course.courses.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    course.courses.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    course.courses.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <TeacherLayout>
-      <h1 className="page-title">My Courses</h1>
+      <div className="page-header">
+        <h1 className="page-title">My Courses</h1>
+        <p className="page-subtitle">Manage your courses, assignments, and students</p>
+      </div>
+      
+      <div className="courses-controls">
+        <div className="search-container">
+          <FaSearch />
+          <input 
+            type="text" 
+            placeholder="Search courses..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        
+        <Link to="/teacher/courses/new" className="btn btn-primary">
+          <FaPlus /> New Course
+        </Link>
+      </div>
       
       {loading ? (
-        <div className="loading-spinner">Loading courses...</div>
+        <div className="loading-spinner">
+          <p>Loading your courses...</p>
+        </div>
       ) : (
-        <CourseList courses={courses} />
+        <CourseList courses={filteredCourses} />
       )}
     </TeacherLayout>
   );
