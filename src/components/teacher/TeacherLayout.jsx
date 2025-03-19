@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   FaChalkboardTeacher, 
@@ -18,8 +18,10 @@ const TeacherLayout = ({ children }) => {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [userName, setUserName] = useState('');
+  const [teacherCourses, setTeacherCourses] = useState([]);
+  const [showAssignmentsDropdown, setShowAssignmentsDropdown] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const getUserProfile = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -34,6 +36,15 @@ const TeacherLayout = ({ children }) => {
           if (data) {
             setUserName(`${data.first_name} ${data.last_name}`);
           }
+
+          // Fetch teacher courses for assignments dropdown
+          const { data: coursesData, error: coursesError } = await supabase
+            .from('courses')
+            .select('id, title')
+            .eq('teacher_id', user.id);
+            
+          if (coursesError) throw coursesError;
+          setTeacherCourses(coursesData || []);
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -55,6 +66,10 @@ const TeacherLayout = ({ children }) => {
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const toggleAssignmentsDropdown = () => {
+    setShowAssignmentsDropdown(!showAssignmentsDropdown);
   };
 
   return (
@@ -95,10 +110,29 @@ const TeacherLayout = ({ children }) => {
                 <FaUserGraduate /> <span>My Students</span>
               </Link>
             </li>
-            <li className={location.pathname.includes('/teacher/assignments') ? 'active' : ''}>
-              <Link to="/teacher/assignments">
-                <FaClipboardList /> <span>Assignments</span>
-              </Link>
+            <li className={location.pathname.includes('/teacher/assignments') || location.pathname.includes('/teacher/courses') && location.pathname.includes('/assignments') ? 'active' : ''}>
+              <div className="dropdown-menu">
+                <div className="dropdown-header" onClick={toggleAssignmentsDropdown}>
+                  <FaClipboardList /> <span>Assignments</span>
+                </div>
+                {showAssignmentsDropdown && (
+                  <div className="dropdown-items">
+                    {teacherCourses.length > 0 ? (
+                      teacherCourses.map(course => (
+                        <Link 
+                          key={course.id} 
+                          to={`/teacher/courses/${course.id}/assignments`}
+                          className="dropdown-item"
+                        >
+                          {course.title}
+                        </Link>
+                      ))
+                    ) : (
+                      <div className="dropdown-item disabled">No courses available</div>
+                    )}
+                  </div>
+                )}
+              </div>
             </li>
             <li className={location.pathname === '/teacher/analysis' ? 'active' : ''}>
               <Link to="/teacher/analysis">
