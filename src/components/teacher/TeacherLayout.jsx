@@ -83,7 +83,7 @@ const TeacherLayout = ({ children }) => {
           </button>
         </div>
         
-        <div className="user-profile">
+        {/* <div className="user-profile">
           <div className="avatar">
             <span>{userName.split(' ').map(n => n[0]).join('')}</span>
           </div>
@@ -91,7 +91,7 @@ const TeacherLayout = ({ children }) => {
             <h3>{userName}</h3>
             <p>Teacher</p>
           </div>
-        </div>
+        </div> */}
         
         <nav className="sidebar-nav">
           <ul>
