@@ -28,15 +28,15 @@ const CourseList = ({ courses }) => {
                 <div className="course-stats">
                   <div className="stat">
                     <FaUserGraduate />
-                    <span>20 Students</span>
+                    <span>{course.stats?.students || 0} Students</span>
                   </div>
                   <div className="stat">
                     <FaClipboardList />
-                    <span>5 Assignments</span>
+                    <span>{course.stats?.assignments || 0} Assignments</span>
                   </div>
                   <div className="stat">
                     <FaCalendarAlt />
-                    <span>Active</span>
+                    <span>{course.stats?.submissions || 0} Submissions</span>
                   </div>
                 </div>
               </div>
