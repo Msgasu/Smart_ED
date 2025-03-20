@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FaSearch, FaUserGraduate, FaSortAmountDown, FaSortAmountUp, FaEye, FaFileAlt } from 'react-icons/fa';
 import TeacherLayout from '../../components/teacher/TeacherLayout';
-import { supabase } from '../../lib/supabase';
+import { getCourseDetails } from '../../backend/teachers/courses';
+import { getStudentsWithPerformance } from '../../backend/teachers/students';
 import '../../components/teacher/styles/TeacherStudents.css';
 
 const TeacherStudents = () => {
@@ -19,84 +20,28 @@ const TeacherStudents = () => {
       try {
         setLoading(true);
         
-        // Fetch course details
-        const { data: courseData, error: courseError } = await supabase
-          .from('courses')
-          .select('*')
-          .eq('id', courseId)
-          .single();
+        // Fetch course details using the backend service
+        const { data: courseData, error: courseError } = await getCourseDetails(courseId);
           
         if (courseError) throw courseError;
         setCourse(courseData);
         
-        // Fetch students enrolled in the course
-        const { data: enrollmentsData, error: enrollmentsError } = await supabase
-          .from('enrollments')
-          .select(`
-            id,
-            profiles:student_id (
-              id, 
-              first_name, 
-              last_name, 
-              email,
-              avatar_url
-            )
-          `)
-          .eq('course_id', courseId);
+        // Fetch students with performance metrics using the backend service
+        const { data: studentsData, error: studentsError } = await getStudentsWithPerformance(courseId);
           
-        if (enrollmentsError) throw enrollmentsError;
+        if (studentsError) throw studentsError;
         
-        // Fetch submissions for performance metrics
-        const { data: submissionsData, error: submissionsError } = await supabase
-          .from('submissions')
-          .select(`
-            id,
-            student_id,
-            score,
-            status,
-            assignments!inner (
-              id,
-              course_id
-            )
-          `)
-          .eq('assignments.course_id', courseId);
-          
-        if (submissionsError) throw submissionsError;
+        // Process students data for the component
+        const processedStudents = studentsData.map(student => ({
+          id: student.id,
+          name: `${student.first_name} ${student.last_name}`,
+          email: student.email,
+          averageScore: student.gradePercentage,
+          completionRate: student.completionRate,
+          submissionsCount: student.completedAssignments
+        }));
         
-        // Process students with performance metrics
-        const studentsWithMetrics = enrollmentsData.map(enrollment => {
-          const studentSubmissions = submissionsData.filter(
-            sub => sub.student_id === enrollment.profiles.id
-          );
-          
-          const totalSubmissions = studentSubmissions.length;
-          const completedSubmissions = studentSubmissions.filter(
-            sub => sub.status === 'graded'
-          ).length;
-          
-          const totalScore = studentSubmissions.reduce(
-            (sum, sub) => sum + (sub.score || 0), 
-            0
-          );
-          
-          const averageScore = totalSubmissions > 0 
-            ? Math.round(totalScore / totalSubmissions) 
-            : 0;
-            
-          return {
-            id: enrollment.profiles.id,
-            name: `${enrollment.profiles.first_name} ${enrollment.profiles.last_name}`,
-            email: enrollment.profiles.email,
-            avatar_url: enrollment.profiles.avatar_url,
-            averageScore,
-            completionRate: totalSubmissions > 0 
-              ? Math.round((completedSubmissions / totalSubmissions) * 100) 
-              : 0,
-            submissionsCount: totalSubmissions
-          };
-        });
-        
-        setStudents(studentsWithMetrics);
+        setStudents(processedStudents);
       } catch (error) {
         console.error('Error fetching course and students:', error);
       } finally {
