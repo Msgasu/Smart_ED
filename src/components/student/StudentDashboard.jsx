@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { getStudentProfile, getStudentCourses } from '../../backend/students';
 import { getChartData } from '../../backend/students/performance';
+import StudentLayout from './StudentLayout';
 
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import { FaHome, FaBook, FaChartLine, FaCalendarAlt, FaCog, FaCheckCircle, FaTimes, FaSignOutAlt } from 'react-icons/fa';
@@ -287,90 +288,33 @@ const StudentDashboard = () => {
 
   if (loading) {
     return (
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
-        <div className="loading-skeleton title"></div>
-        <div className="loading-skeleton"></div>
-        <div className="loading-skeleton"></div>
-        <div className="loading-skeleton card"></div>
-        <div className="loading-skeleton card"></div>
-      </div>
+      <StudentLayout>
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <div className="loading-skeleton title"></div>
+          <div className="loading-skeleton"></div>
+          <div className="loading-skeleton"></div>
+          <div className="loading-skeleton card"></div>
+          <div className="loading-skeleton card"></div>
+        </div>
+      </StudentLayout>
     );
   }
 
   if (error && !studentData) {
     return (
-      <div className="error-container">
-        <p>{error}</p>
-        <button onClick={() => window.location.reload()}>Retry</button>
-      </div>
+      <StudentLayout>
+        <div className="error-container">
+          <p>{error}</p>
+          <button onClick={() => window.location.reload()}>Retry</button>
+        </div>
+      </StudentLayout>
     );
   }
 
   return (
-    <div className="wrapper">
-      {/* Sidebar */}
-      <aside className="sidebar">
-        <div className="sidebar-header">
-          <img src="/logo.png" alt="LIC" height="40" />
-        </div>
-        <nav className="sidebar-nav">
-          <div className="nav-item">
-            <a className="nav-link active" href="#">
-              <FaHome /> Dashboard
-            </a>
-          </div>
-          <div className="nav-item">
-            <a 
-              className="nav-link" 
-              href="#" 
-              id="coursesButton"
-              onClick={(e) => {
-                e.preventDefault();
-                setShowCoursesSidebar(true);
-              }}
-            >
-              <FaBook /> Courses
-            </a>
-          </div>
-          <div className="nav-item">
-            <a className="nav-link" href="#" onClick={(e) => {
-              e.preventDefault();
-              navigate('/student/grades');
-            }}>
-              <FaChartLine /> Grade Projection
-            </a>
-          </div>
-          <div className="nav-item">
-            <a className="nav-link" href="#" onClick={(e) => {
-              e.preventDefault();
-              navigate('/student/schedule');
-            }}>
-              <FaCalendarAlt /> Schedule
-            </a>
-          </div>
-          <div className="nav-item">
-            <a className="nav-link" href="#" onClick={(e) => {
-              e.preventDefault();
-              navigate('/student/settings');
-            }}>
-              <FaCog /> Settings
-            </a>
-          </div>
-          <div className="nav-item">
-            <a className="nav-link logout-link" href="#" onClick={async (e) => {
-              e.preventDefault();
-              await supabase.auth.signOut();
-              navigate('/signin');
-            }}>
-              <FaSignOutAlt /> Logout
-            </a>
-          </div>
-        </nav>
-      </aside>
-
-      {/* Main Content */}
-      <main className="main-content">
+    <StudentLayout>
+      <div className="dashboard-content">
         {/* User profile section */}
         <div className="user-profile">
           <div className="user-info">
@@ -425,50 +369,50 @@ const StudentDashboard = () => {
             </div>
           )}
         </div>
-      </main>
 
-      {/* Courses sidebar popup */}
-      <div className={`courses-sidebar ${showCoursesSidebar ? 'active' : ''}`} id="coursesSidebar">
-        <div className="courses-header">
-          <h3>My Courses</h3>
-          <button 
-            className="close-btn" 
-            onClick={() => setShowCoursesSidebar(false)}
-          >
-            <FaTimes />
-          </button>
-        </div>
-        <div className="courses-search">
-          <input type="text" placeholder="Search courses..." className="form-control" />
-        </div>
-        <div className="courses-list">
-          {courses.length > 0 ? (
-            courses.map(course => (
-              <div 
-                key={course.id} 
-                className="course-item" 
-                onClick={() => {
-                  handleCourseClick(course.id);
-                  setShowCoursesSidebar(false);
-                }}
-              >
-                <h4>{course.name}</h4>
-                <p className="course-code">{course.code}</p>
-                <div className="course-meta">
-                  <span>Term: {course.term}</span>
-                  <span className="completion-status">
-                    <FaCheckCircle />
-                    {course.completedItems} completed {course.completedItems === 1 ? 'item' : 'items'}
-                  </span>
+        {/* Courses sidebar popup */}
+        <div className={`courses-sidebar ${showCoursesSidebar ? 'active' : ''}`} id="coursesSidebar">
+          <div className="courses-header">
+            <h3>My Courses</h3>
+            <button 
+              className="close-btn" 
+              onClick={() => setShowCoursesSidebar(false)}
+            >
+              <FaTimes />
+            </button>
+          </div>
+          <div className="courses-search">
+            <input type="text" placeholder="Search courses..." className="form-control" />
+          </div>
+          <div className="courses-list">
+            {courses.length > 0 ? (
+              courses.map(course => (
+                <div 
+                  key={course.id} 
+                  className="course-item" 
+                  onClick={() => {
+                    handleCourseClick(course.id);
+                    setShowCoursesSidebar(false);
+                  }}
+                >
+                  <h4>{course.name}</h4>
+                  <p className="course-code">{course.code}</p>
+                  <div className="course-meta">
+                    <span>Term: {course.term}</span>
+                    <span className="completion-status">
+                      <FaCheckCircle />
+                      {course.completedItems} completed {course.completedItems === 1 ? 'item' : 'items'}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))
-          ) : (
-            <p className="no-courses">No courses found</p>
-          )}
+              ))
+            ) : (
+              <p className="no-courses">No courses found</p>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </StudentLayout>
   );
 };
 
