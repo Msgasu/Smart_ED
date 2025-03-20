@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { getStudentAssignments } from '../../backend/students/assignments';
+import StudentLayout from '../../components/student/StudentLayout';
+import './styles/StudentAssignments.css';
 
 const StudentAssignments = () => {
   const [assignments, setAssignments] = useState([]);
@@ -28,47 +30,63 @@ const StudentAssignments = () => {
     fetchAssignments();
   }, []);
 
-  if (loading) return <div>Loading assignments...</div>;
+  if (loading) return (
+    <StudentLayout>
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <div className="loading-text">Loading assignments...</div>
+      </div>
+    </StudentLayout>
+  );
 
   return (
-    <div>
-      <h1>My Assignments</h1>
-      <Link to="/student/dashboard">Back to Dashboard</Link>
-      
-      {assignments.length === 0 ? (
-        <p>No assignments found. Make sure you're enrolled in courses.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Course</th>
-              <th>Title</th>
-              <th>Type</th>
-              <th>Due Date</th>
-              <th>Status</th>
-              <th>Score</th>
-            </tr>
-          </thead>
-          <tbody>
-            {assignments.map(assignment => (
-              <tr key={assignment.id}>
-                <td>{assignment.courses.code}</td>
-                <td>{assignment.title}</td>
-                <td>{assignment.type}</td>
-                <td>{new Date(assignment.due_date).toLocaleString()}</td>
-                <td>{assignment.student_submission.status}</td>
-                <td>
-                  {assignment.student_submission.status === 'graded' 
-                    ? `${assignment.student_submission.score} / ${assignment.max_score}`
-                    : 'Pending'
-                  }
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
+    <StudentLayout>
+      <div className="assignments-container">
+        <h1>My Assignments</h1>
+        
+        {assignments.length === 0 ? (
+          <div className="no-assignments">
+            <p>No assignments found. Make sure you're enrolled in courses.</p>
+          </div>
+        ) : (
+          <div className="assignments-table-container">
+            <table className="assignments-table">
+              <thead>
+                <tr>
+                  <th>Course</th>
+                  <th>Title</th>
+                  <th>Type</th>
+                  <th>Due Date</th>
+                  <th>Status</th>
+                  <th>Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                {assignments.map(assignment => (
+                  <tr key={assignment.id}>
+                    <td>{assignment.courses.code}</td>
+                    <td>{assignment.title}</td>
+                    <td>{assignment.type}</td>
+                    <td>{new Date(assignment.due_date).toLocaleString()}</td>
+                    <td>
+                      <span className={`status-badge status-${assignment.student_submission.status}`}>
+                        {assignment.student_submission.status}
+                      </span>
+                    </td>
+                    <td>
+                      {assignment.student_submission.status === 'graded' 
+                        ? `${assignment.student_submission.score} / ${assignment.max_score}`
+                        : 'Pending'
+                      }
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </StudentLayout>
   );
 };
 
