@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Link } from 'react-router-dom';
 import { getStudentCourses } from '../../backend/students/courses';
+import StudentLayout from '../../components/student/StudentLayout';
+import './styles/StudentCourses.css';
 
 const StudentCourses = () => {
   const [courses, setCourses] = useState([]);
@@ -27,36 +29,50 @@ const StudentCourses = () => {
     fetchStudentCourses();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return (
+    <StudentLayout>
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <div className="loading-text">Loading courses...</div>
+      </div>
+    </StudentLayout>
+  );
 
   return (
-    <div>
-      <h1>My Courses</h1>
-      <Link to="/student/dashboard">Back to Dashboard</Link>
-      
-      {courses.length === 0 ? (
-        <p>No courses enrolled yet.</p>
-      ) : (
-        <div className="row">
-          {courses.map(course => (
-            <div key={course.course_id} className="col-md-4 mb-4">
-              <div className="card">
-                <div className="card-body">
-                  <h3 className="card-title">{course.courses.code} - {course.courses.name}</h3>
-                  <p className="card-text">{course.courses.description}</p>
+    <StudentLayout>
+      <div className="courses-container">
+        <h1>My Courses</h1>
+        
+        {courses.length === 0 ? (
+          <div className="no-courses">
+            <p>No courses enrolled yet.</p>
+            <button 
+              className="browse-courses-btn"
+              onClick={() => window.location.href = '/student/courses/browse'}
+            >
+              Browse Available Courses
+            </button>
+          </div>
+        ) : (
+          <div className="courses-grid">
+            {courses.map(course => (
+              <div key={course.course_id} className="course-card">
+                <div className="course-card-content">
+                  <h3 className="course-title">{course.courses.code} - {course.courses.name}</h3>
+                  <p className="course-description">{course.courses.description}</p>
                   <Link 
                     to={`/student/courses/${course.course_id}`}
-                    className="btn btn-primary"
+                    className="view-course-btn"
                   >
                     View Course Details
                   </Link>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </StudentLayout>
   );
 };
 
