@@ -1,1 +1,188 @@
- 
+.assignments-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0;
+  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+}
+
+.assignments-container h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 2rem;
+}
+
+.assignments-table-container {
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.assignments-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.assignments-table th {
+  background-color: #f9fafb;
+  color: #4b5563;
+  font-weight: 500;
+  text-align: left;
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.assignments-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  color: #111827;
+}
+
+.assignments-table tr:last-child td {
+  border-bottom: none;
+}
+
+.assignments-table tr:hover {
+  background-color: #f9fafb;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.status-graded {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.status-submitted {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.status-pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status-past_due {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.no-assignments {
+  text-align: center;
+  padding: 3rem;
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.no-assignments p {
+  font-size: 1.1rem;
+  color: #4b5563;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(14, 165, 233, 0.2);
+  border-radius: 50%;
+  border-top-color: #0ea5e9;
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 1rem;
+}
+
+.loading-text {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .assignments-container {
+    padding: 1rem;
+  }
+  
+  .assignments-table-container {
+    overflow-x: auto;
+  }
+  
+  .assignments-table {
+    min-width: 800px;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .assignments-container {
+    background-color: #111827;
+  }
+  
+  .assignments-container h1 {
+    color: #f9fafb;
+  }
+  
+  .assignments-table-container,
+  .no-assignments {
+    background-color: #1f2937;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  }
+  
+  .assignments-table th {
+    background-color: #111827;
+    color: #9ca3af;
+    border-color: #374151;
+  }
+  
+  .assignments-table td {
+    color: #e5e7eb;
+    border-color: #374151;
+  }
+  
+  .assignments-table tr:hover {
+    background-color: #111827;
+  }
+  
+  .no-assignments p {
+    color: #e5e7eb;
+  }
+  
+  .status-graded {
+    background-color: rgba(34, 197, 94, 0.1);
+    color: #4ade80;
+  }
+  
+  .status-submitted {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #60a5fa;
+  }
+  
+  .status-pending {
+    background-color: rgba(234, 179, 8, 0.1);
+    color: #facc15;
+  }
+  
+  .status-past_due {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+  }
+} 
