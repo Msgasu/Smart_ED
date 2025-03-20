@@ -1,115 +1,9 @@
 /* Modern Dashboard Theme - Enhanced */
-.wrapper {
-    display: flex;
-    min-height: 100vh;
-    background-color: #f9fafb;
-    font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
-}
-  
-/* Sidebar Styling - Enhanced */
-.sidebar {
-    width: 280px;
-    background-color: white;
-    border-right: 1px solid #e5e7eb;
-    padding: 1.5rem;
-    position: fixed;
-    height: 100vh;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.03);
-    transition: all 0.3s ease;
-    z-index: 100;
-}
-  
-.sidebar-header {
-    padding-bottom: 1.5rem;
-    margin-bottom: 1.5rem;
-    border-bottom: 1px solid #e5e7eb;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.dashboard-content {
+    padding: 0;
+    width: 100%;
 }
 
-.sidebar-header img {
-    transition: transform 0.3s ease;
-}
-
-.sidebar-header img:hover {
-    transform: scale(1.05);
-}
-  
-.sidebar-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.nav-item {
-    border-radius: 0.5rem;
-    overflow: hidden;
-    transition: all 0.2s;
-}
-
-.nav-item:hover {
-    transform: translateX(5px);
-}
-  
-.nav-link {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.85rem 1.25rem;
-    color: #4b5563;
-    text-decoration: none;
-    border-radius: 0.5rem;
-    font-weight: 500;
-    transition: all 0.3s;
-}
-  
-.nav-link:hover {
-    background-color: #f3f4f6;
-    color: #111827;
-}
-  
-.nav-link.active {
-    background-color: #0ea5e9;
-    color: white;
-    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
-}
-
-.nav-link svg {
-    font-size: 1.1rem;
-    transition: transform 0.2s;
-}
-
-.nav-link:hover svg {
-    transform: scale(1.2);
-}
-  
-.nav-link.logout-link {
-    margin-top: 1rem;
-    color: #ef4444;
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    background-color: rgba(239, 68, 68, 0.05);
-    transition: all 0.3s ease;
-}
-
-.nav-link.logout-link:hover {
-    background-color: #ef4444;
-    color: white;
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
-}
-
-.nav-link.logout-link svg {
-    margin-right: 0.5rem;
-}
-  
-/* Main Content Area - Enhanced */
-.main-content {
-    flex: 1;
-    margin-left: 280px;
-    padding: 2rem;
-    transition: all 0.3s ease;
-}
-  
 /* User Profile Section - Enhanced */
 .user-profile {
     display: flex;
@@ -406,21 +300,81 @@
     transform: scale(1.2);
 }
 
+/* Loading and Error States */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #f9fafb;
+    font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+    padding: 2rem;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(14, 165, 233, 0.2);
+    border-radius: 50%;
+    border-top-color: #0ea5e9;
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 1rem;
+}
+
+.loading-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading-wave 1.5s infinite;
+    border-radius: 0.5rem;
+    height: 20px;
+    margin-bottom: 0.5rem;
+    width: 100%;
+    max-width: 300px;
+}
+
+.loading-skeleton.title {
+    height: 30px;
+    width: 200px;
+    margin-bottom: 2rem;
+}
+
+.loading-skeleton.card {
+    height: 150px;
+    margin-bottom: 1rem;
+}
+
+.error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+    text-align: center;
+}
+
+.error-container p {
+    color: #ef4444;
+    margin-bottom: 1rem;
+}
+
+.error-container button {
+    padding: 0.75rem 1.5rem;
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.error-container button:hover {
+    background-color: #dc2626;
+}
+
 /* Responsive adjustments */
 @media (max-width: 992px) {
-    .sidebar {
-        width: 240px;
-        transform: translateX(-100%);
-    }
-    
-    .sidebar.active {
-        transform: translateX(0);
-    }
-    
-    .main-content {
-        margin-left: 0;
-    }
-    
     .course-stats {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -439,26 +393,13 @@
 
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
-    .wrapper {
+    .dashboard-content {
         background-color: #111827;
     }
     
-    .sidebar, .main-content, .course-performance, .user-profile {
+    .user-profile, .course-performance {
         background-color: #1f2937;
         border-color: #374151;
-    }
-    
-    .sidebar-header {
-        border-color: #374151;
-    }
-    
-    .nav-link {
-        color: #d1d5db;
-    }
-    
-    .nav-link:hover {
-        background-color: #374151;
-        color: #f9fafb;
     }
     
     .user-name, .course-header h4 {
@@ -493,54 +434,17 @@
     }
 }
 
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  background-color: #f9fafb;
-  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
-  padding: 2rem;
-}
-
-.loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 5px solid rgba(14, 165, 233, 0.2);
-  border-radius: 50%;
-  border-top-color: #0ea5e9;
-  animation: spin 1s ease-in-out infinite;
-  margin-bottom: 1rem;
-}
-
-.loading-skeleton {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: loading-wave 1.5s infinite;
-  border-radius: 0.5rem;
-  height: 20px;
-  margin-bottom: 0.5rem;
-  width: 100%;
-  max-width: 300px;
-}
-
-.loading-skeleton.title {
-  height: 30px;
-  width: 200px;
-  margin-bottom: 2rem;
-}
-
-.loading-skeleton.card {
-  height: 150px;
-  margin-bottom: 1rem;
-}
-
 @keyframes spin {
-  to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 @keyframes loading-wave {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
 }
