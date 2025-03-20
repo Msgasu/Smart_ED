@@ -3,6 +3,7 @@ import { FaBook, FaUserGraduate, FaClipboardList, FaFileAlt } from 'react-icons/
 import { supabase } from '../../lib/supabase';
 import TeacherLayout from '../../components/teacher/TeacherLayout';
 import { getTeacherDashboardStats } from '../../backend/teachers/profile';
+import './styles/TeacherDashboard.css';
 
 
 const TeacherDashboard = () => {
