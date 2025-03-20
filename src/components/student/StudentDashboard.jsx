@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
-import './style/StudentDashboard.css';
+import './styles/StudentDashboard.css';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { getStudentProfile, getStudentCourses } from '../../backend/students';
