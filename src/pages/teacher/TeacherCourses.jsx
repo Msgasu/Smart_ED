@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { FaPlus, FaSearch } from 'react-icons/fa';
 import CourseList from '../../components/teacher/CourseList';
 import TeacherLayout from '../../components/teacher/TeacherLayout';
-import { getTeacherCourses } from '../../backend/teachers/courses';
+import { getTeacherCourses, getCourseStats } from '../../backend/teachers/courses';
 import '../../components/teacher/styles/CourseList.css';
 
 const TeacherCourses = () => {
@@ -19,10 +19,23 @@ const TeacherCourses = () => {
         const { data: { user } } = await supabase.auth.getUser();
         
         // Use the backend service to get teacher courses
-        const { data, error } = await getTeacherCourses(user.id);
+        const { data: coursesData, error } = await getTeacherCourses(user.id);
 
         if (error) throw error;
-        setCourses(data || []);
+
+        // Fetch statistics for each course
+        const coursesWithStats = await Promise.all(
+          coursesData.map(async (course) => {
+            const { data: stats, error: statsError } = await getCourseStats(course.course_id);
+            if (statsError) throw statsError;
+            return {
+              ...course,
+              stats: stats
+            };
+          })
+        );
+
+        setCourses(coursesWithStats || []);
       } catch (error) {
         console.error('Error fetching courses:', error);
       } finally {
