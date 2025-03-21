@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaBook, FaClipboardList, FaPlus } from 'react-icons/fa';
-import TeacherLayout from '../../components/teacher/TeacherLayout';
+import TeacherLayout from '../../components/teacher/TeacherLayout.jsx';
 import { supabase } from '../../lib/supabase';
 import '../../components/teacher/styles/TeacherLayout.css';
 
