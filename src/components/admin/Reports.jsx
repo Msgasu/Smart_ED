@@ -1,7 +1,7 @@
 import React from 'react';
 import './styles/AdminLayout.css';
 
-const Reports = () => {
+const Reports = ({ studentNameRef, averageRef }) => {
   return (
     <div>
       {/* School Information */}
@@ -24,7 +24,13 @@ const Reports = () => {
           <div className="col-md-6">
             <div className="mb-3">
               <label htmlFor="studentName" className="form-label">Student Name</label>
-              <input type="text" className="form-control" id="studentName" placeholder="Enter student name" />
+              <input 
+                type="text" 
+                className="form-control" 
+                id="studentName" 
+                placeholder="Enter student name" 
+                ref={studentNameRef}
+              />
             </div>
           </div>
           <div className="col-md-6">
@@ -78,7 +84,13 @@ const Reports = () => {
           <div className="col-md-6">
             <div className="mb-3">
               <label htmlFor="average" className="form-label">Average</label>
-              <input type="text" className="form-control" id="average" placeholder="Enter average" />
+              <input 
+                type="text" 
+                className="form-control" 
+                id="average" 
+                placeholder="Enter average" 
+                ref={averageRef}
+              />
             </div>
           </div>
           <div className="col-md-6">
@@ -185,7 +197,7 @@ const Reports = () => {
             <div className="col-md-6">
               <div className="mb-3">
                 <label htmlFor="date" className="form-label">Date</label>
-                <input type="date" className="form-control" id="date" />
+                <input type="date" className="form-control" id="date" defaultValue={new Date().toISOString().split('T')[0]} />
               </div>
             </div>
           </div>
@@ -193,6 +205,11 @@ const Reports = () => {
       </div>
     </div>
   );
+};
+
+Reports.defaultProps = {
+  studentNameRef: null,
+  averageRef: null
 };
 
 export default Reports;
