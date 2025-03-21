@@ -256,4 +256,143 @@ export const getStudentsWithPerformance = async (courseId) => {
     console.error('Error fetching students with performance:', error);
     return { data: null, error };
   }
+};
+
+/**
+ * Get class performance statistics for a course
+ * @param {string} courseId - The course ID
+ * @returns {Promise<Object>} - Class performance statistics
+ */
+export const getClassPerformanceStats = async (courseId) => {
+  try {
+    if (!courseId) {
+      throw new Error('Course ID is required');
+    }
+    
+    // Get all assignments for this course
+    const { data: assignments, error: assignmentsError } = await supabase
+      .from('assignments')
+      .select('*')
+      .eq('course_id', courseId);
+      
+    if (assignmentsError) throw assignmentsError;
+    
+    if (!assignments || assignments.length === 0) {
+      return { 
+        data: { 
+          totalPossibleScore: 0, 
+          thresholdScore: 0, 
+          totalAssignments: 0,
+          students: []
+        }, 
+        error: null 
+      };
+    }
+    
+    // Calculate the total possible score for all assignments
+    const totalPossibleScore = assignments.reduce((sum, assignment) => {
+      return sum + assignment.max_score;
+    }, 0);
+    
+    // Calculate the 60% threshold
+    const thresholdScore = Math.round(totalPossibleScore * 0.6);
+    
+    // Get students enrolled in this course
+    const { data: enrolledStudents, error: enrollmentError } = await supabase
+      .from('student_courses')
+      .select(`
+        student_id,
+        profiles:student_id (
+          id,
+          first_name,
+          last_name,
+          email
+        )
+      `)
+      .eq('course_id', courseId);
+      
+    if (enrollmentError) throw enrollmentError;
+    
+    if (!enrolledStudents || enrolledStudents.length === 0) {
+      return { 
+        data: { 
+          totalPossibleScore, 
+          thresholdScore, 
+          totalAssignments: assignments.length,
+          students: []
+        }, 
+        error: null 
+      };
+    }
+    
+    // Get all student assignments for this course
+    const assignmentIds = assignments.map(a => a.id);
+    const studentIds = enrolledStudents.map(s => s.student_id);
+    
+    const { data: studentAssignments, error: studentAssignmentsError } = await supabase
+      .from('student_assignments')
+      .select(`
+        *,
+        assignments (*)
+      `)
+      .in('assignment_id', assignmentIds)
+      .in('student_id', studentIds);
+      
+    if (studentAssignmentsError) throw studentAssignmentsError;
+    
+    // Calculate performance for each student
+    const studentsWithPerformance = enrolledStudents.map(enrollment => {
+      const studentSubmissions = studentAssignments?.filter(sa => sa.student_id === enrollment.student_id) || [];
+      
+      // Calculate total score earned by the student
+      const totalEarnedScore = studentSubmissions.reduce((sum, sa) => {
+        return sa.status === 'graded' && sa.score !== null ? sum + sa.score : sum;
+      }, 0);
+      
+      // Calculate grade percentage
+      const gradePercentage = totalPossibleScore > 0 
+        ? Math.round((totalEarnedScore / totalPossibleScore) * 100) 
+        : 0;
+      
+      // Calculate percentage of the 60% threshold
+      const percentOfThreshold = totalPossibleScore > 0
+        ? Math.round((totalEarnedScore / totalPossibleScore) * 60)
+        : 0;
+      
+      // Determine if student is passing based on 60% threshold
+      const isPassing = totalEarnedScore >= thresholdScore;
+      
+      // Determine letter grade
+      let letterGrade = 'N/A';
+      if (gradePercentage >= 90) letterGrade = 'A';
+      else if (gradePercentage >= 80) letterGrade = 'B';
+      else if (gradePercentage >= 70) letterGrade = 'C';
+      else if (gradePercentage >= 60) letterGrade = 'D';
+      else letterGrade = 'F';
+      
+      return {
+        id: enrollment.student_id,
+        name: `${enrollment.profiles.first_name} ${enrollment.profiles.last_name}`,
+        email: enrollment.profiles.email,
+        totalEarnedScore,
+        gradePercentage,
+        percentOfThreshold,
+        letterGrade,
+        isPassing
+      };
+    });
+    
+    return { 
+      data: {
+        totalPossibleScore,
+        thresholdScore,
+        totalAssignments: assignments.length,
+        students: studentsWithPerformance
+      }, 
+      error: null 
+    };
+  } catch (error) {
+    console.error('Error fetching class performance stats:', error);
+    return { data: null, error };
+  }
 }; 
