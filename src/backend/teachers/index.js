@@ -3,6 +3,14 @@ import { getTeacherCourses, getCourseDetails } from './courses';
 import { getAssignments, createAssignment, deleteAssignment, getAssignmentDetails } from './assignments';
 import { getStudents, getStudentDetails, getStudentAnalytics, getClassPerformanceStats } from './students';
 import { getSubmissions, gradeSubmission, getSubmissionsByAssignment } from './grading';
+import { 
+  saveStudentReport, 
+  getStudentReport, 
+  getReportsByAcademicYear, 
+  getStudentReports, 
+  searchStudentReports,
+  generateStudentReport 
+} from './reports';
 
 export {
   getTeacherProfile,
@@ -18,5 +26,12 @@ export {
   getClassPerformanceStats,
   getSubmissions,
   gradeSubmission,
-  getSubmissionsByAssignment
+  getSubmissionsByAssignment,
+  // Report functions
+  saveStudentReport,
+  getStudentReport,
+  getReportsByAcademicYear,
+  getStudentReports,
+  searchStudentReports,
+  generateStudentReport
 }; 
