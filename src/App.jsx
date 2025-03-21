@@ -25,6 +25,7 @@ import TeacherAssignments from './pages/teacher/TeacherAssignments';
 import StudentAnalysis from './pages/teacher/StudentsAnalysis';
 import GradeAssignment from './pages/teacher/GradeAssignment';
 import AssignmentsCourseSelect from './pages/teacher/AssignmentsCourseSelect';
+import TeacherReport from './pages/teacher/TeacherReport';
 
 function App() {
   const [session, setSession] = useState(null)
@@ -67,6 +68,7 @@ function App() {
         <Route path="/teacher/assignments" element={<AssignmentsCourseSelect />} />
         <Route path="/teacher/students/:studentId" element={<StudentAnalysis />} />
         <Route path="/teacher/assignments/:assignmentId/grade" element={<GradeAssignment />} />
+        <Route path="/teacher/report/:studentId" element={<TeacherReport />} />
         
         {/* Default redirect */}
         <Route path="/" element={<Navigate to="/signin" />} />
