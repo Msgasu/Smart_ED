@@ -281,90 +281,128 @@
   }
 }
 
-/* Reports Component Styling */
+/* Reports Component Styling - Redesigned */
 
 .report-main-container {
   background-color: #ffffff;
   color: #333;
-  padding: 30px;
+  padding: 15px;
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
-/* School Info Section */
-.school-info {
-  padding: 20px 15px;
-  margin-bottom: 25px;
+/* Header with School Information */
+.report-header-section {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  padding: 10px;
   background-color: #f8f9fa;
   border-radius: 6px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .school-logo-container {
+  width: 60px;
+  height: 60px;
+  margin-right: 15px;
   display: flex;
-  justify-content: center;
   align-items: center;
-  height: 100%;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.school-logo {
-  max-width: 80px;
-  max-height: 80px;
+.school-logo-placeholder {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #003366;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: bold;
 }
 
 .school-details h3 {
   color: #003366;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
-  margin-bottom: 5px;
+  margin-bottom: 3px;
 }
 
 .school-details p {
   color: #555;
-  font-size: 14px;
-  margin-bottom: 8px;
+  font-size: 12px;
+  margin-bottom: 5px;
 }
 
 .school-details h4 {
   color: #003366;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
-  margin-top: 10px;
+  margin-top: 3px;
   text-decoration: underline;
 }
 
-/* Section Titles */
-.info-section-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #003366;
+/* Section dividers */
+.content-section {
   margin-bottom: 15px;
-  padding-bottom: 8px;
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.section-divider {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
   border-bottom: 1px solid #e0e0e0;
 }
 
-/* Student Info Section */
-.student-info {
-  padding: 25px;
-  margin-bottom: 25px;
-  background-color: #f8f9fa;
-  border-radius: 6px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #003366;
 }
 
+/* Grid layouts for compact sections */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+  padding: 12px;
+}
+
+.assessment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  padding: 12px;
+}
+
+.info-item {
+  margin-bottom: 0;
+}
+
+/* Form controls */
 .form-label {
   font-weight: 600;
   color: #555;
-  margin-bottom: 8px;
+  margin-bottom: 3px;
   display: block;
+  font-size: 12px;
 }
 
 .form-control {
   width: 100%;
-  padding: 10px 12px;
-  font-size: 14px;
+  padding: 6px 8px;
+  font-size: 13px;
   border: 1px solid #ddd;
-  border-radius: 5px;
+  border-radius: 4px;
   background-color: #fff;
   transition: border-color 0.3s, box-shadow 0.3s;
 }
@@ -373,6 +411,11 @@
   border-color: #4a6cf7;
   box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.1);
   outline: none;
+}
+
+.form-control.sm {
+  padding: 4px 6px;
+  font-size: 12px;
 }
 
 select.form-control {
@@ -386,42 +429,94 @@ select.form-control {
   padding-right: 30px;
 }
 
-.mb-3 {
-  margin-bottom: 1rem;
+/* Course dropdown redesign */
+.course-dropdown-container {
+  padding: 0 12px 12px;
 }
 
-/* Report Table Section */
-.table-container {
-  margin-top: 25px;
-  overflow-x: auto;
-  background-color: #fff;
+.course-dropdown {
+  width: 100%;
+  max-width: 450px;
+  margin-left: auto;
+  background-color: white;
   border-radius: 6px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  border: 1px solid #ddd;
 }
 
-/* Table Header with Add Subject Button */
-.table-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 15px 0;
+.course-search {
   position: relative;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  background-color: #f8f9fa;
 }
 
-.add-subject-container {
-  position: relative;
+.search-icon {
+  position: absolute;
+  left: 18px;
+  top: 19px;
+  color: #555;
 }
 
+.course-search-input {
+  width: 100%;
+  padding: 6px 6px 6px 28px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  background-color: #fff;
+}
+
+.course-list {
+  max-height: 230px;
+  overflow-y: auto;
+}
+
+.course-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  color: #333;
+  font-size: 13px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.course-item:hover {
+  background-color: #f0f4f8;
+}
+
+.course-item strong {
+  margin-right: 5px;
+  color: #00519e;
+  display: inline-block;
+  min-width: 60px;
+}
+
+.no-courses, .course-loading {
+  padding: 12px;
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  font-size: 13px;
+}
+
+.course-loading {
+  color: #4a6cf7;
+}
+
+/* Add Subject Button */
 .add-subject-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
+  gap: 6px;
+  padding: 5px 10px;
   background-color: #4a6cf7;
   color: white;
   border: none;
   border-radius: 4px;
   font-weight: 500;
+  font-size: 12px;
   cursor: pointer;
   transition: background-color 0.3s;
 }
@@ -430,99 +525,18 @@ select.form-control {
   background-color: #3a5ce5;
 }
 
-/* Course Dropdown */
-.course-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  width: 300px;
-  max-height: 400px;
-  background-color: white;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 100;
-  overflow: hidden;
-  margin-top: 5px;
-}
-
-.course-search {
-  position: relative;
+/* Table styles */
+.grades-table-container {
   padding: 12px;
-  border-bottom: 1px solid #eee;
-}
-
-.search-icon {
-  position: absolute;
-  left: 22px;
-  top: 22px;
-  color: #888;
-}
-
-.course-search-input {
-  width: 100%;
-  padding: 8px 8px 8px 30px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-.course-list {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.course-item {
-  padding: 10px 15px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.course-item:hover {
-  background-color: #f0f4f8;
-}
-
-.no-courses, .course-loading {
-  padding: 15px;
-  text-align: center;
-  color: #888;
-  font-style: italic;
-}
-
-.course-loading {
-  color: #4a6cf7;
-}
-
-/* Remove Subject Button */
-.remove-subject-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background-color: #ff6b6b;
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.remove-subject-btn:hover {
-  background-color: #ff5252;
-}
-
-/* Total Score */
-.total-score {
-  font-weight: 600;
-  text-align: center;
-  color: #003366;
-  background-color: #f0f4f8;
+  overflow-x: auto;
 }
 
 .grades-table {
   width: 100%;
   border-collapse: collapse;
   border: 1px solid #eee;
+  min-width: 750px; /* Minimum width to prevent shrinking too much */
+  table-layout: fixed; /* Make table use fixed layout for better control */
 }
 
 .grades-table th {
@@ -530,14 +544,19 @@ select.form-control {
   color: #333;
   font-weight: 600;
   text-align: left;
-  padding: 12px 15px;
+  padding: 8px;
   border-bottom: 2px solid #ddd;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .grades-table td {
-  padding: 12px 15px;
+  padding: 6px 8px;
   border-bottom: 1px solid #eee;
   vertical-align: middle;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .grades-table td:first-child {
@@ -548,147 +567,178 @@ select.form-control {
   background-color: #f8f9fa;
 }
 
-.grades-table tbody tr:last-child td {
+.grades-table tr:last-child td {
   border-bottom: none;
 }
 
-.grades-table input.form-control {
-  min-width: 100px;
-  font-size: 14px;
-  padding: 8px 10px;
+/* Delete Button (Trash Icon) */
+.delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background-color: #ff6b6b;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 12px;
+  padding: 0;
 }
 
-/* Remarks Section */
-.remarks-info {
-  margin-top: 25px;
-  padding: 25px;
-  background-color: #f8f9fa;
-  border-radius: 6px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+.delete-btn svg {
+  width: 14px;
+  height: 14px;
+  display: block;
 }
 
-textarea.form-control {
-  min-height: 100px;
+.delete-btn:hover {
+  background-color: #ff5252;
+}
+
+/* Total Score Cell */
+.total-score {
+  font-weight: 600;
+  text-align: center;
+  color: #003366;
+  background-color: #f0f4f8;
+}
+
+/* Remarks and Signature Section */
+.remarks-container {
+  padding: 0 12px 12px;
+}
+
+.remarks-container textarea {
+  min-height: 60px;
   resize: vertical;
 }
 
-/* Row and Column Layout (Bootstrap-like) */
-.row {
+.signature-section {
   display: flex;
   flex-wrap: wrap;
-  margin-right: -15px;
-  margin-left: -15px;
+  gap: 12px;
+  padding: 0 12px 12px;
 }
 
-.col-md-2, .col-md-3, .col-md-4, .col-md-6, .col-md-10, .col-md-12 {
+.signature-item {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* Date input container with calendar icon */
+.date-input-container {
   position: relative;
-  width: 100%;
-  padding-right: 15px;
-  padding-left: 15px;
 }
 
-@media (min-width: 768px) {
-  .col-md-2 {
-    flex: 0 0 16.666667%;
-    max-width: 16.666667%;
-  }
-  
-  .col-md-3 {
-    flex: 0 0 25%;
-    max-width: 25%;
-  }
-  
-  .col-md-4 {
-    flex: 0 0 33.333333%;
-    max-width: 33.333333%;
-  }
-  
-  .col-md-6 {
-    flex: 0 0 50%;
-    max-width: 50%;
-  }
-  
-  .col-md-10 {
-    flex: 0 0 83.333333%;
-    max-width: 83.333333%;
-  }
-  
-  .col-md-12 {
-    flex: 0 0 100%;
-    max-width: 100%;
-  }
+.calendar-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #555;
+  pointer-events: none;
+  font-size: 12px;
 }
 
-/* Alignment Classes */
-.text-center {
-  text-align: center;
-}
-
-.align-items-center {
-  align-items: center;
-}
-
-/* Empty Table Message */
+/* Empty table message */
 .empty-subjects {
-  padding: 30px 15px;
+  padding: 15px;
   text-align: center;
-  color: #888;
+  color: #666;
   font-style: italic;
+  font-size: 13px;
 }
 
-/* Responsive adjustments */
-@media (max-width: 767px) {
+/* Responsive design adjustments */
+@media (max-width: 768px) {
   .report-main-container {
-    padding: 15px;
+    padding: 10px 8px;
   }
   
-  .school-info, .student-info, .remarks-info {
-    padding: 15px;
-  }
-  
-  .grades-table th, .grades-table td {
-    padding: 8px 10px;
-  }
-  
-  .form-control {
-    padding: 8px 10px;
-  }
-  
-  .table-header {
+  .report-header-section {
     flex-direction: column;
-    align-items: flex-start;
+    text-align: center;
   }
   
-  .add-subject-container {
-    margin-top: 10px;
-    width: 100%;
-  }
-  
-  .add-subject-btn {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .course-dropdown {
-    width: 100%;
-    left: 0;
-    right: auto;
+  .school-logo-container {
+    margin: 0 auto 10px;
   }
 }
 
-/* Override Dark Mode - Force Light Theme */
+/* Print styles optimized for reports */
+@media print {
+  @page {
+    size: portrait;
+    margin: 0.5cm;
+  }
+  
+  .report-main-container {
+    box-shadow: none;
+    padding: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  .report-header-section, .content-section {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+  
+  .delete-btn, .add-subject-btn {
+    display: none !important;
+  }
+  
+  .grades-table {
+    width: 100%;
+    page-break-inside: auto;
+  }
+  
+  .grades-table tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+  
+  .grades-table th {
+    background-color: #f0f4f8 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .total-score {
+    background-color: #f0f4f8 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .section-title {
+    font-size: 14px;
+  }
+  
+  input, select, textarea {
+    border: 1px solid #ddd !important;
+  }
+  
+  /* Ensure content doesn't get cut off */
+  .signature-section {
+    margin-bottom: 20px;
+  }
+}
+
+/* Override Dark Mode - Force Light Theme - Keep this at the end */
 @media (prefers-color-scheme: dark) {
   .report-main-container {
     background-color: #ffffff !important;
     color: #333 !important;
   }
   
-  .school-info, .student-info, .remarks-info {
-    background-color: #f8f9fa !important;
-    color: #333 !important;
+  .report-header-section, .content-section {
+    background-color: #fff !important;
   }
   
-  .school-details h3, .school-details h4, .info-section-title {
+  .school-details h3, .school-details h4, .section-title {
     color: #003366 !important;
   }
   
@@ -702,14 +752,6 @@ textarea.form-control {
     color: #333 !important;
   }
   
-  .form-control:focus {
-    border-color: #4a6cf7 !important;
-  }
-  
-  .table-container {
-    background-color: #fff !important;
-  }
-  
   .grades-table th {
     background-color: #f0f4f8 !important;
     color: #333 !important;
@@ -717,23 +759,22 @@ textarea.form-control {
   
   .grades-table td {
     color: #333 !important;
-    border-bottom-color: #eee !important;
-  }
-  
-  .grades-table tr:hover {
-    background-color: #f8f9fa !important;
   }
   
   .course-dropdown {
     background-color: #fff !important;
   }
   
+  .course-item {
+    color: #333 !important;
+  }
+  
   .course-item:hover {
     background-color: #f0f4f8 !important;
   }
   
-  .no-courses, .course-loading {
-    color: #888 !important;
+  .no-courses {
+    color: #666 !important;
   }
   
   .course-loading {
@@ -746,28 +787,11 @@ textarea.form-control {
   }
 }
 
-/* Print Styles */
-@media print {
-  .report-main-container {
-    box-shadow: none;
-    padding: 0;
-  }
-  
-  .school-info, .student-info, .remarks-info {
-    box-shadow: none;
-    border: 1px solid #ddd;
-  }
-  
-  .table-container {
-    box-shadow: none;
-    border: 1px solid #ddd;
-  }
-  
-  .add-subject-btn, .remove-subject-btn {
-    display: none;
-  }
-  
-  .info-section-title {
-    font-size: 14px;
-  }
+/* Fix for text alignments */
+.text-center {
+  text-align: center;
+}
+
+.align-items-center {
+  align-items: center;
 }
