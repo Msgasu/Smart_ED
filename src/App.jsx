@@ -26,6 +26,8 @@ import StudentAnalysis from './pages/teacher/StudentsAnalysis';
 import GradeAssignment from './pages/teacher/GradeAssignment';
 import AssignmentsCourseSelect from './pages/teacher/AssignmentsCourseSelect';
 import TeacherReport from './pages/teacher/TeacherReport';
+import ReportsList from './pages/teacher/ReportsList';
+import ReportView from './pages/teacher/ReportView';
 
 function App() {
   const [session, setSession] = useState(null)
@@ -61,6 +63,7 @@ function App() {
         <Route path="/student/assignments" element={<StudentAssignments />} />
         
         {/* Teacher routes */}
+        <Route path="/teacher" element={<Navigate to="/teacher/dashboard" />} />
         <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
         <Route path="/teacher/courses" element={<TeacherCourses />} />
         <Route path="/teacher/courses/:courseId/students" element={<TeacherStudents />} />
@@ -69,6 +72,8 @@ function App() {
         <Route path="/teacher/students/:studentId" element={<StudentAnalysis />} />
         <Route path="/teacher/assignments/:assignmentId/grade" element={<GradeAssignment />} />
         <Route path="/teacher/report/:studentId" element={<TeacherReport />} />
+        <Route path="/teacher/reports" element={<ReportsList />} />
+        <Route path="/teacher/report-view/:reportId" element={<ReportView />} />
         
         {/* Default redirect */}
         <Route path="/" element={<Navigate to="/signin" />} />
