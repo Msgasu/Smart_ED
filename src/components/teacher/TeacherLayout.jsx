@@ -8,7 +8,9 @@ import {
   FaChartBar, 
   FaSignOutAlt,
   FaBars,
-  FaTimes
+  FaTimes,
+  FaFileAlt,
+  FaCog
 } from 'react-icons/fa';
 import { supabase } from '../../lib/supabase';
 import './styles/TeacherLayout.css';
@@ -139,6 +141,16 @@ const TeacherLayout = ({ children }) => {
                 <FaChartBar /> <span>Student Analysis</span>
               </Link>
             </li>
+            <li className={location.pathname.includes('/teacher/reports') || location.pathname.includes('/teacher/report-view') ? 'active' : ''}>
+              <Link to="/teacher/reports">
+                <FaFileAlt /> <span>Reports</span>
+              </Link>
+            </li>
+            <li className={location.pathname === '/teacher/settings' ? 'active' : ''}>
+              <Link to="/teacher/settings">
+                <FaCog /> <span>Settings</span>
+              </Link>
+            </li>
           </ul>
         </nav>
         
@@ -159,4 +171,4 @@ const TeacherLayout = ({ children }) => {
   );
 };
 
-export default TeacherLayout; 
+export default TeacherLayout;
