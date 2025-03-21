@@ -1,5 +1,3 @@
-this is the db.. for the queries
-
 -- Drop existing tables if they exist
 DROP TABLE IF EXISTS guardian_students CASCADE;
 DROP TABLE IF EXISTS guardians CASCADE;
@@ -123,6 +121,31 @@ CREATE TABLE student_assignments (
     UNIQUE(assignment_id, student_id)
 );
 
+-- Student Reports Table
+CREATE TABLE student_reports (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    student_id UUID REFERENCES students(profile_id) NOT NULL,
+    term VARCHAR(20) NOT NULL CHECK (term IN ('Term 1', 'Term 2', 'Term 3')),
+    academic_year VARCHAR(9) NOT NULL,
+    total_score DECIMAL(6,2),
+    overall_grade CHAR(2),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(student_id, term, academic_year)
+);
+
+-- Student Grades Table
+CREATE TABLE student_grades (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    report_id UUID REFERENCES student_reports(id) ON DELETE CASCADE,
+    subject_id UUID REFERENCES courses(id) ON DELETE CASCADE,
+    score DECIMAL(5,2),
+    grade CHAR(2),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+
 -- Insert sample courses
 INSERT INTO courses (code, name, description, created_at, updated_at) VALUES
 ('BIO101', 'Biology', 'Study of living organisms', NOW(), NOW()),
@@ -147,4 +170,24 @@ INSERT INTO courses (code, name, description, created_at, updated_at) VALUES
 ('HIS101', 'History', 'Study of historical events', NOW(), NOW()),
 ('ACC101', 'Accounting', 'Principles of accounting', NOW(), NOW()),
 ('ECO102', 'Economics II', 'Advanced economic theories', NOW(), NOW());
-
+INSERT INTO profiles (
+    id,
+    email,
+    first_name,
+    last_name,
+    role,
+    phone_number,
+    status,
+    created_at,
+    updated_at
+) VALUES (
+    '26e47c01-6790-4d81-a207-5b308c8c8913',  -- Replace with an actual UUID from auth.users
+    'admin@gmail.com',          
+    'System',
+    'Administrator',
+    'admin',
+    '1234567890',
+    'active',
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+);
