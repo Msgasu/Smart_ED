@@ -1,113 +1,200 @@
 .report-container {
-  padding: 2rem;
-  background-color: var(--bg-color);
-  min-height: calc(100vh - 5rem);
+  padding: 20px;
+  background-color: #f9f9f9;
+  min-height: calc(100vh - 70px);
 }
 
 .report-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .report-title {
   font-size: 1.8rem;
   font-weight: 600;
-  color: var(--text-color);
+  color: #333;
+  margin: 0;
+}
+
+.back-button, .print-button, .save-button {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+  text-decoration: none;
 }
 
 .back-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background-color: var(--primary-color);
-  color: white;
-  border-radius: 0.25rem;
-  text-decoration: none;
-  transition: background-color 0.3s ease;
+  background-color: #f0f0f0;
+  color: #333;
 }
 
 .back-button:hover {
-  background-color: var(--primary-color-dark);
+  background-color: #e0e0e0;
 }
 
-.print-button {
-  display: flex;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  background-color: #5C6BC0;
+.print-button, .save-button {
+  background-color: #4a6cf7;
   color: white;
-  border: none;
-  border-radius: 0.25rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+  margin-left: 10px;
 }
 
-.print-button:hover {
-  background-color: #3949AB;
+.print-button:hover, .save-button:hover {
+  background-color: #3a5ce5;
+}
+
+.print-button:disabled, .save-button:disabled {
+  background-color: #b0c0ff;
+  cursor: not-allowed;
+}
+
+.print-icon, .save-icon {
+  margin-right: 6px;
 }
 
 .report-content {
-  background-color: var(--card-bg);
-  border-radius: 0.5rem;
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 2rem;
 }
 
 .loading-spinner {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 50vh;
+  height: 300px;
+}
+
+.report-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.report-meta-controls {
+  display: flex;
+  margin-right: 15px;
+}
+
+.form-group {
+  margin-right: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+}
+
+.form-control {
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 150px;
+}
+
+.save-button.saved {
+  background-color: #4caf50;
 }
 
 /* Print styles */
 @media print {
-  .report-header,
-  .sidebar,
-  .navbar {
-    display: none !important;
+  .report-header, .back-button, .print-button, .save-button, .report-meta-controls {
+    display: none;
   }
-  
+
   .report-container {
     padding: 0;
-    margin: 0;
     background-color: white;
   }
-  
+
   .report-content {
     box-shadow: none;
     padding: 0;
-    margin: 0;
-    background-color: white;
-  }
-  
-  body, html {
-    background-color: white;
-  }
-  
-  * {
-    -webkit-print-color-adjust: exact !important;
-    color-adjust: exact !important;
   }
 }
 
 /* Dark mode styles */
-[data-theme='dark'] .report-content {
-  background-color: var(--card-bg);
+@media (prefers-color-scheme: dark) {
+  .report-container {
+    background-color: #1a1a1a;
+  }
+  
+  .report-content {
+    background-color: #2a2a2a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  .report-title {
+    color: #e0e0e0;
+  }
+  
+  .back-button {
+    background-color: #333;
+    color: #e0e0e0;
+  }
+  
+  .back-button:hover {
+    background-color: #444;
+  }
+
+  .form-group label {
+    color: #ddd;
+  }
+  
+  .form-control {
+    background-color: #333;
+    border-color: #444;
+    color: #e0e0e0;
+  }
 }
 
+/* Responsive styles */
 @media (max-width: 768px) {
   .report-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
   }
-  
+
   .report-title {
-    order: -1;
+    margin: 10px 0;
   }
-} 
+
+  .report-actions {
+    margin-top: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .report-meta-controls {
+    margin-bottom: 10px;
+    width: 100%;
+  }
+
+  .form-group {
+    margin-bottom: 10px;
+    width: 100%;
+  }
+
+  .form-control {
+    width: 100%;
+  }
+
+  .save-button, .print-button {
+    width: 100%;
+    margin-left: 0;
+    margin-bottom: 10px;
+    justify-content: center;
+  }
+}

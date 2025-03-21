@@ -1,0 +1,442 @@
+.report-view-container {
+  padding: 20px;
+  background-color: #f9f9f9;
+  min-height: calc(100vh - 70px);
+}
+
+.report-view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #f0f0f0;
+  color: #333;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background-color 0.3s;
+}
+
+.back-button:hover {
+  background-color: #e0e0e0;
+}
+
+.report-info {
+  flex: 1;
+  margin: 0 20px;
+}
+
+.report-info h1 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 10px 0;
+}
+
+.report-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  font-size: 14px;
+  color: #555;
+}
+
+.report-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.print-button, .export-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.print-button {
+  background-color: #4a6cf7;
+  color: white;
+}
+
+.export-button {
+  background-color: #43a047;
+  color: white;
+}
+
+.print-button:hover {
+  background-color: #3a5ce5;
+}
+
+.export-button:hover {
+  background-color: #388e3c;
+}
+
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+}
+
+.no-report {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.back-to-reports {
+  margin-top: 20px;
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: #4a6cf7;
+  color: white;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background-color 0.3s;
+}
+
+.back-to-reports:hover {
+  background-color: #3a5ce5;
+}
+
+.report-view-content {
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.report-header-section {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.school-info h2 {
+  font-size: 1.5rem;
+  margin: 0 0 5px 0;
+  color: #333;
+}
+
+.school-info p {
+  margin: 0;
+  color: #555;
+}
+
+.student-info p {
+  margin: 5px 0;
+  color: #333;
+}
+
+.grades-section {
+  margin-bottom: 30px;
+}
+
+.grades-section h3 {
+  font-size: 1.2rem;
+  margin: 0 0 15px 0;
+  color: #333;
+}
+
+.grades-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.grades-table th, .grades-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.grades-table th {
+  background-color: #f5f5f5;
+  color: #333;
+  font-weight: 600;
+}
+
+.overall-row {
+  background-color: #f9f9f9;
+}
+
+.grade-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  text-align: center;
+  min-width: 30px;
+}
+
+.grade-A {
+  background-color: #e3f9e5;
+  color: #1e7c2b;
+}
+
+.grade-B {
+  background-color: #e3f1f9;
+  color: #1e567c;
+}
+
+.grade-C {
+  background-color: #f9f3e3;
+  color: #7c6a1e;
+}
+
+.grade-D {
+  background-color: #f9e9e3;
+  color: #7c4d1e;
+}
+
+.grade-F {
+  background-color: #f9e3e3;
+  color: #7c1e1e;
+}
+
+.no-grades {
+  text-align: center;
+  color: #777;
+  padding: 20px 0;
+}
+
+.report-comments {
+  margin-bottom: 30px;
+}
+
+.report-comments h3 {
+  font-size: 1.2rem;
+  margin: 0 0 15px 0;
+  color: #333;
+}
+
+.comment-box {
+  background-color: #f9f9f9;
+  padding: 15px;
+  border-radius: 4px;
+  min-height: 100px;
+}
+
+.placeholder-text {
+  color: #777;
+  font-style: italic;
+}
+
+.report-footer {
+  margin-top: 40px;
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+}
+
+.signature-area {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 30px;
+}
+
+.signature-line {
+  position: relative;
+  width: 45%;
+  border-top: 1px solid #aaa;
+  padding-top: 5px;
+}
+
+.signature-line span {
+  font-size: 14px;
+  color: #555;
+}
+
+.report-date {
+  text-align: right;
+  font-size: 14px;
+  color: #777;
+}
+
+/* Print styles */
+@media print {
+  .report-view-header, .back-button, .print-button, .export-button {
+    display: none;
+  }
+
+  .report-view-container {
+    padding: 0;
+    background-color: white;
+  }
+
+  .report-view-content {
+    box-shadow: none;
+    padding: 0;
+    border-radius: 0;
+  }
+
+  .report-header-section, .grades-section, .report-comments, .report-footer {
+    page-break-inside: avoid;
+  }
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  .report-view-container {
+    background-color: #1a1a1a;
+  }
+  
+  .report-view-content {
+    background-color: #2a2a2a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  .back-button {
+    background-color: #333;
+    color: #e0e0e0;
+  }
+  
+  .back-button:hover {
+    background-color: #444;
+  }
+  
+  .report-info h1 {
+    color: #e0e0e0;
+  }
+  
+  .report-meta {
+    color: #bbb;
+  }
+  
+  .no-report {
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+  }
+
+  .school-info h2, .school-info p, .student-info p {
+    color: #e0e0e0;
+  }
+
+  .report-header-section, .report-footer {
+    border-color: #444;
+  }
+
+  .grades-table th {
+    background-color: #333;
+    color: #e0e0e0;
+  }
+
+  .grades-table td {
+    color: #e0e0e0;
+    border-bottom-color: #444;
+  }
+
+  .overall-row {
+    background-color: #333;
+  }
+
+  .no-grades {
+    color: #bbb;
+  }
+
+  .comment-box {
+    background-color: #333;
+  }
+
+  .placeholder-text {
+    color: #bbb;
+  }
+
+  .signature-line {
+    border-color: #777;
+  }
+
+  .signature-line span {
+    color: #bbb;
+  }
+
+  .report-date {
+    color: #bbb;
+  }
+  
+  .grade-A {
+    background-color: rgba(30, 124, 43, 0.3);
+    color: #a0d8a8;
+  }
+  
+  .grade-B {
+    background-color: rgba(30, 86, 124, 0.3);
+    color: #a0c4d8;
+  }
+  
+  .grade-C {
+    background-color: rgba(124, 106, 30, 0.3);
+    color: #d8d0a0;
+  }
+  
+  .grade-D {
+    background-color: rgba(124, 77, 30, 0.3);
+    color: #d8bba0;
+  }
+  
+  .grade-F {
+    background-color: rgba(124, 30, 30, 0.3);
+    color: #d8a0a0;
+  }
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .report-view-header {
+    flex-direction: column;
+  }
+  
+  .report-info {
+    margin: 15px 0;
+    width: 100%;
+  }
+  
+  .report-meta {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .report-actions {
+    width: 100%;
+  }
+  
+  .print-button, .export-button {
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .report-header-section {
+    flex-direction: column;
+  }
+  
+  .student-info {
+    margin-top: 15px;
+  }
+  
+  .signature-area {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .signature-line {
+    width: 100%;
+  }
+}
