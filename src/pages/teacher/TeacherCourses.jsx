@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { Link } from 'react-router-dom';
 import { FaPlus, FaSearch } from 'react-icons/fa';
 import CourseList from '../../components/teacher/CourseList';
-import TeacherLayout from '../../components/teacher/TeacherLayout';
+import TeacherLayout from '../../components/teacher/TeacherLayout.jsx';
 import { getTeacherCourses, getCourseStats } from '../../backend/teachers/courses';
 import '../../components/teacher/styles/CourseList.css';
 

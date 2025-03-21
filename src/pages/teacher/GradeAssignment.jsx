@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
-import TeacherLayout from '../../components/teacher/TeacherLayout';
+import TeacherLayout from '../../components/teacher/TeacherLayout.jsx';
 import { getAssignmentDetails } from '../../backend/teachers/assignments';
 import { getSubmissionsByAssignment, bulkGradeSubmissions } from '../../backend/teachers/grading';
 import { FaSave, FaArrowLeft, FaFilter, FaSearch } from 'react-icons/fa';

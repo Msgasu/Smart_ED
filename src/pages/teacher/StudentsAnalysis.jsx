@@ -2,10 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { FaChartBar, FaUserGraduate, FaBook, FaClipboardList, FaArrowLeft, FaInfoCircle, FaCheck, FaTimes } from 'react-icons/fa';
+import { FaChartBar, FaUserGraduate, FaBook, FaClipboardList, FaArrowLeft, FaInfoCircle, FaCheck, FaTimes, FaFileAlt } from 'react-icons/fa';
 import { Bar, Line, Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Title, Tooltip, Legend } from 'chart.js';
-import TeacherLayout from '../../components/teacher/TeacherLayout';
+import TeacherLayout from '../../components/teacher/TeacherLayout.jsx';
 import { getStudentAnalytics, getClassPerformanceStats } from '../../backend/teachers/students';
 import './styles/StudentsAnalysis.css';
 
@@ -127,9 +127,14 @@ const StudentAnalysis = () => {
           <h1 className="analysis-title">
             Analysis for {student.first_name} {student.last_name}
           </h1>
-          <Link to="/teacher/dashboard" className="back-button">
-            <FaArrowLeft /> Back to Dashboard
-          </Link>
+          <div className="analysis-actions">
+            <Link to={`/teacher/report/${studentId}`} className="generate-report-button">
+              <FaFileAlt /> Generate Student Report
+            </Link>
+            <Link to="/teacher/dashboard" className="back-button">
+              <FaArrowLeft /> Back to Dashboard
+            </Link>
+          </div>
         </div>
         
         <div className="student-info-card">
@@ -252,15 +257,6 @@ const StudentAnalysis = () => {
             </div>
           </div>
         </div>
-      </div>
-      
-      <div className="report-button-container">
-        <Link 
-          to={`/teacher/report/${studentId}`} 
-          className="generate-report-button"
-        >
-          <FaClipboardList className="report-icon" /> Generate Student Report
-        </Link>
       </div>
     </TeacherLayout>
   );

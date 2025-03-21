@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FaPlus, FaTrash, FaEdit, FaCalendarAlt, FaClock, FaBook, FaFileAlt, FaSearch } from 'react-icons/fa';
-import TeacherLayout from '../../components/teacher/TeacherLayout';
+import TeacherLayout from '../../components/teacher/TeacherLayout.jsx';
 import { getCourseDetails } from '../../backend/teachers/courses';
 import { getAssignments, createAssignment, deleteAssignment } from '../../backend/teachers/assignments';
 import './styles/TeacherAssignments.css';
