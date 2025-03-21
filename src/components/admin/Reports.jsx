@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FaPlus, FaSearch, FaTimes } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaTrashAlt, FaCalendarAlt } from 'react-icons/fa';
 import { supabase } from '../../lib/supabase';
 import './styles/AdminLayout.css';
-import './styles/Reports.css'; // New CSS file we'll create for better styling
+import './styles/Reports.css';
 
 const Reports = ({ studentNameRef, averageRef }) => {
   const [subjects, setSubjects] = useState([
@@ -124,284 +124,294 @@ const Reports = ({ studentNameRef, averageRef }) => {
 
   return (
     <div className="report-main-container">
-      {/* School Information */}
-      <div className="school-info text-center">
-        <div className="row">
-          <div className="col-md-2">
-            {/* <img src="/path/to/school-logo.png" alt="School Logo" className="img-fluid" /> */}
+      {/* Header with School Information */}
+      <div className="report-header-section">
+        <div className="school-logo-container">
+          {/* Replace with actual logo */}
+          <div className="school-logo-placeholder">LIC</div>
+        </div>
+        <div className="school-details text-center">
+          <h3>Life International College</h3>
+          <p>Private mail Bag, 252 Tema. / Tel: 024 437 7584</p>
+          <h4>TERMINAL REPORT</h4>
+        </div>
+      </div>
+
+      {/* Student Information - Compact Layout */}
+      <div className="content-section">
+        <div className="section-divider">
+          <span className="section-title">Student Information</span>
+        </div>
+        
+        <div className="info-grid">
+          <div className="info-item">
+            <label htmlFor="studentName" className="form-label">Student Name</label>
+            <input 
+              type="text" 
+              className="form-control" 
+              id="studentName" 
+              placeholder="Enter name" 
+              ref={studentNameRef}
+            />
           </div>
-          <div className="col-md-10 school-details">
-            <h3>Life International College</h3>
-            <p>Private mail Bag, 252 Tema. / Tel: 024 437 7584</p>
-            <h4>TERMINAL REPORT</h4>
+          
+          <div className="info-item">
+            <label htmlFor="studentClass" className="form-label">Class</label>
+            <input type="text" className="form-control" id="studentClass" placeholder="Enter class" />
+          </div>
+          
+          <div className="info-item">
+            <label htmlFor="studentAge" className="form-label">Age</label>
+            <input type="number" className="form-control" id="studentAge" placeholder="Enter age" />
+          </div>
+          
+          <div className="info-item">
+            <label htmlFor="studentSex" className="form-label">Gender</label>
+            <select className="form-control" id="studentSex">
+              <option value="">Select</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          
+          <div className="info-item">
+            <label htmlFor="currentTerm" className="form-label">Current Term</label>
+            <select className="form-control" id="currentTerm">
+              <option value="">Select</option>
+              <option value="Term 1">Term 1</option>
+              <option value="Term 2">Term 2</option>
+              <option value="Term 3">Term 3</option>
+            </select>
+          </div>
+          
+          <div className="info-item">
+            <label htmlFor="year" className="form-label">Year</label>
+            <input type="text" className="form-control" id="year" placeholder="Enter year" />
+          </div>
+          
+          <div className="info-item">
+            <label htmlFor="house" className="form-label">House</label>
+            <input type="text" className="form-control" id="house" placeholder="Enter house" />
+          </div>
+          
+          <div className="info-item">
+            <label htmlFor="programOffering" className="form-label">Program</label>
+            <input type="text" className="form-control" id="programOffering" placeholder="Enter program" />
+          </div>
+          
+          <div className="info-item">
+            <label htmlFor="average" className="form-label">Average</label>
+            <input 
+              type="text" 
+              className="form-control" 
+              id="average" 
+              placeholder="Enter average" 
+              ref={averageRef}
+            />
+          </div>
+          
+          <div className="info-item">
+            <label htmlFor="attendance" className="form-label">Attendance</label>
+            <input type="text" className="form-control" id="attendance" placeholder="Enter attendance" />
           </div>
         </div>
       </div>
 
-      {/* Student Information */}
-      <div className="student-info">
-        <div className="info-section-title">Student Information</div>
-        <div className="row mb-3">
-          <div className="col-md-6">
-            <div className="mb-3">
-              <label htmlFor="studentName" className="form-label">Student Name</label>
-              <input 
-                type="text" 
-                className="form-control" 
-                id="studentName" 
-                placeholder="Enter student name" 
-                ref={studentNameRef}
-              />
-            </div>
-          </div>
-          <div className="col-md-3">
-            <div className="mb-3">
-              <label htmlFor="studentClass" className="form-label">Class</label>
-              <input type="text" className="form-control" id="studentClass" placeholder="Enter class" />
-            </div>
-          </div>
-          <div className="col-md-3">
-            <div className="mb-3">
-              <label htmlFor="studentAge" className="form-label">Age</label>
-              <input type="number" className="form-control" id="studentAge" placeholder="Enter age" />
-            </div>
-          </div>
+      {/* Academic Performance Section */}
+      <div className="content-section">
+        <div className="section-divider">
+          <span className="section-title">Academic Performance</span>
+          <button 
+            type="button" 
+            className="add-subject-btn"
+            onClick={() => setShowDropdown(!showDropdown)}
+          >
+            <FaPlus /> Add Subject
+          </button>
         </div>
         
-        <div className="row mb-3">
-          <div className="col-md-3">
-            <div className="mb-3">
-              <label htmlFor="studentSex" className="form-label">Gender</label>
-              <select className="form-control" id="studentSex">
-                <option value="">Select Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-          </div>
-          <div className="col-md-3">
-            <div className="mb-3">
-              <label htmlFor="currentTerm" className="form-label">Current Term</label>
-              <select className="form-control" id="currentTerm">
-                <option value="">Select Term</option>
-                <option value="Term 1">Term 1</option>
-                <option value="Term 2">Term 2</option>
-                <option value="Term 3">Term 3</option>
-              </select>
-            </div>
-          </div>
-          <div className="col-md-3">
-            <div className="mb-3">
-              <label htmlFor="year" className="form-label">Year</label>
-              <input type="text" className="form-control" id="year" placeholder="Enter year" />
-            </div>
-          </div>
-          <div className="col-md-3">
-            <div className="mb-3">
-              <label htmlFor="house" className="form-label">House</label>
-              <input type="text" className="form-control" id="house" placeholder="Enter house" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="row">
-          <div className="col-md-4">
-            <div className="mb-3">
-              <label htmlFor="programOffering" className="form-label">Program Offering</label>
-              <input type="text" className="form-control" id="programOffering" placeholder="Enter program" />
-            </div>
-          </div>
-          <div className="col-md-4">
-            <div className="mb-3">
-              <label htmlFor="average" className="form-label">Average</label>
-              <input 
-                type="text" 
-                className="form-control" 
-                id="average" 
-                placeholder="Enter average" 
-                ref={averageRef}
-              />
-            </div>
-          </div>
-          <div className="col-md-4">
-            <div className="mb-3">
-              <label htmlFor="attendance" className="form-label">Attendance</label>
-              <input type="text" className="form-control" id="attendance" placeholder="Enter attendance" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Report Table with Add Subject Button */}
-      <div className="table-container">
-        <div className="table-header">
-          <div className="info-section-title">Academic Performance</div>
-          <div className="add-subject-container">
-            <button 
-              type="button" 
-              className="add-subject-btn"
-              onClick={() => setShowDropdown(!showDropdown)}
-            >
-              <FaPlus /> Add Subject
-            </button>
-            
-            {showDropdown && (
-              <div className="course-dropdown">
-                <div className="course-search">
-                  <FaSearch className="search-icon" />
-                  <input
-                    type="text"
-                    placeholder="Search for a course..."
-                    value={searchTerm}
-                    onChange={handleSearch}
-                    className="course-search-input"
-                    autoFocus
-                  />
-                </div>
-                <div className="course-list">
-                  {loading ? (
-                    <div className="course-loading">Loading courses...</div>
-                  ) : filteredCourses.length > 0 ? (
-                    filteredCourses.map(course => (
-                      <div 
-                        key={course.id} 
-                        className="course-item"
-                        onClick={() => addSubject(course)}
-                      >
-                        {course.code ? `${course.code} - ${course.name}` : course.name}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="no-courses">No matching courses found</div>
-                  )}
-                </div>
+        {showDropdown && (
+          <div className="course-dropdown-container">
+            <div className="course-dropdown">
+              <div className="course-search">
+                <FaSearch className="search-icon" />
+                <input
+                  type="text"
+                  placeholder="Search for a course..."
+                  value={searchTerm}
+                  onChange={handleSearch}
+                  className="course-search-input"
+                  autoFocus
+                />
               </div>
-            )}
+              <div className="course-list">
+                {loading ? (
+                  <div className="course-loading">Loading courses...</div>
+                ) : filteredCourses.length > 0 ? (
+                  filteredCourses.map(course => (
+                    <div 
+                      key={course.id} 
+                      className="course-item"
+                      onClick={() => addSubject(course)}
+                    >
+                      {course.code ? <strong>{course.code}</strong> : ''} {course.name}
+                    </div>
+                  ))
+                ) : (
+                  <div className="no-courses">No matching courses found</div>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
+        )}
         
-        <table className="grades-table">
-          <thead>
-            <tr>
-              <th>Subjects</th>
-              <th>Class Score</th>
-              <th>Exam Score</th>
-              <th>Total</th>
-              <th>Position</th>
-              <th>Grade</th>
-              <th>Remark</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {subjects.map(subject => (
-              <tr key={subject.id}>
-                <td>{subject.code ? `${subject.code} - ${subject.name}` : subject.name}</td>
-                <td>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    placeholder="Enter score" 
-                    value={subject.classScore}
-                    onChange={(e) => handleSubjectChange(subject.id, 'classScore', e.target.value)}
-                  />
-                </td>
-                <td>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    placeholder="Enter score" 
-                    value={subject.examScore}
-                    onChange={(e) => handleSubjectChange(subject.id, 'examScore', e.target.value)}
-                  />
-                </td>
-                <td className="total-score">
-                  {calculateTotal(subject.classScore, subject.examScore)}
-                </td>
-                <td>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    placeholder="Enter position" 
-                    value={subject.position}
-                    onChange={(e) => handleSubjectChange(subject.id, 'position', e.target.value)}
-                  />
-                </td>
-                <td>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    placeholder="Enter grade" 
-                    value={subject.grade}
-                    onChange={(e) => handleSubjectChange(subject.id, 'grade', e.target.value)}
-                  />
-                </td>
-                <td>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    placeholder="Enter remark" 
-                    value={subject.remark}
-                    onChange={(e) => handleSubjectChange(subject.id, 'remark', e.target.value)}
-                  />
-                </td>
-                <td>
-                  <button 
-                    className="remove-subject-btn" 
-                    onClick={() => removeSubject(subject.id)}
-                    title="Remove subject"
-                  >
-                    <FaTimes />
-                  </button>
-                </td>
+        <div className="grades-table-container">
+          <table className="grades-table">
+            <thead>
+              <tr>
+                <th style={{ width: '25%' }}>Subjects</th>
+                <th style={{ width: '12%' }}>Class Score</th>
+                <th style={{ width: '12%' }}>Exam Score</th>
+                <th style={{ width: '10%' }}>Total</th>
+                <th style={{ width: '10%' }}>Position</th>
+                <th style={{ width: '10%' }}>Grade</th>
+                <th style={{ width: '15%' }}>Remark</th>
+                <th style={{ width: '6%' }}>Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {subjects.length > 0 ? (
+                subjects.map(subject => (
+                  <tr key={subject.id}>
+                    <td>{subject.code ? <strong>{subject.code}:</strong> : ''} {subject.name}</td>
+                    <td>
+                      <input 
+                        type="text" 
+                        className="form-control sm" 
+                        placeholder="Score" 
+                        value={subject.classScore}
+                        onChange={(e) => handleSubjectChange(subject.id, 'classScore', e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <input 
+                        type="text" 
+                        className="form-control sm" 
+                        placeholder="Score" 
+                        value={subject.examScore}
+                        onChange={(e) => handleSubjectChange(subject.id, 'examScore', e.target.value)}
+                      />
+                    </td>
+                    <td className="total-score">
+                      {calculateTotal(subject.classScore, subject.examScore)}
+                    </td>
+                    <td>
+                      <input 
+                        type="text" 
+                        className="form-control sm" 
+                        placeholder="Position" 
+                        value={subject.position}
+                        onChange={(e) => handleSubjectChange(subject.id, 'position', e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <input 
+                        type="text" 
+                        className="form-control sm" 
+                        placeholder="Grade" 
+                        value={subject.grade}
+                        onChange={(e) => handleSubjectChange(subject.id, 'grade', e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        placeholder="Remark" 
+                        value={subject.remark}
+                        onChange={(e) => handleSubjectChange(subject.id, 'remark', e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <button 
+                        className="delete-btn" 
+                        onClick={() => removeSubject(subject.id)}
+                        title="Remove subject"
+                        aria-label="Delete subject"
+                      >
+                        <FaTrashAlt size={14} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="8" className="empty-subjects">
+                    No subjects added. Click "Add Subject" to add courses.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-        {/* Teachers remarks and next semesters data */}
-        <div className="remarks-info">
-          <div className="info-section-title">Final Assessment</div>
-          <div className="row mb-3">
-            <div className="col-md-6">
-              <div className="mb-3">
-                <label htmlFor="conduct" className="form-label">Conduct</label>
-                <input type="text" className="form-control" id="conduct" placeholder="Enter Conduct here" />
-              </div>
-            </div>
-            
-            <div className="col-md-6">
-              <div className="mb-3">
-                <label htmlFor="nextClass" className="form-label">Class</label>
-                <input type="text" className="form-control" id="nextClass" placeholder="Enter class" />
-              </div>
-            </div>
+      {/* Final Assessment Section */}
+      <div className="content-section">
+        <div className="section-divider">
+          <span className="section-title">Final Assessment</span>
+        </div>
+        
+        <div className="assessment-grid">
+          <div className="info-item">
+            <label htmlFor="conduct" className="form-label">Conduct</label>
+            <input type="text" className="form-control" id="conduct" placeholder="Enter conduct" />
           </div>
           
-          {/* Additional fields for teacher remarks */}
-          <div className="row mb-3">
-            <div className="col-md-12">
-              <div className="mb-3">
-                <label htmlFor="teacherRemarks" className="form-label">Teacher's Remarks</label>
-                <textarea className="form-control" id="teacherRemarks" rows="3" placeholder="Enter teacher's remarks"></textarea>
-              </div>
-            </div>
+          <div className="info-item">
+            <label htmlFor="nextClass" className="form-label">Next Class</label>
+            <input type="text" className="form-control" id="nextClass" placeholder="Enter next class" />
           </div>
           
-          <div className="row mb-3">
-            <div className="col-md-6">
-              <div className="mb-3">
-                <label htmlFor="principalSignature" className="form-label">Principal's Signature</label>
-                <input type="text" className="form-control" id="principalSignature" placeholder="Principal's signature" />
-              </div>
+          <div className="info-item">
+            <label htmlFor="reopeningDate" className="form-label">Reopening Date</label>
+            <div className="date-input-container">
+              <FaCalendarAlt className="calendar-icon" />
+              <input type="date" className="form-control" id="reopeningDate" />
             </div>
-            <div className="col-md-6">
-              <div className="mb-3">
-                <label htmlFor="date" className="form-label">Date</label>
-                <input type="date" className="form-control" id="date" defaultValue={new Date().toISOString().split('T')[0]} />
-              </div>
-            </div>
+          </div>
+        </div>
+        
+        <div className="remarks-container">
+          <label htmlFor="teacherRemarks" className="form-label">Teacher's Remarks</label>
+          <textarea 
+            className="form-control" 
+            id="teacherRemarks" 
+            rows="2" 
+            placeholder="Enter teacher's remarks"
+          ></textarea>
+        </div>
+        
+        <div className="signature-section">
+          <div className="signature-item">
+            <label htmlFor="principalSignature" className="form-label">Principal's Signature</label>
+            <input 
+              type="text" 
+              className="form-control" 
+              id="principalSignature" 
+              placeholder="Principal's signature" 
+            />
+          </div>
+          
+          <div className="signature-item">
+            <label htmlFor="date" className="form-label">Date</label>
+            <input 
+              type="date" 
+              className="form-control" 
+              id="date" 
+              defaultValue={new Date().toISOString().split('T')[0]} 
+            />
           </div>
         </div>
       </div>
