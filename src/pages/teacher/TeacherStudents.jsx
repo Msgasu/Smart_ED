@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FaSearch, FaUserGraduate, FaSortAmountDown, FaSortAmountUp, FaEye, FaFileAlt } from 'react-icons/fa';
-import TeacherLayout from '../../components/teacher/TeacherLayout';
+import TeacherLayout from '../../components/teacher/TeacherLayout.jsx';
 import { getCourseDetails } from '../../backend/teachers/courses';
 import { getStudentsWithPerformance } from '../../backend/teachers/students';
 import '../../components/teacher/styles/TeacherStudents.css';
