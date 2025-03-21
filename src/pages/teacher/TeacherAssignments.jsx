@@ -12,7 +12,7 @@ const TeacherAssignments = () => {
   const [assignments, setAssignments] = useState([]);
   const [newAssignment, setNewAssignment] = useState({
     title: '',
-    description: '',
+    // description: '',
     type: 'Homework',
     max_score: 100,
     due_date: '',
@@ -76,7 +76,7 @@ const TeacherAssignments = () => {
       const assignmentData = {
         course_id: courseId,
         title: newAssignment.title,
-        description: newAssignment.description,
+        // description: newAssignment.description,
         type: newAssignment.type,
         max_score: newAssignment.max_score,
         due_date: dueDateTime
