@@ -41,12 +41,25 @@ const TeacherLayout = ({ children }) => {
 
           // Fetch teacher courses for assignments dropdown
           const { data: coursesData, error: coursesError } = await supabase
-            .from('courses')
-            .select('id, title')
-            .eq('teacher_id', user.id);
+            .from('faculty_courses')
+            .select(`
+              course_id,
+              courses (
+                id,
+                name
+              )
+            `)
+            .eq('faculty_id', user.id);
             
           if (coursesError) throw coursesError;
-          setTeacherCourses(coursesData || []);
+          
+          // Transform the data to match the expected format
+          const transformedCourses = coursesData?.map(fc => ({
+            id: fc.courses.id,
+            name: fc.courses.name
+          })) || [];
+          
+          setTeacherCourses(transformedCourses);
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -126,7 +139,7 @@ const TeacherLayout = ({ children }) => {
                           to={`/teacher/courses/${course.id}/assignments`}
                           className="dropdown-item"
                         >
-                          {course.title}
+                          {course.name}
                         </Link>
                       ))
                     ) : (
