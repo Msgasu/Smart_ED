@@ -4,13 +4,8 @@ import { supabase } from '../../lib/supabase';
 import './styles/AdminLayout.css';
 import './styles/Reports.css';
 
-const Reports = ({ studentNameRef, averageRef }) => {
-  const [subjects, setSubjects] = useState([
-    { id: 1, name: 'Core Mathematics', classScore: '', examScore: '', position: '', grade: '', remark: '', sign: '' },
-    { id: 2, name: 'English', classScore: '', examScore: '', position: '', grade: '', remark: '', sign: '' },
-    { id: 3, name: 'Social Studies', classScore: '', examScore: '', position: '', grade: '', remark: '', sign: '' },
-    { id: 4, name: 'Integrated Science', classScore: '', examScore: '', position: '', grade: '', remark: '', sign: '' }
-  ]);
+const Reports = ({ studentNameRef, averageRef, subjects: initialSubjects, onSubjectsChange }) => {
+  const [subjects, setSubjects] = useState(initialSubjects || []);
   const [searchTerm, setSearchTerm] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [availableCourses, setAvailableCourses] = useState([]);
@@ -21,6 +16,13 @@ const Reports = ({ studentNameRef, averageRef }) => {
     dateOfBirth: '',
     age: ''
   });
+
+  // Update subjects when initialSubjects changes
+  useEffect(() => {
+    if (initialSubjects) {
+      setSubjects(initialSubjects);
+    }
+  }, [initialSubjects]);
 
   // Calculate age based on date of birth
   const calculateAge = (dateOfBirth) => {
@@ -138,13 +140,13 @@ const Reports = ({ studentNameRef, averageRef }) => {
 
   // Add a new subject
   const addSubject = (course) => {
-    // Check if course is already added
-    if (subjects.some(subject => subject.name === course.name)) {
+    // Check if course is already added using courseId
+    if (subjects.some(subject => subject.courseId === course.id)) {
       return; // Course already exists
     }
     
     const newSubject = {
-      id: Date.now(), // Use timestamp as temporary ID
+      id: Date.now(),
       courseId: course.id,
       name: course.name,
       code: course.code,
@@ -155,10 +157,12 @@ const Reports = ({ studentNameRef, averageRef }) => {
       remark: '',
       sign: ''
     };
-    setSubjects([...subjects, newSubject]);
-    setShowDropdown(false);
-    setSearchTerm('');
-    setFilteredCourses(availableCourses);
+    
+    const updatedSubjects = [...subjects, newSubject];
+    setSubjects(updatedSubjects);
+    if (onSubjectsChange) {
+      onSubjectsChange(updatedSubjects);
+    }
   };
 
   // Remove a subject
@@ -182,6 +186,9 @@ const Reports = ({ studentNameRef, averageRef }) => {
       return subject;
     });
     setSubjects(updatedSubjects);
+    if (onSubjectsChange) {
+      onSubjectsChange(updatedSubjects);
+    }
   };
 
   return (
