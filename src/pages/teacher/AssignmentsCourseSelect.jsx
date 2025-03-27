@@ -17,25 +17,33 @@ const AssignmentsCourseSelect = () => {
         if (!user) return;
         
         const { data, error } = await supabase
-          .from('courses')
+          .from('faculty_courses')
           .select(`
-            id,
-            title,
-            description,
-            code,
-            created_at,
-            (
-              select count(*) 
-              from assignments 
-              where course_id = courses.id
-            ) as assignment_count
+            courses (
+              id,
+              name,
+              description,
+              code,
+              created_at,
+              (
+                select count(*) 
+                from assignments 
+                where course_id = courses.id
+              ) as assignment_count
+            )
           `)
-          .eq('teacher_id', user.id)
+          .eq('faculty_id', user.id)
           .order('created_at', { ascending: false });
           
         if (error) throw error;
         
-        setCourses(data || []);
+        // Transform the data to match the expected format
+        const transformedData = data?.map(fc => ({
+          ...fc.courses,
+          id: fc.courses.id
+        })) || [];
+        
+        setCourses(transformedData);
       } catch (error) {
         console.error('Error fetching courses:', error);
       } finally {
@@ -67,7 +75,7 @@ const AssignmentsCourseSelect = () => {
                   <FaBook />
                 </div>
                 <div className="course-details">
-                  <h3>{course.title}</h3>
+                  <h3>{course.name}</h3>
                   <p>{course.description}</p>
                   <div className="course-meta">
                     <span className="course-code">{course.code}</span>
