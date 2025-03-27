@@ -34,6 +34,7 @@ const TeacherReport = () => {
     dateOfBirth: '',
     age: ''
   });
+  const [subjects, setSubjects] = useState([]);
 
   // Subscribe to real-time updates for this student's report
   useEffect(() => {
@@ -259,9 +260,26 @@ const TeacherReport = () => {
   // Handle saving a single subject grade
   const handleSaveSubjectGrade = async (row) => {
     try {
+      if (!reportData?.id) {
+        // If no report exists yet, create one
+        const { data: newReport, error: reportError } = await supabase
+          .from('student_reports')
+          .insert({
+            student_id: studentId,
+            term: termSelectRef.current.value,
+            academic_year: academicYearRef.current.value,
+            class_year: document.getElementById('studentClass')?.value
+          })
+          .select()
+          .single();
+
+        if (reportError) throw reportError;
+        setReportData(newReport);
+      }
+
       const gradeData = {
         report_id: reportData.id,
-        subject_id: row.dataset.subjectId,
+        subject_id: row.dataset.courseId, // Make sure this matches the courseId from the row
         class_score: parseFloat(row.querySelector('input[placeholder="Score"]')?.value) || 0,
         exam_score: parseFloat(row.querySelector('input[placeholder="Score"]:nth-child(2)')?.value) || 0,
         total_score: parseFloat(row.querySelector('.total-score')?.textContent) || 0,
@@ -271,7 +289,12 @@ const TeacherReport = () => {
         teacher_signature: row.querySelector('input[placeholder="Sign"]')?.value
       };
 
-      const { data, error } = await saveSubjectGrade(gradeData);
+      const { data, error } = await supabase
+        .from('student_grades')
+        .upsert(gradeData, {
+          onConflict: 'report_id,subject_id',
+          returning: true
+        });
       
       if (error) throw error;
       
@@ -300,84 +323,89 @@ const TeacherReport = () => {
     }
   };
 
+  const fetchStudentCourses = async (studentId) => {
+    try {
+      // First get student's assigned courses
+      const { data: assignedCourses, error: coursesError } = await supabase
+        .from('student_courses')
+        .select(`
+          course_id,
+          courses (
+            id,
+            name,
+            code
+          )
+        `)
+        .eq('student_id', studentId);
+
+      if (coursesError) throw coursesError;
+
+      // Then get any existing grades for these courses
+      const { data: grades, error: gradesError } = await supabase
+        .from('student_grades')
+        .select('*')
+        .in('subject_id', assignedCourses.map(course => course.course_id));
+
+      if (gradesError) throw gradesError;
+
+      // Map the courses with their grades (if they exist)
+      return assignedCourses.map(course => {
+        const existingGrade = grades?.find(grade => grade.subject_id === course.course_id);
+        
+        return {
+          id: Date.now() + Math.random(), // Temporary unique ID for the UI
+          courseId: course.course_id,
+          name: course.courses.name,
+          code: course.courses.code,
+          classScore: existingGrade?.class_score || '',
+          examScore: existingGrade?.exam_score || '',
+          totalScore: existingGrade?.total_score || '',
+          position: existingGrade?.position || '',
+          grade: existingGrade?.grade || '',
+          remark: existingGrade?.remark || '',
+          teacherSignature: existingGrade?.teacher_signature || ''
+        };
+      });
+    } catch (error) {
+      console.error('Error fetching student courses:', error);
+      return [];
+    }
+  };
+
   const loadSavedReport = async () => {
     if (!studentId || !termSelectRef.current?.value || !academicYearRef.current?.value) return;
 
     try {
-      const { data, error } = await supabase
+      // First, get any existing saved report
+      const { data: existingReport, error: reportError } = await supabase
         .from('student_reports')
-        .select(`
-          *,
-          student_grades (
-            *,
-            courses (
-              id,
-              name,
-              code
-            )
-          )
-        `)
+        .select('*')
         .eq('student_id', studentId)
         .eq('term', termSelectRef.current.value)
         .eq('academic_year', academicYearRef.current.value)
         .single();
 
-      if (error) throw error;
+      if (reportError && reportError.code !== 'PGRST116') throw reportError;
 
-      if (data) {
-        setReportData(data);
+      // Get student's assigned courses with any existing grades
+      const assignedCourses = await fetchStudentCourses(studentId);
+
+      if (existingReport) {
+        setReportData(existingReport);
         
-        // Populate report data
-        document.getElementById('studentClass').value = data.class_year || '';
-        document.getElementById('conduct').value = data.conduct || '';
-        document.getElementById('nextClass').value = data.next_class || '';
-        document.getElementById('reopeningDate').value = data.reopening_date || '';
-        document.getElementById('teacherRemarks').value = data.teacher_remarks || '';
-        document.getElementById('principalSignature').value = data.principal_signature || '';
-        document.getElementById('attendance').value = data.attendance || '';
-        
-        // Populate grades
-        if (data.student_grades) {
-          const gradesTable = document.querySelector('.grades-table tbody');
-          gradesTable.innerHTML = ''; // Clear existing rows
-          
-          data.student_grades.forEach(grade => {
-            const row = document.createElement('tr');
-            row.dataset.subjectId = grade.subject_id;
-            row.dataset.saved = 'true';
-            row.innerHTML = `
-              <td>${grade.courses.code}: ${grade.courses.name}</td>
-              <td><input type="text" class="form-control sm" placeholder="Score" value="${grade.class_score}" /></td>
-              <td><input type="text" class="form-control sm" placeholder="Score" value="${grade.exam_score}" /></td>
-              <td class="total-score">${grade.total_score}</td>
-              <td><input type="text" class="form-control sm" placeholder="Position" value="${grade.position}" /></td>
-              <td><input type="text" class="form-control sm" placeholder="Grade" value="${grade.grade}" /></td>
-              <td><input type="text" class="form-control" placeholder="Remark" value="${grade.remark}" /></td>
-              <td><input type="text" class="form-control sm" placeholder="Sign" value="${grade.teacher_signature}" /></td>
-              <td>
-                <button class="save-grade-btn" title="Save grade">Save</button>
-                <button class="delete-btn" title="Remove subject"><FaTrashAlt /></button>
-              </td>
-            `;
-
-            // Add event listeners
-            const inputs = row.querySelectorAll('input');
-            inputs.forEach(input => {
-              input.addEventListener('change', () => handleGradeInputChange(row));
-            });
-
-            // Add save button event listener
-            const saveBtn = row.querySelector('.save-grade-btn');
-            saveBtn.addEventListener('click', () => handleSaveSubjectGrade(row));
-
-            // Add delete button event listener
-            const deleteBtn = row.querySelector('.delete-btn');
-            deleteBtn.addEventListener('click', () => handleDeleteSubjectGrade(row));
-
-            gradesTable.appendChild(row);
-          });
-        }
+        // Populate report fields
+        document.getElementById('studentClass').value = existingReport.class_year || '';
+        document.getElementById('conduct').value = existingReport.conduct || '';
+        document.getElementById('nextClass').value = existingReport.next_class || '';
+        document.getElementById('reopeningDate').value = existingReport.reopening_date || '';
+        document.getElementById('teacherRemarks').value = existingReport.teacher_remarks || '';
+        document.getElementById('principalSignature').value = existingReport.principal_signature || '';
+        document.getElementById('attendance').value = existingReport.attendance || '';
       }
+
+      // Set the subjects regardless of whether there's an existing report
+      setSubjects(assignedCourses);
+
     } catch (error) {
       console.error('Error loading saved report:', error);
       toast.error('Failed to load saved report');
@@ -453,6 +481,8 @@ const TeacherReport = () => {
           <Reports 
             studentNameRef={studentNameInputRef}
             averageRef={averageInputRef}
+            subjects={subjects}
+            onSubjectsChange={setSubjects}
           />
         </div>
       </div>
