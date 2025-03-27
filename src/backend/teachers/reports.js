@@ -485,119 +485,246 @@ export const searchStudentReports = async (searchTerm, academicYear = null) => {
 };
 
 /**
- * Generate a report from student data and assignments
- * @param {string} studentId - The student ID
- * @param {string} courseId - The course ID
- * @param {string} term - The term (e.g., 'Term 1', 'Term 2', 'Term 3')
- * @param {string} academicYear - The academic year (e.g., '2023-2024')
- * @returns {Promise<Object>} - Object containing the generated report data or error
+ * Save or update basic report information
+ * @param {Object} reportData - Basic report information
+ * @returns {Promise<Object>} - Object containing the saved report data or error
  */
-export const generateStudentReport = async (studentId, courseId, term, academicYear) => {
+export const saveReportDetails = async (reportData) => {
   try {
-    // Get student details
-    const { data: student, error: studentError } = await supabase
-      .from('students')
-      .select(`
-        profile_id,
+    const {
+      student_id,
+      term,
+      academic_year,
+      class_year,
+      total_score,
+      overall_grade,
+      conduct,
+      next_class,
+      reopening_date,
+      teacher_remarks,
+      principal_signature,
+      attendance
+    } = reportData;
+
+    // Start a transaction
+    const { data: report, error: reportError } = await supabase
+      .from('student_reports')
+      .upsert({
         student_id,
-        profiles:profile_id (
-          first_name,
-          last_name,
-          email
-        )
-      `)
-      .eq('profile_id', studentId)
+        term,
+        academic_year,
+        class_year,
+        total_score,
+        overall_grade,
+        conduct,
+        next_class,
+        reopening_date,
+        teacher_remarks,
+        principal_signature,
+        attendance,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'student_id,term,academic_year'
+      })
+      .select()
       .single();
 
-    if (studentError) throw studentError;
-    if (!student) throw new Error('Student not found');
+    if (reportError) throw reportError;
+    if (!report) throw new Error('Failed to save report details');
 
-    // Get assignments and student submissions for this course
-    const { data: courseData, error: courseError } = await supabase
-      .from('courses')
+    // Broadcast the update
+    await supabase
+      .channel('student_reports')
+      .send({
+        type: 'broadcast',
+        event: 'report_details_updated',
+        payload: { report_id: report.id }
+      });
+
+    return {
+      data: report,
+      error: null
+    };
+  } catch (error) {
+    console.error('Error saving report details:', error);
+    return {
+      data: null,
+      error: error.message
+    };
+  }
+};
+
+/**
+ * Save or update a single subject grade
+ * @param {Object} gradeData - Grade information for a single subject
+ * @returns {Promise<Object>} - Object containing the saved grade data or error
+ */
+export const saveSubjectGrade = async (gradeData) => {
+  try {
+    const {
+      report_id,
+      subject_id,
+      class_score,
+      exam_score,
+      total_score,
+      position,
+      grade,
+      remark,
+      teacher_signature
+    } = gradeData;
+
+    // Validate required fields
+    if (!report_id || !subject_id) {
+      throw new Error('Missing required fields: report_id and subject_id are required');
+    }
+
+    // Save or update the grade
+    const { data: savedGrade, error: gradeError } = await supabase
+      .from('student_grades')
+      .upsert({
+        report_id,
+        subject_id,
+        class_score,
+        exam_score,
+        total_score,
+        position,
+        grade,
+        remark,
+        teacher_signature,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'report_id,subject_id'
+      })
+      .select()
+      .single();
+
+    if (gradeError) throw gradeError;
+    if (!savedGrade) throw new Error('Failed to save grade');
+
+    // Broadcast the update
+    await supabase
+      .channel('student_reports')
+      .send({
+        type: 'broadcast',
+        event: 'grade_updated',
+        payload: { 
+          report_id,
+          subject_id,
+          grade: savedGrade
+        }
+      });
+
+    return {
+      data: savedGrade,
+      error: null
+    };
+  } catch (error) {
+    console.error('Error saving subject grade:', error);
+    return {
+      data: null,
+      error: error.message
+    };
+  }
+};
+
+/**
+ * Delete a subject grade
+ * @param {string} reportId - The report ID
+ * @param {string} subjectId - The subject ID
+ * @returns {Promise<Object>} - Object containing success status or error
+ */
+export const deleteSubjectGrade = async (reportId, subjectId) => {
+  try {
+    const { error: deleteError } = await supabase
+      .from('student_grades')
+      .delete()
+      .eq('report_id', reportId)
+      .eq('subject_id', subjectId);
+
+    if (deleteError) throw deleteError;
+
+    // Broadcast the deletion
+    await supabase
+      .channel('student_reports')
+      .send({
+        type: 'broadcast',
+        event: 'grade_deleted',
+        payload: { 
+          report_id: reportId,
+          subject_id: subjectId
+        }
+      });
+
+    return {
+      data: { success: true },
+      error: null
+    };
+  } catch (error) {
+    console.error('Error deleting subject grade:', error);
+    return {
+      data: null,
+      error: error.message
+    };
+  }
+};
+
+/**
+ * Generates and saves a student report
+ * @param {Object} reportData - The complete report data including all fields and grades
+ * @returns {Promise<Object>} - Object containing the saved report data or error
+ */
+export const generateStudentReport = async (reportData) => {
+  try {
+    // First save the report details
+    const { data: report, error: reportError } = await saveReportDetails(reportData);
+    if (reportError) throw reportError;
+
+    // Then save each grade individually
+    if (reportData.grades && reportData.grades.length > 0) {
+      const gradePromises = reportData.grades.map(grade => 
+        saveSubjectGrade({
+          ...grade,
+          report_id: report.id
+        })
+      );
+
+      const gradeResults = await Promise.all(gradePromises);
+      const gradeErrors = gradeResults.filter(result => result.error);
+      
+      if (gradeErrors.length > 0) {
+        throw new Error('Some grades failed to save: ' + gradeErrors.map(e => e.error).join(', '));
+      }
+    }
+
+    // Fetch the complete report with grades
+    const { data: completeReport, error: fetchError } = await supabase
+      .from('student_reports')
       .select(`
-        id,
-        code,
-        name,
-        assignments (
-          id,
-          title,
-          type,
-          max_score,
-          student_assignments!inner (
+        *,
+        student_grades (
+          *,
+          courses (
             id,
-            student_id,
-            score,
-            status
+            name,
+            code
           )
         )
       `)
-      .eq('id', courseId)
+      .eq('id', report.id)
       .single();
 
-    if (courseError) throw courseError;
-    if (!courseData) throw new Error('Course not found');
+    if (fetchError) throw fetchError;
 
-    // Filter assignments for this specific student
-    const studentAssignments = [];
-    courseData.assignments.forEach(assignment => {
-      const studentSubmission = assignment.student_assignments.find(
-        submission => submission.student_id === studentId
-      );
-      
-      if (studentSubmission && studentSubmission.status === 'graded') {
-        studentAssignments.push({
-          ...assignment,
-          studentScore: studentSubmission.score
-        });
-      }
-    });
-
-    // Calculate total and average scores
-    let totalScore = 0;
-    let totalMaxScore = 0;
-
-    studentAssignments.forEach(assignment => {
-      totalScore += assignment.studentScore;
-      totalMaxScore += assignment.max_score;
-    });
-
-    // Calculate percentage and determine grade
-    const percentage = totalMaxScore > 0 ? Math.round((totalScore / totalMaxScore) * 100) : 0;
-    let grade = 'N/A';
-    
-    if (percentage >= 90) grade = 'A';
-    else if (percentage >= 80) grade = 'B';
-    else if (percentage >= 70) grade = 'C';
-    else if (percentage >= 60) grade = 'D';
-    else if (percentage > 0) grade = 'F';
-
-    // Prepare report data
-    const reportData = {
-      student_id: studentId,
-      term: term,
-      academic_year: academicYear,
-      total_score: percentage,
-      overall_grade: grade
+    return {
+      data: completeReport,
+      error: null
     };
 
-    // Prepare grade data for this subject
-    const gradesData = [
-      {
-        subject_id: courseId,
-        score: percentage,
-        grade: grade
-      }
-    ];
-
-    // Save the report
-    const { data: savedReport, error: saveError } = await saveStudentReport(reportData, gradesData);
-    
-    if (saveError) throw saveError;
-
-    return { data: savedReport, error: null };
   } catch (error) {
     console.error('Error generating student report:', error);
-    return { data: null, error };
+    return {
+      data: null,
+      error: error.message
+    };
   }
 };
