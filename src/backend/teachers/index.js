@@ -9,7 +9,10 @@ import {
   getReportsByAcademicYear, 
   getStudentReports, 
   searchStudentReports,
-  generateStudentReport 
+  generateStudentReport,
+  saveReportDetails,
+  saveSubjectGrade,
+  deleteSubjectGrade
 } from './reports';
 
 export {
@@ -33,5 +36,8 @@ export {
   getReportsByAcademicYear,
   getStudentReports,
   searchStudentReports,
-  generateStudentReport
+  generateStudentReport,
+  saveReportDetails,
+  saveSubjectGrade,
+  deleteSubjectGrade
 }; 
