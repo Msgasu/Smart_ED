@@ -16,6 +16,68 @@ const Reports = ({ studentNameRef, averageRef }) => {
   const [availableCourses, setAvailableCourses] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [studentData, setStudentData] = useState({
+    name: '',
+    dateOfBirth: '',
+    age: ''
+  });
+
+  // Calculate age based on date of birth
+  const calculateAge = (dateOfBirth) => {
+    if (!dateOfBirth) return '';
+    
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    return age.toString();
+  };
+
+  // Fetch student data when name is populated
+  useEffect(() => {
+    const fetchStudentData = async () => {
+      if (!studentNameRef?.current?.value) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('date_of_birth')
+          .eq('first_name', studentNameRef.current.value.split(' ')[0])
+          .eq('last_name', studentNameRef.current.value.split(' ')[1])
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          const age = calculateAge(data.date_of_birth);
+          setStudentData({
+            name: studentNameRef.current.value,
+            dateOfBirth: data.date_of_birth,
+            age: age
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching student data:', error);
+      }
+    };
+
+    // Add event listener to student name input
+    if (studentNameRef?.current) {
+      studentNameRef.current.addEventListener('change', fetchStudentData);
+    }
+
+    // Cleanup
+    return () => {
+      if (studentNameRef?.current) {
+        studentNameRef.current.removeEventListener('change', fetchStudentData);
+      }
+    };
+  }, [studentNameRef]);
 
   // Fetch courses from the database
   useEffect(() => {
@@ -129,40 +191,47 @@ const Reports = ({ studentNameRef, averageRef }) => {
         <div className="school-logo-container">
           {/* Replace with actual logo */}
           <div className="school-logo-placeholder">LIC</div>
-        </div>
+          </div>
         <div className="school-details text-center">
-          <h3>Life International College</h3>
-          <p>Private mail Bag, 252 Tema. / Tel: 024 437 7584</p>
-          <h4>TERMINAL REPORT</h4>
+            <h3>Life International College</h3>
+            <p>Private mail Bag, 252 Tema. / Tel: 024 437 7584</p>
+            <h4>TERMINAL REPORT</h4>
+          </div>
         </div>
-      </div>
 
       {/* Student Information - Compact Layout */}
       <div className="content-section">
         <div className="section-divider">
           <span className="section-title">Student Information</span>
-        </div>
-        
+      </div>
+
         <div className="info-grid">
           <div className="info-item">
-            <label htmlFor="studentName" className="form-label">Student Name</label>
-            <input 
-              type="text" 
-              className="form-control" 
-              id="studentName" 
+              <label htmlFor="studentName" className="form-label">Student Name</label>
+              <input 
+                type="text" 
+                className="form-control" 
+                id="studentName" 
               placeholder="Enter name" 
-              ref={studentNameRef}
-            />
+                ref={studentNameRef}
+              />
           </div>
           
           <div className="info-item">
-            <label htmlFor="studentClass" className="form-label">Class</label>
-            <input type="text" className="form-control" id="studentClass" placeholder="Enter class" />
+              <label htmlFor="studentClass" className="form-label">Class</label>
+              <input type="text" className="form-control" id="studentClass" placeholder="Enter class" />
           </div>
           
           <div className="info-item">
-            <label htmlFor="studentAge" className="form-label">Age</label>
-            <input type="number" className="form-control" id="studentAge" placeholder="Enter age" />
+              <label htmlFor="studentAge" className="form-label">Age</label>
+              <input 
+                type="text" 
+                className="form-control" 
+                id="studentAge" 
+                value={studentData.age}
+                readOnly
+                placeholder="Auto-calculated"
+              />
           </div>
           
           <div className="info-item">
@@ -176,7 +245,7 @@ const Reports = ({ studentNameRef, averageRef }) => {
           </div>
           
           <div className="info-item">
-            <label htmlFor="currentTerm" className="form-label">Current Term</label>
+              <label htmlFor="currentTerm" className="form-label">Current Term</label>
             <select className="form-control" id="currentTerm">
               <option value="">Select</option>
               <option value="Term 1">Term 1</option>
@@ -191,8 +260,8 @@ const Reports = ({ studentNameRef, averageRef }) => {
           </div>
           
           <div className="info-item">
-            <label htmlFor="house" className="form-label">House</label>
-            <input type="text" className="form-control" id="house" placeholder="Enter house" />
+              <label htmlFor="house" className="form-label">House</label>
+              <input type="text" className="form-control" id="house" placeholder="Enter house" />
           </div>
           
           <div className="info-item">
@@ -201,19 +270,19 @@ const Reports = ({ studentNameRef, averageRef }) => {
           </div>
           
           <div className="info-item">
-            <label htmlFor="average" className="form-label">Average</label>
-            <input 
-              type="text" 
-              className="form-control" 
-              id="average" 
-              placeholder="Enter average" 
-              ref={averageRef}
-            />
-          </div>
+              <label htmlFor="average" className="form-label">Average</label>
+              <input 
+                type="text" 
+                className="form-control" 
+                id="average" 
+                placeholder="Enter average" 
+                ref={averageRef}
+              />
+            </div>
           
           <div className="info-item">
-            <label htmlFor="attendance" className="form-label">Attendance</label>
-            <input type="text" className="form-control" id="attendance" placeholder="Enter attendance" />
+              <label htmlFor="attendance" className="form-label">Attendance</label>
+              <input type="text" className="form-control" id="attendance" placeholder="Enter attendance" />
           </div>
         </div>
       </div>
@@ -268,8 +337,8 @@ const Reports = ({ studentNameRef, averageRef }) => {
         
         <div className="grades-table-container">
           <table className="grades-table">
-            <thead>
-              <tr>
+          <thead>
+            <tr>
                 <th style={{ width: '25%' }}>Subjects</th>
                 <th style={{ width: '12%' }}>Class Score</th>
                 <th style={{ width: '12%' }}>Exam Score</th>
@@ -278,9 +347,9 @@ const Reports = ({ studentNameRef, averageRef }) => {
                 <th style={{ width: '10%' }}>Grade</th>
                 <th style={{ width: '15%' }}>Remark</th>
                 <th style={{ width: '6%' }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
+            </tr>
+          </thead>
+          <tbody>
               {subjects.length > 0 ? (
                 subjects.map(subject => (
                   <tr key={subject.id}>
@@ -338,30 +407,29 @@ const Reports = ({ studentNameRef, averageRef }) => {
                         className="delete-btn" 
                         onClick={() => removeSubject(subject.id)}
                         title="Remove subject"
-                        aria-label="Delete subject"
                       >
-                        <FaTrashAlt size={14} />
+                        <FaTrashAlt />
                       </button>
                     </td>
-                  </tr>
+            </tr>
                 ))
               ) : (
                 <tr>
                   <td colSpan="8" className="empty-subjects">
                     No subjects added. Click "Add Subject" to add courses.
                   </td>
-                </tr>
+            </tr>
               )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
+          </tbody>
+        </table>
+              </div>
+            </div>
+            
       {/* Final Assessment Section */}
       <div className="content-section">
         <div className="section-divider">
           <span className="section-title">Final Assessment</span>
-        </div>
+              </div>
         
         <div className="assessment-grid">
           <div className="info-item">
@@ -380,8 +448,8 @@ const Reports = ({ studentNameRef, averageRef }) => {
               <FaCalendarAlt className="calendar-icon" />
               <input type="date" className="form-control" id="reopeningDate" />
             </div>
-          </div>
-        </div>
+              </div>
+            </div>
         
         <div className="remarks-container">
           <label htmlFor="teacherRemarks" className="form-label">Teacher's Remarks</label>
