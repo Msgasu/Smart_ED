@@ -173,13 +173,14 @@ export const gradeSubmission = async (studentId, assignmentId, gradeData) => {
     let result;
     
     if (existingSubmission) {
-      // Update existing submission
+      // Update existing submission - remove graded_at if the column doesn't exist
       const { data, error } = await supabase
         .from('student_assignments')
         .update({
-          ...gradeData,
+          score: gradeData.score,
           status: 'graded',
-          graded_at: new Date().toISOString()
+          // Remove graded_at until you add it to the schema
+          // graded_at: new Date().toISOString() 
         })
         .eq('id', existingSubmission.id)
         .select()
@@ -194,9 +195,10 @@ export const gradeSubmission = async (studentId, assignmentId, gradeData) => {
         .insert([{
           assignment_id: assignmentId,
           student_id: studentId,
-          ...gradeData,
+          score: gradeData.score,
           status: 'graded',
-          graded_at: new Date().toISOString()
+          // Remove graded_at until you add it to the schema
+          // graded_at: new Date().toISOString()
         }])
         .select()
         .single();
