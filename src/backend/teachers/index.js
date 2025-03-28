@@ -12,7 +12,8 @@ import {
   generateStudentReport,
   saveReportDetails,
   saveSubjectGrade,
-  deleteSubjectGrade
+  deleteSubjectGrade,
+  calculateClassScoreFromAssignments
 } from './reports';
 
 export {
@@ -39,5 +40,6 @@ export {
   generateStudentReport,
   saveReportDetails,
   saveSubjectGrade,
-  deleteSubjectGrade
+  deleteSubjectGrade,
+  calculateClassScoreFromAssignments
 }; 
