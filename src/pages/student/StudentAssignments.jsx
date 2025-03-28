@@ -4,11 +4,13 @@ import { supabase } from '../../lib/supabase';
 import { getStudentAssignments } from '../../backend/students/assignments';
 import StudentLayout from '../../components/student/StudentLayout';
 import './styles/StudentAssignments.css';
+import AssignmentList from '../../components/student/AssignmentList';
 
 const StudentAssignments = () => {
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
     const fetchAssignments = async () => {
@@ -19,6 +21,9 @@ const StudentAssignments = () => {
         if (!user) {
           throw new Error('User not authenticated');
         }
+        
+        // Store the user ID
+        setUserId(user.id);
         
         // Use the backend service to get student assignments
         const { data, error } = await getStudentAssignments(user.id);
@@ -194,6 +199,11 @@ const StudentAssignments = () => {
             </table>
           </div>
         )}
+        <AssignmentList 
+          assignments={assignments} 
+          studentId={userId}
+          onSubmissionUpdate={() => fetchAssignments()}
+        />
       </div>
     </StudentLayout>
   );

@@ -34,7 +34,7 @@ const GradeAssignment = () => {
         submissionsData.students.forEach(student => {
           gradesObj[student.id] = {
             score: student.submission.score,
-            feedback: student.submission.feedback,
+            // feedback: student.submission.feedback,
             status: student.submission.status,
             id: student.submission.id
           };
@@ -64,16 +64,16 @@ const GradeAssignment = () => {
     }));
   };
 
-  const handleFeedbackChange = (studentId, feedback) => {
-    setGrades(prev => ({
-      ...prev,
-      [studentId]: {
-        ...prev[studentId],
-        feedback,
-        status: 'graded'
-      }
-    }));
-  };
+  // const handleFeedbackChange = (studentId, feedback) => {
+  //   setGrades(prev => ({
+  //     ...prev,
+  //     [studentId]: {
+  //       ...prev[studentId],
+  //       feedback,
+  //       status: 'graded'
+  //     }
+  //   }));
+  // };
 
   const saveGrades = async () => {
     try {
@@ -88,7 +88,7 @@ const GradeAssignment = () => {
             assignmentId,
             gradeData: {
               score: data.score,
-              feedback: data.feedback || ''
+              // feedback: data.feedback || ''
             }
           });
         }
@@ -222,7 +222,7 @@ const GradeAssignment = () => {
                 <th>Student</th>
                 <th>Status</th>
                 <th>Score</th>
-                <th>Feedback</th>
+                {/* <th>Feedback</th> */}
               </tr>
             </thead>
             <tbody>
@@ -251,14 +251,14 @@ const GradeAssignment = () => {
                       />
                       <span className="max-score">/ {assignment?.max_score || 100}</span>
                     </td>
-                    <td>
+                    {/* <td>
                       <textarea
                         value={grades[student.id]?.feedback || ''}
                         onChange={(e) => handleFeedbackChange(student.id, e.target.value)}
                         placeholder="Add feedback..."
                         className="feedback-input"
                       />
-                    </td>
+                    </td> */}
                   </tr>
                 ))
               )}

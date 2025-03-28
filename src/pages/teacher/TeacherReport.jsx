@@ -11,7 +11,10 @@ import {
   generateStudentReport,
   saveReportDetails,
   saveSubjectGrade,
-  deleteSubjectGrade
+  deleteSubjectGrade,
+  saveStudentReport, 
+  getStudentReport, 
+  calculateClassScoreFromAssignments
 } from '../../backend/teachers';
 import './styles/TeacherReport.css';
 import { supabase } from '../../lib/supabase';
@@ -348,24 +351,70 @@ const TeacherReport = () => {
 
       if (gradesError) throw gradesError;
 
-      // Map the courses with their grades (if they exist)
-      return assignedCourses.map(course => {
+      // Map the courses with their grades and calculated class scores
+      const coursesWithGrades = [];
+      
+      for (const course of assignedCourses) {
         const existingGrade = grades?.find(grade => grade.subject_id === course.course_id);
         
-        return {
+        // Calculate class score directly here
+        let classScore = '';
+        
+        // Get all assignments for this course
+        const { data: assignments } = await supabase
+          .from('assignments')
+          .select('*')
+          .eq('course_id', course.course_id);
+        
+        if (assignments && assignments.length > 0) {
+          // Get student submissions for these assignments
+          const { data: submissions } = await supabase
+            .from('student_assignments')
+            .select('*')
+            .eq('student_id', studentId)
+            .in('assignment_id', assignments.map(a => a.id));
+          
+          if (submissions && submissions.length > 0) {
+            // Calculate total points earned and total possible points
+            const gradedSubmissions = submissions.filter(s => s.status === 'graded' && s.score !== null);
+            
+            if (gradedSubmissions.length > 0) {
+              let totalScore = 0;
+              let maxPossibleScore = 0;
+              
+              for (const submission of gradedSubmissions) {
+                const assignment = assignments.find(a => a.id === submission.assignment_id);
+                if (assignment) {
+                  totalScore += submission.score;
+                  maxPossibleScore += assignment.max_score;
+                }
+              }
+              
+              // Calculate percentage and convert to 60% scale
+              if (maxPossibleScore > 0) {
+                const percentageScore = (totalScore / maxPossibleScore) * 100;
+                classScore = (percentageScore * 0.6).toFixed(2); // 60% of total score
+              }
+            }
+          }
+        }
+        
+        coursesWithGrades.push({
           id: Date.now() + Math.random(), // Temporary unique ID for the UI
           courseId: course.course_id,
           name: course.courses.name,
           code: course.courses.code,
-          classScore: existingGrade?.class_score || '',
+          classScore: existingGrade?.class_score || classScore || '', // Use calculated score if no existing grade
           examScore: existingGrade?.exam_score || '',
           totalScore: existingGrade?.total_score || '',
           position: existingGrade?.position || '',
           grade: existingGrade?.grade || '',
           remark: existingGrade?.remark || '',
           teacherSignature: existingGrade?.teacher_signature || ''
-        };
-      });
+        });
+      }
+      
+      return coursesWithGrades;
     } catch (error) {
       console.error('Error fetching student courses:', error);
       return [];

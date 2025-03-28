@@ -728,3 +728,64 @@ export const generateStudentReport = async (reportData) => {
     };
   }
 };
+
+/**
+ * Calculate class score from assignments for student report
+ * @param {string} studentId - The student ID
+ * @param {string} courseId - The course ID 
+ * @param {string} term - The term (e.g., 'Term 1')
+ * @param {string} academicYear - The academic year (e.g., '2023-2024')
+ * @returns {Promise<number>} - The calculated class score (60% of total)
+ */
+export const calculateClassScoreFromAssignments = async (studentId, courseId, term, academicYear) => {
+  try {
+    // Get all assignments for this course
+    const { data: assignments, error: assignmentsError } = await supabase
+      .from('assignments')
+      .select('*')
+      .eq('course_id', courseId);
+      
+    if (assignmentsError) throw assignmentsError;
+    
+    if (!assignments || assignments.length === 0) {
+      return 0; // No assignments, so class score is 0
+    }
+    
+    // Get student submissions for these assignments
+    const { data: submissions, error: submissionsError } = await supabase
+      .from('student_assignments')
+      .select('*')
+      .eq('student_id', studentId)
+      .in('assignment_id', assignments.map(a => a.id));
+      
+    if (submissionsError) throw submissionsError;
+    
+    // Calculate total points earned and total possible points
+    const gradedSubmissions = submissions.filter(s => s.status === 'graded' && s.score !== null);
+    
+    if (gradedSubmissions.length === 0) {
+      return 0; // No graded submissions, so class score is 0
+    }
+    
+    // Calculate total score and max possible score
+    let totalScore = 0;
+    let maxPossibleScore = 0;
+    
+    for (const submission of gradedSubmissions) {
+      const assignment = assignments.find(a => a.id === submission.assignment_id);
+      if (assignment) {
+        totalScore += submission.score;
+        maxPossibleScore += assignment.max_score;
+      }
+    }
+    
+    // Calculate percentage and convert to 60% scale
+    const percentageScore = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 100 : 0;
+    const classScore = (percentageScore * 0.6); // 60% of total score
+    
+    return parseFloat(classScore.toFixed(2)); // Return with 2 decimal places
+  } catch (error) {
+    console.error('Error calculating class score from assignments:', error);
+    return 0; // Return 0 if there's an error
+  }
+};

@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { getStudentProfile, getStudentCourses } from '../../backend/students';
 import { getChartData } from '../../backend/students/performance';
 import StudentLayout from './StudentLayout';
+import AssignmentList from './AssignmentList';
 
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import { FaHome, FaBook, FaChartLine, FaCalendarAlt, FaCog, FaCheckCircle, FaTimes, FaSignOutAlt } from 'react-icons/fa';
@@ -22,6 +23,7 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const [userId, setUserId] = useState(null);
   
   // Fetch student data and courses
   useEffect(() => {
@@ -35,6 +37,8 @@ const StudentDashboard = () => {
         if (!user) {
           throw new Error('User not authenticated');
         }
+        
+        setUserId(user.id); // Set the userId state
         
         // Fetch student profile
         const { data: profileData, error: profileError } = await getStudentProfile(user.id);
@@ -410,6 +414,18 @@ const StudentDashboard = () => {
               <p className="no-courses">No courses found</p>
             )}
           </div>
+        </div>
+
+        {/* Add AssignmentList component */}
+        <div className="assignments-section">
+          <AssignmentList 
+            assignments={assignmentsResponse?.data || []} 
+            studentId={userId}
+            onSubmissionUpdate={() => {
+              // Refresh assignments after submission
+              fetchStudentData();
+            }}
+          />
         </div>
       </div>
     </StudentLayout>
