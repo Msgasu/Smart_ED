@@ -15,68 +15,159 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointEleme
 const StudentAnalysis = () => {
   const { studentId } = useParams();
   const [student, setStudent] = useState(null);
-  const [assignments, setAssignments] = useState([]);
-  const [courseId, setCourseId] = useState(null);
-  const [classStats, setClassStats] = useState(null);
-  const [studentGrade, setStudentGrade] = useState({
-    totalEarned: 0,
-    percentage: 0,
-    percentOfThreshold: 0,
-    letterGrade: 'N/A',
-    isPassing: false
+  const [courses, setCourses] = useState([]);
+  const [selectedCourseId, setSelectedCourseId] = useState(null);
+  const [courseAnalytics, setCourseAnalytics] = useState({
+    assignments: [],
+    stats: {
+      totalAssignments: 0,
+      completedAssignments: 0,
+      overallPercentage: 0,
+      classScore: 0
+    },
+    progress: {
+      completed: 0,
+      upcoming: 0,
+      pastDue: 0
+    }
   });
   const [loading, setLoading] = useState(true);
 
+  // Fetch student's courses
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchStudentCourses = async () => {
+      try {
+        // Get student profile
+        const { data: studentData, error: studentError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', studentId)
+          .single();
+
+        if (studentError) throw studentError;
+        setStudent(studentData);
+
+        // Get student's enrolled courses
+        const { data: enrolledCourses, error: coursesError } = await supabase
+          .from('student_courses')
+          .select(`
+            course_id,
+            courses (
+              id,
+              name,
+              code
+            )
+          `)
+          .eq('student_id', studentId);
+
+        if (coursesError) throw coursesError;
+
+        const coursesData = enrolledCourses.map(ec => ec.courses);
+        setCourses(coursesData);
+        
+        // Set first course as default if none selected
+        if (!selectedCourseId && coursesData.length > 0) {
+          setSelectedCourseId(coursesData[0].id);
+        }
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+      }
+    };
+
+    if (studentId) {
+      fetchStudentCourses();
+    }
+  }, [studentId]);
+
+  // Fetch course analytics when selected course changes
+  useEffect(() => {
+    const fetchCourseAnalytics = async () => {
+      if (!selectedCourseId || !studentId) return;
+
       try {
         setLoading(true);
         
-        // First, get the student details and assignments
-        const { data: studentData, error: studentError } = await getStudentAnalytics(studentId);
+        // Get all assignments for this course
+        const { data: assignments, error: assignmentsError } = await supabase
+          .from('assignments')
+          .select('*')
+          .eq('course_id', selectedCourseId)
+          .order('due_date', { ascending: true });
+
+        if (assignmentsError) throw assignmentsError;
+
+        // Get student's submissions for these assignments
+        const { data: submissions, error: submissionsError } = await supabase
+          .from('student_assignments')
+          .select('*')
+          .eq('student_id', studentId)
+          .in('assignment_id', assignments.map(a => a.id));
+
+        if (submissionsError) throw submissionsError;
+
+        // Process assignments and submissions
+        const now = new Date();
+        const gradedSubmissions = submissions.filter(s => s.status === 'graded' && s.score !== null);
+        const submittedAssignments = submissions.filter(s => s.status === 'submitted' || s.status === 'graded');
         
-        if (studentError) throw studentError;
-        
-        if (studentData && studentData.assignments && studentData.assignments.length > 0) {
-          // We have assignments, so we can determine the course
-          const firstAssignment = studentData.assignments[0];
-          const courseId = firstAssignment.assignments.course_id;
-          setCourseId(courseId);
+        let totalScore = 0;
+        let maxPossibleScore = 0;
+        const processedAssignments = [];
+
+        assignments.forEach(assignment => {
+          const submission = submissions.find(s => s.assignment_id === assignment.id);
           
-          // Now get the class performance stats for this course
-          const { data: classData, error: classError } = await getClassPerformanceStats(courseId);
-          
-          if (classError) throw classError;
-          
-          setClassStats(classData);
-          
-          // Find this student in the class stats to get their grade info
-          const studentStats = classData.students.find(s => s.id === studentId);
-          
-          if (studentStats) {
-            setStudentGrade({
-              totalEarned: studentStats.totalEarnedScore,
-              percentage: studentStats.gradePercentage,
-              percentOfThreshold: studentStats.percentOfThreshold,
-              letterGrade: studentStats.letterGrade,
-              isPassing: studentStats.isPassing
+          if (submission?.status === 'graded') {
+            totalScore += submission.score;
+            maxPossibleScore += assignment.max_score;
+            
+            processedAssignments.push({
+              title: assignment.title,
+              score: submission.score,
+              maxScore: assignment.max_score,
+              percentage: ((submission.score / assignment.max_score) * 100).toFixed(2),
+              date: assignment.due_date,
+              status: submission.status
             });
           }
-        }
+        });
+
+        // Calculate progress stats
+        const upcomingAssignments = assignments.filter(a => 
+          !submittedAssignments.find(s => s.assignment_id === a.id) && 
+          new Date(a.due_date) > now
+        );
         
-        setStudent(studentData);
-        setAssignments(studentData?.assignments || []);
+        const pastDueAssignments = assignments.filter(a => 
+          !submittedAssignments.find(s => s.assignment_id === a.id) && 
+          new Date(a.due_date) <= now
+        );
+
+        // Update state with all analytics
+        setCourseAnalytics({
+          assignments: processedAssignments,
+          stats: {
+            totalAssignments: assignments.length,
+            completedAssignments: gradedSubmissions.length,
+            overallPercentage: maxPossibleScore > 0 ? ((totalScore / maxPossibleScore) * 100).toFixed(2) : 0,
+            classScore: maxPossibleScore > 0 ? ((totalScore / maxPossibleScore) * 60).toFixed(2) : 0
+          },
+          progress: {
+            completed: submittedAssignments.length,
+            upcoming: upcomingAssignments.length,
+            pastDue: pastDueAssignments.length
+          }
+        });
+
       } catch (error) {
-        console.error('Error fetching student data:', error);
+        console.error('Error fetching course analytics:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    if (studentId) {
-      fetchData();
-    }
-  }, [studentId]);
+    fetchCourseAnalytics();
+  }, [selectedCourseId, studentId]);
 
   const getLetterGradeClass = (grade) => {
     if (grade === 'A') return 'grade-a';
@@ -98,165 +189,219 @@ const StudentAnalysis = () => {
   if (loading) {
     return (
       <TeacherLayout>
-        <div className="analysis-container">
-          <div className="loading-spinner">
-            <p>Loading student data...</p>
-          </div>
-        </div>
-      </TeacherLayout>
-    );
-  }
-
-  if (!student) {
-    return (
-      <TeacherLayout>
-        <div className="analysis-container">
-          <h1 className="analysis-title">Student not found</h1>
-          <Link to="/teacher/dashboard" className="back-button">
-            <FaArrowLeft /> Back to Dashboard
-          </Link>
-        </div>
+        <div className="loading-spinner">Loading analysis...</div>
       </TeacherLayout>
     );
   }
 
   return (
     <TeacherLayout>
-      <div className="analysis-container">
+      <div className="student-analysis">
         <div className="analysis-header">
-          <h1 className="analysis-title">
-            Analysis for {student.first_name} {student.last_name}
-          </h1>
-          <div className="analysis-actions">
-            <Link to={`/teacher/report/${studentId}`} className="generate-report-button">
-              <FaFileAlt /> Generate Student Report
+          <Link to="/teacher/students" className="back-button">
+            <FaArrowLeft /> Back to Students
             </Link>
-            <Link to="/teacher/dashboard" className="back-button">
-              <FaArrowLeft /> Back to Dashboard
-            </Link>
+          <h2>{student?.first_name} {student?.last_name}'s Performance</h2>
+          
+          <div className="course-selector">
+            <select 
+              value={selectedCourseId || ''} 
+              onChange={(e) => setSelectedCourseId(e.target.value)}
+            >
+              <option value="">Select Course</option>
+              {courses.map(course => (
+                <option key={course.id} value={course.id}>
+                  {course.code} - {course.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
         
-        <div className="student-info-card">
-          <div className="student-info-header">
-            <h2><FaUserGraduate /> Student Information</h2>
+        {selectedCourseId ? (
+          <div className="analysis-grid">
+            {/* Course Progress Card */}
+            <div className="analysis-card">
+              <h3>Course Progress</h3>
+              <div className="progress-container">
+                <div 
+                  className="progress-bar" 
+                  style={{ 
+                    width: `${Math.round((courseAnalytics.progress.completed) / 
+                      courseAnalytics.stats.totalAssignments * 100)}%` 
+                  }}
+                ></div>
           </div>
-          <div className="student-info-body">
-            <p>
-              <span className="info-label">Name:</span>
-              <span>{student.first_name} {student.last_name}</span>
-            </p>
-            <p>
-              <span className="info-label">Student ID:</span>
-              <span>{student.student_id || 'N/A'}</span>
-            </p>
-            <p>
-              <span className="info-label">Email:</span>
-              <span>{student.email}</span>
-            </p>
-            
-            <div className="grade-section">
-              <h3>Grade Performance</h3>
-              
-              <div className="grade-metrics">
-                <div className="grade-metric">
-                  <div className={`letter-grade ${getLetterGradeClass(studentGrade.letterGrade)}`}>
-                    {studentGrade.letterGrade}
+              <div className="progress-stats">
+                <div className="stat">
+                  <span className="stat-value">{courseAnalytics.progress.completed}</span>
+                  <span className="stat-label">Completed</span>
                   </div>
-                  <div className="grade-metric-label">Letter Grade</div>
+                <div className="stat">
+                  <span className="stat-value">{courseAnalytics.progress.upcoming}</span>
+                  <span className="stat-label">Upcoming</span>
                 </div>
-                
-                <div className="grade-metric">
-                  <div className="grade-metric-value">{studentGrade.percentage}%</div>
-                  <div className="grade-metric-label">Overall Percentage</div>
-                </div>
-                
-                <div className="grade-metric">
-                  <div className={`grade-metric-value threshold-value ${getThresholdProgressClass(studentGrade.percentOfThreshold)}`}>
-                    {studentGrade.percentOfThreshold}%
+                <div className="stat">
+                  <span className="stat-value">{courseAnalytics.progress.pastDue}</span>
+                  <span className="stat-label">Past Due</span>
                   </div>
-                  <div className="grade-metric-label">Of Total Grade Scale</div>
                 </div>
               </div>
               
-              <div className="threshold-progress-container">
-                <div className="threshold-progress-label">
-                  <span>Progress on the 60% scale:</span>
-                  <span className="threshold-value-text">{studentGrade.totalEarned} of {classStats?.totalPossibleScore} possible points</span>
+            {/* Performance Card */}
+            <div className="analysis-card">
+              <h3>Course Performance</h3>
+              <div className="stats-grid">
+                <div className="stat-item">
+                  <span className="stat-label">Class Score (60%)</span>
+                  <span className="stat-value">{courseAnalytics.stats.classScore}%</span>
                 </div>
-                <div className="threshold-progress-bar-container">
-                  <div 
-                    className={`threshold-progress-bar ${getThresholdProgressClass(studentGrade.percentOfThreshold)}`}
-                    style={{ width: `${Math.min(studentGrade.percentOfThreshold, 100)}%` }}
-                  ></div>
+                <div className="stat-item">
+                  <span className="stat-label">Overall Grade</span>
+                  <span className="stat-value">{courseAnalytics.stats.overallPercentage}%</span>
                 </div>
-                <div className="threshold-status">
-                  {studentGrade.isPassing ? (
-                    <span className="passing-indicator passing"><FaCheck /> Above 60% threshold</span>
-                  ) : (
-                    <span className="passing-indicator failing"><FaTimes /> Below 60% threshold</span>
-                  )}
                 </div>
               </div>
               
-              {classStats && (
-                <div className="threshold-info">
-                  <FaInfoCircle />
-                  <div>
-                    <strong>Class Information:</strong> Total possible points: {classStats.totalPossibleScore}. 
-                    Student has earned {studentGrade.totalEarned} points ({studentGrade.percentage}%). 
-                    Their score on the 60% scale is {studentGrade.percentOfThreshold}%.
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* Performance Trend Chart - Smaller size */}
+            <div className="analysis-card chart-card">
+              <h3>Performance Trend</h3>
+              <div className="chart-container">
+                <Line
+                  data={{
+                    labels: courseAnalytics.assignments.map(a => a.title.substring(0, 15)),
+                    datasets: [{
+                      label: 'Assignment Scores (%)',
+                      data: courseAnalytics.assignments.map(a => a.percentage),
+                      borderColor: '#0ea5e9',
+                      backgroundColor: 'rgba(14, 165, 233, 0.2)',
+                      borderWidth: 2,
+                      pointBackgroundColor: '#0ea5e9',
+                      pointBorderColor: '#fff',
+                      pointBorderWidth: 2,
+                      pointRadius: 6,
+                      pointHoverRadius: 8,
+                      fill: true,
+                      tension: 0.3
+                    }]
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                      mode: 'index',
+                      intersect: false,
+                    },
+                    plugins: {
+                      legend: {
+                        display: false
+                      },
+                      tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: {
+                          size: 14,
+                          weight: 'bold'
+                        },
+                        bodyFont: {
+                          size: 13
+                        },
+                        callbacks: {
+                          label: function(context) {
+                            return `Score: ${context.parsed.y}%`;
+                          }
+                        }
+                      }
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                          stepSize: 10,
+                          font: {
+                            size: 12,
+                            weight: '500'
+                          },
+                          color: '#64748b',
+                          callback: function(value) {
+                            return value + '%';
+                          }
+                        },
+                        grid: {
+                          display: true,
+                          color: '#e2e8f0',
+                          drawBorder: false
+                        }
+                      },
+                      x: {
+                        grid: {
+                          display: false
+                        },
+                        ticks: {
+                          font: {
+                            size: 11,
+                            weight: '500'
+                          },
+                          color: '#64748b',
+                          maxRotation: 45,
+                          minRotation: 45
+                        }
+                      }
+                    },
+                    layout: {
+                      padding: {
+                        top: 20,
+                        right: 20,
+                        bottom: 20,
+                        left: 20
+                      }
+                    }
+                  }}
+                />
           </div>
         </div>
 
-        <div className="assignments-section">
-          <div className="assignments-card">
-            <div className="assignments-header">
-              <h2><FaClipboardList /> Assignments</h2>
-            </div>
-            <div className="assignments-body">
-              {assignments.length === 0 ? (
-                <p>No assignments yet</p>
-              ) : (
-                <table className="assignments-table">
+            {/* Assignment Details Table */}
+            <div className="analysis-card full-width">
+              <h3>Assignment Details</h3>
+              <div className="assignments-table">
+                <table>
                   <thead>
                     <tr>
-                      <th>Title</th>
-                      <th>Type</th>
-                      <th>Due Date</th>
-                      <th>Status</th>
+                      <th>Assignment</th>
                       <th>Score</th>
+                      <th>Max Score</th>
+                      <th>Percentage</th>
+                      <th>Date</th>
+                      <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {assignments.map(assignment => (
-                      <tr key={assignment.id}>
-                        <td>{assignment.assignments.title}</td>
-                        <td>{assignment.assignments.type}</td>
-                        <td>{new Date(assignment.assignments.due_date).toLocaleDateString()}</td>
+                    {courseAnalytics.assignments.map((assignment, index) => (
+                      <tr key={index}>
+                        <td>{assignment.title}</td>
+                        <td>{assignment.score}</td>
+                        <td>{assignment.maxScore}</td>
+                        <td>{assignment.percentage}%</td>
+                        <td>{new Date(assignment.date).toLocaleDateString()}</td>
                         <td>
-                          <span className={`status-badge status-${assignment.status.toLowerCase()}`}>
+                          <span className={`status-badge status-${assignment.status}`}>
                             {assignment.status}
                           </span>
-                        </td>
-                        <td>
-                          {assignment.status === 'graded' 
-                            ? `${assignment.score} / ${assignment.assignments.max_score}`
-                            : 'Pending'
-                          }
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              )}
             </div>
           </div>
         </div>
+        ) : (
+          <div className="no-course-selected">
+            Please select a course to view analysis
+          </div>
+        )}
       </div>
     </TeacherLayout>
   );

@@ -1,4 +1,298 @@
 /* Student Analysis Page Styles */
+.student-analysis {
+  padding: 2rem;
+  background-color: #f8fafc;
+  min-height: calc(100vh - 64px);
+  width: 100%;
+  max-width: 100%;
+}
+
+.analysis-header {
+  margin-bottom: 2rem;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+.analysis-header h2 {
+  color: #1e293b;
+  font-size: 1.8rem;
+  margin: 1rem 0;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #475569;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.back-button:hover {
+  color: #0ea5e9;
+}
+
+.course-selector {
+  margin-top: 1rem;
+}
+
+.course-selector select {
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+  width: 300px;
+  font-size: 1rem;
+  background-color: white;
+  color: #1e293b;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.course-selector select:hover {
+  border-color: #94a3b8;
+}
+
+.course-selector select:focus {
+  border-color: #0ea5e9;
+  outline: none;
+}
+
+.analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  width: 100%;
+}
+
+.analysis-card {
+  width: 100%;
+  height: 100%;
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.analysis-card h3 {
+  color: #1e293b;
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+/* Progress Bar Styles */
+.progress-container {
+  width: 100%;
+  height: 12px;
+  background-color: #e2e8f0;
+  border-radius: 6px;
+  margin: 1rem 0;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: #0ea5e9;
+  border-radius: 6px;
+  transition: width 0.5s ease;
+}
+
+.progress-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.stat {
+  text-align: center;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+/* Performance Stats */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.stat-item {
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.stat-item .stat-label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.stat-item .stat-value {
+  font-size: 1.8rem;
+  color: #0ea5e9;
+}
+
+/* Chart Card */
+.chart-card {
+  grid-column: 2 / span 2;
+  width: 100%;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.chart-container {
+  height: 500px;
+  width: 100%;
+  margin: 1rem 0;
+  padding: 1rem;
+  position: relative;
+  background: white;
+}
+
+/* Chart Tooltip Custom Styles */
+.chart-tooltip {
+  background: rgba(0, 0, 0, 0.8) !important;
+  border-radius: 4px !important;
+  padding: 8px 12px !important;
+}
+
+/* Table Styles */
+.full-width {
+  grid-column: 1 / span 3;
+  width: 100%;
+}
+
+.assignments-table {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.9rem;
+}
+
+th, td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+th {
+  background-color: #f8fafc;
+  font-weight: 600;
+  color: #475569;
+  position: sticky;
+  top: 0;
+}
+
+tr:hover {
+  background-color: #f1f5f9;
+}
+
+/* Status Badge */
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.status-graded {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.status-submitted {
+  background-color: #e0f2fe;
+  color: #075985;
+}
+
+.status-pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+/* Loading State */
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: #64748b;
+  font-size: 1.1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .analysis-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .chart-card {
+    grid-column: 1 / span 2;
+  }
+  
+  .full-width {
+    grid-column: 1 / span 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .student-analysis {
+    padding: 1rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .course-selector select {
+    width: 100%;
+  }
+
+  .analysis-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .chart-card {
+    grid-column: 1;
+  }
+  
+  .full-width {
+    grid-column: 1;
+  }
+  
+  .chart-container {
+    height: 400px;
+  }
+}
+
+/* Student Analysis Page Styles */
 .analysis-container {
   padding: 2rem;
   background-color: var(--bg-color);
@@ -25,22 +319,6 @@
   gap: 1rem;
   align-items: center;
   flex-wrap: wrap;
-}
-
-.back-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background-color: var(--primary-color);
-  color: white;
-  border-radius: 0.25rem;
-  text-decoration: none;
-  transition: background-color 0.3s ease;
-}
-
-.back-button:hover {
-  background-color: var(--primary-color-dark);
 }
 
 .generate-report-button {
@@ -386,29 +664,6 @@
   background-color: var(--card-bg-secondary);
 }
 
-@media (max-width: 768px) {
-  .analysis-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-
-  .grade-metrics {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .grade-metric {
-    flex: none;
-    width: 100%;
-  }
-
-  .assignments-table {
-    display: block;
-    overflow-x: auto;
-  }
-}
-
 /* Report button styles */
 .report-button-container {
   display: flex;
@@ -453,4 +708,105 @@
 
 [data-theme='dark'] .generate-report-button:hover {
   background-color: #3949AB;
+}
+
+.analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.analysis-card:not(.chart-card):not(.full-width) {
+  grid-column: span 1;
+}
+
+.chart-container {
+  height: 500px;
+  width: 100%;
+  margin: 1rem 0;
+  padding: 1rem;
+  position: relative;
+  background: white;
+}
+
+.progress-container {
+  width: 100%;
+  height: 8px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+  margin: 1rem 0;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: #0ea5e9;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.full-width {
+  grid-column: span 3;
+}
+
+.assignments-table {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+th, td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+th {
+  background-color: #f9fafb;
+  font-weight: 600;
+}
+
+/* Add smooth animations for hover effects */
+.chart-container canvas {
+  transition: all 0.3s ease;
+}
+
+.chart-container:hover canvas {
+  filter: brightness(102%);
+}
+
+/* Update TeacherLayout content area if needed */
+:global(.teacher-layout-content) {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
 }

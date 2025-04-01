@@ -263,15 +263,18 @@ const TeacherReport = () => {
   // Handle saving a single subject grade
   const handleSaveSubjectGrade = async (row) => {
     try {
+      // 1. First ensure we have a report record
       if (!reportData?.id) {
-        // If no report exists yet, create one
+        // Create new report if none exists
         const { data: newReport, error: reportError } = await supabase
           .from('student_reports')
           .insert({
             student_id: studentId,
             term: termSelectRef.current.value,
             academic_year: academicYearRef.current.value,
-            class_year: document.getElementById('studentClass')?.value
+            class_year: document.getElementById('studentClass')?.value,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           })
           .select()
           .single();
@@ -280,28 +283,61 @@ const TeacherReport = () => {
         setReportData(newReport);
       }
 
+      // 2. Prepare grade data
+      const classScore = parseFloat(row.querySelector('input[placeholder="Score"]')?.value) || 0;
+      const examScore = parseFloat(row.querySelector('input[placeholder="Score"]:nth-child(2)')?.value) || 0;
+      const totalScore = classScore + examScore;
+      
       const gradeData = {
         report_id: reportData.id,
-        subject_id: row.dataset.courseId, // Make sure this matches the courseId from the row
-        class_score: parseFloat(row.querySelector('input[placeholder="Score"]')?.value) || 0,
-        exam_score: parseFloat(row.querySelector('input[placeholder="Score"]:nth-child(2)')?.value) || 0,
-        total_score: parseFloat(row.querySelector('.total-score')?.textContent) || 0,
+        subject_id: row.dataset.courseId,
+        class_score: classScore,
+        exam_score: examScore,
+        total_score: totalScore,
         position: parseInt(row.querySelector('input[placeholder="Position"]')?.value) || 0,
         grade: row.querySelector('input[placeholder="Grade"]')?.value,
         remark: row.querySelector('input[placeholder="Remark"]')?.value,
-        teacher_signature: row.querySelector('input[placeholder="Sign"]')?.value
+        teacher_signature: row.querySelector('input[placeholder="Sign"]')?.value,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
 
-      const { data, error } = await supabase
+      // 3. Save to student_grades table
+      const { data: savedGrade, error: gradeError } = await supabase
         .from('student_grades')
         .upsert(gradeData, {
           onConflict: 'report_id,subject_id',
           returning: true
         });
       
-      if (error) throw error;
+      if (gradeError) throw gradeError;
+
+      // 4. Update the student_reports table with latest data
+      const { data: reportGrades, error: reportGradesError } = await supabase
+        .from('student_grades')
+        .select('total_score')
+        .eq('report_id', reportData.id);
+
+      if (reportGradesError) throw reportGradesError;
+
+      // Calculate overall stats for the report
+      const totalScores = reportGrades.map(g => g.total_score).filter(score => score != null);
+      const overallTotal = totalScores.reduce((sum, score) => sum + score, 0);
+      const average = totalScores.length > 0 ? overallTotal / totalScores.length : 0;
+
+      // 5. Update the report with new totals
+      const { error: updateReportError } = await supabase
+        .from('student_reports')
+        .update({
+          total_score: overallTotal,
+          overall_grade: calculateOverallGrade(average),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', reportData.id);
+
+      if (updateReportError) throw updateReportError;
       
-      // Update the row with saved data
+      // 6. Update UI
       row.dataset.saved = 'true';
       toast.success('Grade saved successfully');
       
