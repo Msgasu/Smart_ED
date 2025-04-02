@@ -8,12 +8,13 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, 
 import TeacherLayout from '../../components/teacher/TeacherLayout.jsx';
 import { getStudentAnalytics, getClassPerformanceStats } from '../../backend/teachers/students';
 import './styles/StudentsAnalysis.css';
+import { toast } from 'react-hot-toast';
 
 // Register ChartJS components
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Title, Tooltip, Legend);
 
 const StudentAnalysis = () => {
-  const { studentId } = useParams();
+  const { studentId, courseId } = useParams();
   const [student, setStudent] = useState(null);
   const [courses, setCourses] = useState([]);
   const [selectedCourseId, setSelectedCourseId] = useState(null);
@@ -65,8 +66,10 @@ const StudentAnalysis = () => {
         const coursesData = enrolledCourses.map(ec => ec.courses);
         setCourses(coursesData);
         
-        // Set first course as default if none selected
-        if (!selectedCourseId && coursesData.length > 0) {
+        // Set course from URL param if available, otherwise use first course
+        if (courseId) {
+          setSelectedCourseId(courseId);
+        } else if (coursesData.length > 0) {
           setSelectedCourseId(coursesData[0].id);
         }
       } catch (error) {
@@ -77,7 +80,7 @@ const StudentAnalysis = () => {
     if (studentId) {
       fetchStudentCourses();
     }
-  }, [studentId]);
+  }, [studentId, courseId]);
 
   // Fetch course analytics when selected course changes
   useEffect(() => {
@@ -203,18 +206,33 @@ const StudentAnalysis = () => {
             </Link>
           <h2>{student?.first_name} {student?.last_name}'s Performance</h2>
           
-          <div className="course-selector">
-            <select 
-              value={selectedCourseId || ''} 
-              onChange={(e) => setSelectedCourseId(e.target.value)}
+          <div className="header-actions">
+            <div className="course-selector">
+              <select 
+                value={selectedCourseId || ''} 
+                onChange={(e) => setSelectedCourseId(e.target.value)}
+              >
+                <option value="">Select Course</option>
+                {courses.map(course => (
+                  <option key={course.id} value={course.id}>
+                    {course.code} - {course.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <Link 
+              to={`/teacher/report/${studentId}/${selectedCourseId}`} 
+              className="generate-report-button"
+              onClick={(e) => {
+                if (!selectedCourseId) {
+                  e.preventDefault();
+                  toast.error('Please select a course first');
+                }
+              }}
             >
-              <option value="">Select Course</option>
-              {courses.map(course => (
-                <option key={course.id} value={course.id}>
-                  {course.code} - {course.name}
-                </option>
-              ))}
-            </select>
+              <FaFileAlt className="report-icon" />
+              Generate Report
+            </Link>
           </div>
         </div>
         

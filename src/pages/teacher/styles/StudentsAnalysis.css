@@ -8,6 +8,11 @@
 }
 
 .analysis-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
   margin-bottom: 2rem;
   background: white;
   padding: 1.5rem;
@@ -290,6 +295,21 @@ tr:hover {
   .chart-container {
     height: 400px;
   }
+
+  .analysis-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .generate-report-button {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* Student Analysis Page Styles */
@@ -324,18 +344,33 @@ tr:hover {
 .generate-report-button {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background-color: var(--success-color, #4CAF50);
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #5C6BC0;
   color: white;
-  border-radius: 0.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.5rem;
   text-decoration: none;
-  transition: background-color 0.3s ease;
-  font-weight: 500;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .generate-report-button:hover {
-  background-color: var(--success-color-dark, #3d8b40);
+  background-color: #3949AB;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  color: white;
+  text-decoration: none;
+}
+
+.generate-report-button:active {
+  transform: translateY(0);
+}
+
+.report-icon {
+  font-size: 1.2rem;
 }
 
 .student-info-card {
@@ -671,142 +706,15 @@ tr:hover {
   margin: 2rem 0;
 }
 
-.generate-report-button {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1.5rem;
-  background-color: #5C6BC0;
-  color: white;
-  font-size: 1rem;
-  font-weight: 600;
-  border: none;
-  border-radius: 0.5rem;
-  text-decoration: none;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.generate-report-button:hover {
-  background-color: #3949AB;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.generate-report-button:active {
-  transform: translateY(0);
-}
-
-.report-icon {
-  font-size: 1.2rem;
-}
-
-/* Dark mode styles */
-[data-theme='dark'] .generate-report-button {
-  background-color: #5C6BC0;
-}
-
-[data-theme='dark'] .generate-report-button:hover {
-  background-color: #3949AB;
-}
-
-.analysis-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-  margin-top: 1.5rem;
-}
-
-.analysis-card:not(.chart-card):not(.full-width) {
-  grid-column: span 1;
-}
-
-.chart-container {
-  height: 500px;
-  width: 100%;
-  margin: 1rem 0;
-  padding: 1rem;
-  position: relative;
-  background: white;
-}
-
-.progress-container {
-  width: 100%;
-  height: 8px;
-  background-color: #e5e7eb;
-  border-radius: 4px;
-  margin: 1rem 0;
-}
-
-.progress-bar {
-  height: 100%;
-  background-color: #0ea5e9;
-  border-radius: 4px;
-  transition: width 0.3s ease;
-}
-
-.progress-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  text-align: center;
-  margin-top: 1rem;
-}
-
-.stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.stat-value {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.full-width {
-  grid-column: span 3;
-}
-
-.assignments-table {
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-}
-
-th, td {
-  padding: 0.75rem;
-  text-align: left;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-th {
-  background-color: #f9fafb;
-  font-weight: 600;
-}
-
-/* Add smooth animations for hover effects */
-.chart-container canvas {
-  transition: all 0.3s ease;
-}
-
-.chart-container:hover canvas {
-  filter: brightness(102%);
-}
-
 /* Update TeacherLayout content area if needed */
 :global(.teacher-layout-content) {
   width: 100%;
   max-width: 100%;
   padding: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
