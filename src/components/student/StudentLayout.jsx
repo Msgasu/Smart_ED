@@ -10,7 +10,8 @@ import {
   FaCog, 
   FaSignOutAlt,
   FaBars,
-  FaTimes
+  FaTimes,
+  FaChartLine
 } from 'react-icons/fa';
 import './styles/StudentLayout.css';
 
@@ -84,6 +85,11 @@ const StudentLayout = ({ children }) => {
             <li className={location.pathname === '/student/assignments' ? 'active' : ''}>
               <Link to="/student/assignments">
                 <FaClipboardList /> <span>Assignments</span>
+              </Link>
+            </li>
+            <li className={location.pathname === '/student/career-prediction' ? 'active' : ''}>
+              <Link to="/student/career-prediction">
+                <FaChartLine /> <span>Career Prediction</span>
               </Link>
             </li>
             <li className={location.pathname === '/student/calendar' ? 'active' : ''}>
