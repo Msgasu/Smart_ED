@@ -13,6 +13,11 @@ import StudentDashboard from './pages/student/StudentDashboard'
 import StudentCourses from './pages/student/StudentCourses'
 import CourseDetails from './pages/student/CourseDetails'
 import StudentAssignments from './pages/student/StudentAssignments'
+// Import the new Grade Projection page
+// Remove the old import for GradeProjection
+// import GradeProjection from './pages/student/GradeProjection';
+// Import the renamed component
+import CareerPrediction from './pages/student/CareerPrediction';
 // import FacultyDashboard from './pages/faculty/FacultyDashboard'
 // import GuardianDashboard from './pages/guardian/GuardianDashboard'
 import { Toaster } from 'react-hot-toast'
@@ -61,6 +66,8 @@ function App() {
         <Route path="/student/courses" element={<StudentCourses />} />
         <Route path="/student/courses/:courseId" element={<CourseDetails />} />
         <Route path="/student/assignments" element={<StudentAssignments />} />
+        {/* Update route for Career Prediction */}
+        <Route path="/student/career-prediction" element={<CareerPrediction />} />
         
         {/* Teacher routes */}
         <Route path="/teacher" element={<Navigate to="/teacher/dashboard" />} />
