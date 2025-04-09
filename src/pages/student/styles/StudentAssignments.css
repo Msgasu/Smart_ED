@@ -14,18 +14,17 @@
 .assignments-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
   background-color: var(--bg-light);
 }
 
 .assignments-container h1 {
   margin-bottom: 2rem;
   color: var(--text-color);
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 600;
 }
 
-/* Progress Section Styles */
+Progress Section Styles
 .progress-section {
   background: var(--bg-light);
   border-radius: 0.75rem;
