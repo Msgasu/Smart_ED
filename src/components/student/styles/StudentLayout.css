@@ -4,7 +4,7 @@
   --secondary-color: #2ecc71;
   --text-color: #333;
   --text-light: #777;
-  --bg-light: #f8f9fa;
+  --bg-light: #ffffff;
   --bg-dark: #343a40;
   --border-color: #e0e0e0;
   --sidebar-width: 260px;
@@ -202,58 +202,4 @@
 
 .student-sidebar.closed .logout-button svg {
   margin-right: 0;
-}
-
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  .student-layout {
-    background-color: var(--bg-dark);
-  }
-
-  .student-sidebar {
-    background-color: #1f2937;
-    border-right: 1px solid #374151;
-    box-shadow: none;
-  }
-
-  .sidebar-header {
-    border-color: #374151;
-  }
-
-  .sidebar-title {
-    color: #f9fafb;
-  }
-
-  .sidebar-toggle {
-    color: #9ca3af;
-  }
-
-  .sidebar-nav a {
-    color: #9ca3af;
-  }
-
-  .sidebar-nav a:hover {
-    background-color: #374151;
-    color: #f9fafb;
-  }
-
-  .sidebar-nav li.active a {
-    background-color: #374151;
-    color: #f9fafb;
-  }
-
-  .sidebar-footer {
-    border-color: #374151;
-  }
-
-  .logout-button {
-    color: #f87171;
-    border-color: rgba(239, 68, 68, 0.3);
-  }
-
-  .logout-button:hover {
-    background-color: rgba(239, 68, 68, 0.1);
-    color: #f87171;
-    border-color: rgba(239, 68, 68, 0.5);
-  }
 } 
