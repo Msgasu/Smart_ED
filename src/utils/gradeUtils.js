@@ -4,7 +4,7 @@
  * @returns {string} The corresponding letter grade
  */
 export const calculateGrade = (score) => {
-  if (score >= 90 && score <= 100) return 'A';
+  if (score >= 90 && score <= 100) return 'A1';
   if (score >= 80 && score < 90) return 'B2';
   if (score >= 70 && score < 80) return 'B3';
   if (score >= 65 && score < 70) return 'C4';
