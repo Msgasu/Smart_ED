@@ -17,6 +17,8 @@ const CourseDetails = () => {
   const [instructor, setInstructor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [courseGrade, setCourseGrade] = useState(null);
+  const [gradeLoading, setGradeLoading] = useState(false);
 
   useEffect(() => {
     const fetchCourseDetails = async () => {
@@ -91,6 +93,19 @@ const CourseDetails = () => {
       };
     }
   };
+
+  useEffect(() => {
+    // Load grades when the grades tab is activated
+    if (activeTab === 'grades' && !courseGrade) {
+      const loadGrades = async () => {
+        setGradeLoading(true);
+        const gradeData = await fetchCourseGrade();
+        setCourseGrade(gradeData);
+        setGradeLoading(false);
+      };
+      loadGrades();
+    }
+  }, [activeTab, courseGrade]);
 
   if (loading) {
     return (
@@ -318,42 +333,102 @@ const CourseDetails = () => {
         {activeTab === 'grades' && (
           <div className="grades-tab">
             <div className="grades-header">
-              <h2>Grade Details</h2>
+              <h2>Grade Summary</h2>
               <div className="overall-grade">
-                Overall: <span className="grade-value">{letterGrade} ({overallGrade || 'N/A'}%)</span>
+                <div 
+                  className="grade-progress-circle"
+                  style={{ 
+                    '--grade-percent': courseGrade?.overallGrade || 0 
+                  }}
+                >
+                  <div className="grade-circle-inner">
+                    <span className="grade-percentage">{courseGrade?.overallGrade || 'N/A'}</span>
+                    <span className="grade-percent-sign">%</span>
+                  </div>
+                </div>
+                <div className="grade-details">
+                  <div className="grade-letter">{courseGrade?.letterGrade || 'N/A'}</div>
+                  <div className="grade-stats">
+                    <div className="grade-fraction">
+                      <span className="grade-earned">{courseGrade?.totalEarned || 0}</span>
+                      <span className="grade-separator">/</span>
+                      <span className="grade-possible">{courseGrade?.totalPossible || 0}</span>
+                      <span className="grade-points">points</span>
+                    </div>
+                    <div className="grade-completion">
+                      <span>{courseGrade?.gradedAssignments || 0} of {courseGrade?.totalAssignments || 0} assignments completed</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
             
-            <table className="grades-table">
-              <thead>
-                <tr>
-                  <th>Assignment</th>
-                  <th>Due Date</th>
-                  <th>Status</th>
-                  <th>Score</th>
-                </tr>
-              </thead>
-              <tbody>
-                {assignments.map(assignment => (
-                  <tr key={assignment.id}>
-                    <td>{assignment.title}</td>
-                    <td>{new Date(assignment.due_date).toLocaleDateString()}</td>
-                    <td>
-                      <span className={`status-badge status-${assignment.student_assignments[0]?.status || 'not_submitted'}`}>
-                        {assignment.student_assignments[0]?.status === 'graded' ? 'Graded' : 
-                         assignment.student_assignments[0]?.status === 'submitted' ? 'Submitted' : 
-                         new Date(assignment.due_date) < new Date() ? 'Past Due' : 'Not Submitted'}
-                      </span>
-                    </td>
-                    <td>
-                      {assignment.student_assignments[0]?.status === 'graded' 
-                        ? `${assignment.student_assignments[0]?.score || 0}/${assignment.points || 100}` 
-                        : '-'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {gradeLoading ? (
+              <div className="grades-loading">
+                <div className="loading-spinner"></div>
+                <p>Loading grades...</p>
+              </div>
+            ) : courseGrade?.detailedGrades?.length > 0 ? (
+              <div className="grades-detail-section">
+                <div className="grades-filters">
+                  <h3>Assignment Grades</h3>
+                </div>
+                <div className="grades-table-wrapper">
+                  <table className="grades-table">
+                    <thead>
+                      <tr>
+                        <th className="assignment-column">Assignment</th>
+                        <th className="date-column">Due Date</th>
+                        <th className="status-column">Status</th>
+                        <th className="score-column">Score</th>
+                        <th className="percentage-column">Percentage</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {courseGrade.detailedGrades.map(assignment => (
+                        <tr key={assignment.id} className={`grade-row status-${assignment.status}`}>
+                          <td className="assignment-title">{assignment.title}</td>
+                          <td>{new Date(assignment.dueDate).toLocaleDateString()}</td>
+                          <td>
+                            <span className={`status-badge status-${assignment.status}`}>
+                              {assignment.status === 'graded' ? 'Graded' : 
+                              assignment.status === 'submitted' ? 'Submitted' : 
+                              new Date(assignment.dueDate) < new Date() ? 'Past Due' : 'Pending'}
+                            </span>
+                          </td>
+                          <td className="score-cell">
+                            {assignment.status === 'graded' 
+                              ? `${assignment.score || 0}/${assignment.maxScore}` 
+                              : '-'}
+                          </td>
+                          <td>
+                            {assignment.percentage !== null ? (
+                              <div className="percentage-display">
+                                <div 
+                                  className="percentage-bar" 
+                                  style={{ width: `${assignment.percentage}%` }}
+                                ></div>
+                                <span>{assignment.percentage}%</span>
+                              </div>
+                            ) : '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="no-grades-message">
+                <p>No graded assignments yet for this course.</p>
+                <button 
+                  className="check-assignments-btn"
+                  onClick={() => setActiveTab('assignments')}
+                >
+                  View Assignments
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
