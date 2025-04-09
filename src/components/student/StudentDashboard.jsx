@@ -7,6 +7,7 @@ import { getStudentProfile, getStudentCourses } from '../../backend/students';
 import { getChartData } from '../../backend/students/performance';
 import StudentLayout from './StudentLayout';
 import AssignmentList from './AssignmentList';
+import { calculateGrade, getGradeColor } from '../../utils/gradeUtils';
 
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import { FaHome, FaBook, FaChartLine, FaCalendarAlt, FaCog, FaCheckCircle, FaTimes, FaSignOutAlt } from 'react-icons/fa';
@@ -107,19 +108,8 @@ const StudentDashboard = () => {
             const totalScore = gradedSubmissions.reduce((sum, submission) => sum + submission.score, 0);
             overallGrade = Math.round(totalScore / gradedSubmissions.length);
             
-            // Determine letter grade
-            if (overallGrade >= 90) letterGrade = 'A';
-            else if (overallGrade >= 80) letterGrade = 'B';
-            else if (overallGrade >= 70) letterGrade = 'C';
-            else if (overallGrade >= 60) letterGrade = 'D';
-            else letterGrade = 'F';
-            
-            // Add +/- modifiers
-            if (letterGrade !== 'F') {
-              const remainder = overallGrade % 10;
-              if (remainder >= 7 && letterGrade !== 'A') letterGrade += '+';
-              else if (remainder <= 2 && letterGrade !== 'F') letterGrade += '-';
-            }
+            // Use the new grading system
+            letterGrade = calculateGrade(overallGrade);
           }
           
           return {
@@ -128,6 +118,7 @@ const StudentDashboard = () => {
             name: course.courses.name,
             description: course.courses.description,
             grade: letterGrade,
+            gradeColor: getGradeColor(letterGrade),
             overallGrade: overallGrade || 'N/A',
             completedAssignments,
             totalAssignments,
@@ -320,13 +311,13 @@ const StudentDashboard = () => {
     <StudentLayout>
       <div className="dashboard-content">
         {/* User profile section */}
-        <div className="user-profile">
+        {/* <div className="user-profile">
           <div className="user-info">
             <div className="user-name">{studentData?.first_name} {studentData?.last_name}</div>
             <div className="user-role">{studentData?.role}</div>
           </div>
           <img src={studentData?.avatar_url || "/profile.jpg"} alt="Profile" />
-        </div>
+        </div> */}
 
         <div className="container-fluid">
           {/* Course Performance Cards */}
@@ -340,7 +331,7 @@ const StudentDashboard = () => {
               >
                 <div className="course-header">
                   <h4>{course.name} ({course.code})</h4>
-                  <div className="course-grade">{course.grade}</div>
+                  <div className="course-grade" style={{ backgroundColor: course.gradeColor }}>{course.grade}</div>
                 </div>
                 <div className="course-stats">
                   <div className="stat-card">
