@@ -73,33 +73,33 @@
 /* Course Performance Cards - Enhanced */
 .course-performance {
     background: var(--bg-light);
-    border-radius: 1rem;
-    padding: 1.75rem;
-    margin-bottom: 2rem;
+    border-radius: 0.6rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
     box-shadow: var(--shadow);
     transition: var(--transition);
-    border-left: 4px solid var(--primary-color);
+    border-left: 3px solid var(--primary-color);
 }
 
 .course-performance:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
   
 .course-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.8rem;
 }
   
 .course-header h4 {
-    font-size: 1.25rem;
+    font-size: 0.95rem;
     font-weight: 600;
     color: var(--text-color);
     margin: 0;
     position: relative;
-    padding-bottom: 0.5rem;
+    padding-bottom: 0.3rem;
 }
 
 .course-header h4::after {
@@ -107,70 +107,72 @@
     position: absolute;
     bottom: 0;
     left: 0;
-    width: 40px;
-    height: 3px;
+    width: 25px;
+    height: 2px;
     background-color: var(--primary-color);
-    border-radius: 3px;
+    border-radius: 2px;
 }
   
 .course-grade {
     background-color: var(--primary-color);
     color: white;
-    padding: 0.35rem 0.85rem;
+    padding: 0.1rem 0.5rem;
     border-radius: 9999px;
     font-weight: 600;
-    font-size: 0.95rem;
-    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+    font-size: 0.7rem;
+    box-shadow: 0 1px 3px rgba(52, 152, 219, 0.2);
     transition: var(--transition);
+    min-width: 2rem;
+    text-align: center;
 }
 
 .course-grade:hover {
-    transform: scale(1.1);
+    transform: scale(1.03);
 }
   
 /* Stats Cards - Enhanced */
 .course-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1.25rem;
-    margin-bottom: 1.75rem;
+    gap: 0.7rem;
+    margin-bottom: 0.8rem;
 }
   
 .stat-card {
     background-color: #f9fafb;
-    padding: 1.25rem;
-    border-radius: 0.75rem;
+    padding: 0.6rem;
+    border-radius: 0.5rem;
     text-align: center;
     transition: var(--transition);
     border: 1px solid var(--border-color);
 }
   
 .stat-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-2px);
     background-color: #f3f4f6;
     box-shadow: var(--shadow);
 }
   
 .stat-card .h3 {
-    font-size: 1.75rem;
+    font-size: 1.15rem;
     font-weight: 700;
     color: var(--primary-color);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.2rem;
 }
   
 .stat-card small {
     color: var(--text-light);
-    font-size: 0.875rem;
+    font-size: 0.7rem;
     font-weight: 500;
 }
   
 /* Chart Container - Enhanced */
 .chart-container {
-    height: 300px;
-    margin-top: 1.5rem;
-    padding: 1.25rem;
+    height: 200px;
+    margin-top: 0.8rem;
+    padding: 0.7rem;
     background-color: #f9fafb;
-    border-radius: 0.75rem;
+    border-radius: 0.5rem;
     transition: var(--transition);
     border: 1px solid var(--border-color);
 }
