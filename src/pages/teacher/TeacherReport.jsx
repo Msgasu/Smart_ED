@@ -18,6 +18,7 @@ import {
 } from '../../backend/teachers';
 import './styles/TeacherReport.css';
 import { supabase } from '../../lib/supabase';
+import { calculateGrade, getGradeColor } from '../../utils/gradeUtils';
 
 const TeacherReport = () => {
   const { studentId } = useParams();
@@ -190,16 +191,12 @@ const TeacherReport = () => {
 
   // Calculate overall grade based on total score
   const calculateOverallGrade = (score) => {
-    if (!score) return 'F';
+    if (!score) return 'F9';
     
     const totalScore = parseFloat(score);
-    if (isNaN(totalScore)) return 'F';
+    if (isNaN(totalScore)) return 'F9';
 
-    if (totalScore >= 90) return 'A';
-    if (totalScore >= 80) return 'B';
-    if (totalScore >= 70) return 'C';
-    if (totalScore >= 60) return 'D';
-    return 'F';
+    return calculateGrade(totalScore);
   };
 
   // Handle saving report details
