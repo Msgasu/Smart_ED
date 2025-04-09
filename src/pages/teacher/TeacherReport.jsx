@@ -279,7 +279,6 @@ const TeacherReport = () => {
         .single();
 
       if (reportError) throw reportError;
-
       setReportData(newReport);
       reportId = newReport.id;
     }
