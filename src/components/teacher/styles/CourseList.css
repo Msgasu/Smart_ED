@@ -1,91 +1,92 @@
 /* CourseList.css */
 .course-container {
-  margin-top: 2rem;
+  margin-top: 1.5rem;
 }
 
 .course-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
 }
 
 .course-card {
   background-color: white;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .course-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .course-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.5rem;
+  padding: 0.75rem 1rem;
   background-color: rgba(52, 152, 219, 0.05);
   border-bottom: 1px solid rgba(52, 152, 219, 0.1);
 }
 
 .course-code {
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.85rem;
   color: var(--primary-color);
 }
 
 .course-status {
   background-color: rgba(46, 204, 113, 0.1);
   color: #2ecc71;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-weight: 500;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
 }
 
 .course-body {
-  padding: 1.5rem;
+  padding: 1rem;
 }
 
 .course-title {
-  margin: 0 0 0.75rem;
-  font-size: 1.25rem;
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
   color: var(--text-color);
 }
 
 .course-description {
   color: var(--text-light);
-  font-size: 0.9rem;
-  margin-bottom: 1.5rem;
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  min-height: 2.7rem;
+  min-height: 2.4rem;
 }
 
 .course-stats {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   border-top: 1px solid var(--border-color);
-  padding-top: 1rem;
+  padding-top: 0.75rem;
 }
 
 .stat {
   display: flex;
   align-items: center;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   color: var(--text-light);
 }
 
 .stat svg {
-  margin-right: 0.5rem;
+  margin-right: 0.4rem;
   color: var(--primary-color);
+  font-size: 0.8rem;
 }
 
 .course-actions {
@@ -96,7 +97,7 @@
 }
 
 .course-action-btn {
-  padding: 1rem;
+  padding: 0.75rem 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -104,10 +105,12 @@
   font-weight: 500;
   transition: all 0.3s ease;
   background-color: white;
+  font-size: 0.8rem;
 }
 
 .course-action-btn svg {
-  margin-right: 0.5rem;
+  margin-right: 0.4rem;
+  font-size: 0.8rem;
 }
 
 .students-btn {
