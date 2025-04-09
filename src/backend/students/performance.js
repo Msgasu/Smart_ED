@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabase';
+import { calculateGrade } from '../../utils/gradeUtils';
 
 /**
  * Get chart data for a course
@@ -152,31 +153,52 @@ export const calculateCourseGrade = async (courseId, studentId) => {
     let overallGrade = 0;
     let letterGrade = 'N/A';
     
+    // Calculate total points earned and total possible points
+    let totalEarned = 0;
+    let totalPossible = 0;
+    
     if (gradedSubmissions.length > 0) {
-      const totalScore = gradedSubmissions.reduce((sum, submission) => sum + submission.score, 0);
-      overallGrade = Math.round(totalScore / gradedSubmissions.length);
+      // Get assignment details to get max points
+      gradedSubmissions.forEach(submission => {
+        const assignment = courseAssignments.find(a => a.id === submission.assignment_id);
+        if (assignment) {
+          const maxPoints = assignment.max_score || 100;
+          totalEarned += submission.score || 0;
+          totalPossible += maxPoints;
+        }
+      });
       
-      // Determine letter grade
-      if (overallGrade >= 90) letterGrade = 'A';
-      else if (overallGrade >= 80) letterGrade = 'B';
-      else if (overallGrade >= 70) letterGrade = 'C';
-      else if (overallGrade >= 60) letterGrade = 'D';
-      else letterGrade = 'F';
+      // Calculate as percentage
+      overallGrade = totalPossible > 0 ? Math.round((totalEarned / totalPossible) * 100) : 0;
       
-      // Add +/- modifiers
-      if (letterGrade !== 'F') {
-        const remainder = overallGrade % 10;
-        if (remainder >= 7 && letterGrade !== 'A') letterGrade += '+';
-        else if (remainder <= 2 && letterGrade !== 'F') letterGrade += '-';
-      }
+      // Use the utility function to get the letter grade
+      letterGrade = calculateGrade(overallGrade);
     }
+    
+    // Detailed grades for each assignment
+    const detailedGrades = courseAssignments.map(assignment => {
+      const submission = courseSubmissions.find(s => s.assignment_id === assignment.id);
+      return {
+        id: assignment.id,
+        title: assignment.title,
+        dueDate: assignment.due_date,
+        maxScore: assignment.max_score || 100,
+        score: submission?.score,
+        status: submission?.status || 'pending',
+        weight: assignment.weight || 1,
+        percentage: submission?.score ? Math.round((submission.score / (assignment.max_score || 100)) * 100) : null
+      };
+    });
     
     return { 
       data: {
         overallGrade,
         letterGrade,
+        totalEarned,
+        totalPossible,
         gradedAssignments: gradedSubmissions.length,
-        totalAssignments: courseAssignments.length
+        totalAssignments: courseAssignments.length,
+        detailedGrades
       }, 
       error: null 
     };
