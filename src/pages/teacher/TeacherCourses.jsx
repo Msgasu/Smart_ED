@@ -69,10 +69,7 @@ const TeacherCourses = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        
-        <Link to="/teacher/courses/new" className="btn btn-primary">
-          <FaPlus /> New Course
-        </Link>
+
       </div>
       
       {loading ? (
