@@ -1,97 +1,124 @@
 .courses-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0;
+  padding: 2rem;
   font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+  background-color: #f8fafc;
+  min-height: calc(100vh - 64px);
 }
 
 .courses-container h1 {
-  font-size: 2rem;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 2rem;
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 2.5rem;
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+.courses-container h1::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px;
+  height: 4px;
+  background-color: #0ea5e9;
+  border-radius: 2px;
 }
 
 .courses-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 2rem;
 }
 
 .course-card {
   background-color: white;
   border-radius: 1rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
+  border: 1px solid #e2e8f0;
 }
 
 .course-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  border-color: #0ea5e9;
 }
 
 .course-card-content {
-  padding: 1.5rem;
+  padding: 2rem;
+  position: relative;
 }
 
 .course-title {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 600;
-  color: #111827;
-  margin-bottom: 0.75rem;
+  color: #1e293b;
+  margin-bottom: 1rem;
+  line-height: 1.3;
 }
 
 .course-description {
-  color: #4b5563;
-  margin-bottom: 1.5rem;
-  line-height: 1.5;
+  color: #64748b;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+  font-size: 1rem;
 }
 
 .view-course-btn {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background-color: #0ea5e9;
   color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  border-radius: 0.75rem;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 1rem;
   transition: all 0.2s ease;
+  width: 100%;
+  text-align: center;
 }
 
 .view-course-btn:hover {
   background-color: #0284c7;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 .no-courses {
   text-align: center;
-  padding: 3rem;
+  padding: 4rem 2rem;
   background-color: white;
   border-radius: 1rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  margin-top: 2rem;
 }
 
 .no-courses p {
-  font-size: 1.1rem;
-  color: #4b5563;
-  margin-bottom: 1.5rem;
+  font-size: 1.25rem;
+  color: #64748b;
+  margin-bottom: 2rem;
 }
 
 .browse-courses-btn {
   background-color: #0ea5e9;
   color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
+  padding: 1rem 2rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .browse-courses-btn:hover {
   background-color: #0284c7;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 .loading-container {
@@ -103,18 +130,19 @@
 }
 
 .loading-spinner {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border: 4px solid rgba(14, 165, 233, 0.2);
   border-radius: 50%;
   border-top-color: #0ea5e9;
   animation: spin 1s ease-in-out infinite;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .loading-text {
-  color: #6b7280;
+  color: #64748b;
   font-weight: 500;
+  font-size: 1.125rem;
 }
 
 @keyframes spin {
@@ -124,36 +152,46 @@
 /* Responsive Adjustments */
 @media (max-width: 768px) {
   .courses-container {
-    padding: 1rem;
+    padding: 1.5rem;
   }
   
   .courses-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .course-card-content {
+    padding: 1.5rem;
   }
 }
 
 /* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
   .courses-container {
-    background-color: #111827;
+    background-color: #0f172a;
   }
   
-  .courses-container h1,
+  .courses-container h1 {
+    color: #f8fafc;
+  }
+  
+  .course-card {
+    background-color: #1e293b;
+    border-color: #334155;
+  }
+  
   .course-title {
-    color: #f9fafb;
+    color: #f8fafc;
   }
   
   .course-description {
-    color: #e5e7eb;
+    color: #94a3b8;
   }
   
-  .course-card,
   .no-courses {
-    background-color: #1f2937;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    background-color: #1e293b;
   }
   
   .no-courses p {
-    color: #e5e7eb;
+    color: #94a3b8;
   }
 } 
