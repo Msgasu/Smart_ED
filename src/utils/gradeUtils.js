@@ -23,7 +23,7 @@ export const calculateGrade = (score) => {
  */
 export const getGradeColor = (grade) => {
   switch (grade) {
-    case 'A': return '#4CAF50'; // Green
+    case 'A1': return '#4CAF50'; // Green
     case 'B2': return '#8BC34A'; // Light Green
     case 'B3': return '#CDDC39'; // Lime
     case 'C4': return '#FFEB3B'; // Yellow
