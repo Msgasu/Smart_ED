@@ -4,6 +4,10 @@ import './styles/Dashboard.css';
 import './styles/AdminLayout.css';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
+import Modal from 'react-bootstrap/Modal';
+import Button from 'react-bootstrap/Button';
+import Form from 'react-bootstrap/Form';
+import { sendNotification } from '../../backend/admin/notifications';
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -15,6 +19,15 @@ const Dashboard = () => {
     upcomingEvents: []
   });
   const [loading, setLoading] = useState(true);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [notificationData, setNotificationData] = useState({
+    title: '',
+    message: '',
+    recipientType: 'all', // 'all', 'students', 'faculty', or 'specific'
+    specificRecipients: []
+  });
+  const [availableRecipients, setAvailableRecipients] = useState([]);
+  const [sendingNotification, setSendingNotification] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -148,6 +161,117 @@ const Dashboard = () => {
     } else {
       return past.toLocaleDateString();
     }
+  };
+
+  // Function to fetch available recipients
+  const fetchRecipients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email, role')
+        .order('role')
+        .order('last_name');
+        
+      if (error) throw error;
+      setAvailableRecipients(data || []);
+    } catch (error) {
+      console.error('Error fetching recipients:', error);
+      toast.error('Failed to load recipients');
+    }
+  };
+
+  // Handle opening the notification modal
+  const handleOpenNotificationModal = () => {
+    fetchRecipients();
+    setShowNotificationModal(true);
+  };
+
+  // Handle sending notification
+  const handleSendNotification = async () => {
+    try {
+      setSendingNotification(true);
+      
+      // Validation
+      if (!notificationData.title.trim()) {
+        toast.error('Please enter a notification title');
+        return;
+      }
+      
+      if (!notificationData.message.trim()) {
+        toast.error('Please enter a notification message');
+        return;
+      }
+      
+      if (notificationData.recipientType === 'specific' && 
+          notificationData.specificRecipients.length === 0) {
+        toast.error('Please select at least one recipient');
+        return;
+      }
+      
+      // Determine recipients based on selection
+      let recipientIds = [];
+      
+      if (notificationData.recipientType === 'specific') {
+        recipientIds = notificationData.specificRecipients;
+      } else {
+        // Filter by role if needed
+        const roleFilter = notificationData.recipientType === 'all' 
+          ? null 
+          : notificationData.recipientType.slice(0, -1); // Remove 's' from 'students' or 'faculty'
+        
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq(roleFilter ? 'role' : 'id', roleFilter || notificationData.specificRecipients[0]);
+          
+        if (error) throw error;
+        recipientIds = data.map(user => user.id);
+      }
+
+      // Send notification using the backend function
+      const { data, error } = await sendNotification({
+        title: notificationData.title,
+        message: notificationData.message,
+        recipientIds: recipientIds
+      });
+      
+      if (error) throw error;
+      
+      toast.success(`Notification sent to ${recipientIds.length} recipient(s)`);
+      setShowNotificationModal(false);
+      
+      // Reset form
+      setNotificationData({
+        title: '',
+        message: '',
+        recipientType: 'all',
+        specificRecipients: []
+      });
+      
+    } catch (error) {
+      console.error('Error sending notification:', error);
+      toast.error('Failed to send notification: ' + error.message);
+    } finally {
+      setSendingNotification(false);
+    }
+  };
+
+  // Handle input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNotificationData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handle recipient selection
+  const handleRecipientSelection = (e) => {
+    const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+    setNotificationData(prev => ({
+      ...prev,
+      specificRecipients: selectedOptions
+    }));
   };
 
   return (
@@ -305,7 +429,10 @@ const Dashboard = () => {
                 <div className="action-text">Generate Report</div>
               </button>
               
-              <button className="action-button">
+              <button 
+                className="action-button"
+                onClick={handleOpenNotificationModal}
+              >
                 <div className="action-icon send-notification">
                   <FaPaperPlane />
                 </div>
@@ -356,6 +483,92 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+      
+      {/* Notification Modal */}
+      <Modal 
+        show={showNotificationModal} 
+        onHide={() => setShowNotificationModal(false)}
+        backdrop="static"
+        size="lg"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Send Notification</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Notification Title</Form.Label>
+              <Form.Control
+                type="text"
+                name="title"
+                value={notificationData.title}
+                onChange={handleInputChange}
+                placeholder="Enter notification title"
+              />
+            </Form.Group>
+            
+            <Form.Group className="mb-3">
+              <Form.Label>Recipients</Form.Label>
+              <Form.Select 
+                name="recipientType"
+                value={notificationData.recipientType}
+                onChange={handleInputChange}
+              >
+                <option value="all">All Users</option>
+                <option value="students">All Students</option>
+                <option value="faculty">All Faculty</option>
+                <option value="specific">Specific Recipients</option>
+              </Form.Select>
+            </Form.Group>
+            
+            {notificationData.recipientType === 'specific' && (
+              <Form.Group className="mb-3">
+                <Form.Label>Select Recipients</Form.Label>
+                <Form.Select 
+                  multiple 
+                  className="form-control" 
+                  style={{ height: '150px' }}
+                  onChange={handleRecipientSelection}
+                  value={notificationData.specificRecipients}
+                >
+                  {availableRecipients.map(user => (
+                    <option key={user.id} value={user.id}>
+                      {user.first_name} {user.last_name} ({user.email}) - {user.role}
+                    </option>
+                  ))}
+                </Form.Select>
+                <Form.Text className="text-muted">
+                  Hold Ctrl (or Cmd on Mac) to select multiple recipients
+                </Form.Text>
+              </Form.Group>
+            )}
+            
+            <Form.Group className="mb-3">
+              <Form.Label>Message</Form.Label>
+              <Form.Control
+                as="textarea"
+                name="message"
+                value={notificationData.message}
+                onChange={handleInputChange}
+                rows={4}
+                placeholder="Enter your message here"
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowNotificationModal(false)}>
+            Cancel
+          </Button>
+          <Button 
+            variant="primary" 
+            onClick={handleSendNotification} 
+            disabled={sendingNotification}
+          >
+            {sendingNotification ? 'Sending...' : 'Send Notification'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };
