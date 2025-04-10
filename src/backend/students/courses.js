@@ -34,7 +34,7 @@ export const getStudentCourses = async (studentId) => {
 };
 
 /**
- * Get course details including instructor information
+ * Get course details including instructor information and assignments
  * @param {string} courseId - The course ID
  * @returns {Promise<Object>} - The course details
  */
@@ -42,6 +42,12 @@ export const getCourseDetails = async (courseId) => {
   try {
     if (!courseId) {
       throw new Error('Course ID is required');
+    }
+    
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('User not authenticated');
     }
     
     // Fetch course details with instructor information
@@ -74,10 +80,43 @@ export const getCourseDetails = async (courseId) => {
       }
     }
     
+    // Fetch assignments for this course and student submissions in parallel
+    const [assignmentsResponse, submissionsResponse] = await Promise.all([
+      supabase
+        .from('assignments')
+        .select('*')
+        .eq('course_id', courseId)
+        .order('due_date', { ascending: true }),
+      supabase
+        .from('student_assignments')
+        .select('*')
+        .eq('student_id', user.id)
+    ]);
+    
+    if (assignmentsResponse.error) throw assignmentsResponse.error;
+    if (submissionsResponse.error) throw submissionsResponse.error;
+    
+    // Combine assignments with their submissions
+    const assignmentsWithSubmissions = assignmentsResponse.data.map(assignment => {
+      const submission = submissionsResponse.data.find(
+        sub => sub.assignment_id === assignment.id
+      );
+      
+      return {
+        ...assignment,
+        student_assignments: submission ? [submission] : [{
+          status: 'not_submitted',
+          score: null,
+          submitted_at: null
+        }]
+      };
+    });
+    
     return { 
       data: { 
         course: courseData, 
-        instructor: instructorData 
+        instructor: instructorData,
+        assignments: assignmentsWithSubmissions
       }, 
       error: null 
     };
