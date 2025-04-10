@@ -96,19 +96,32 @@ const StudentDashboard = () => {
             s => s.status === 'submitted' || s.status === 'graded'
           ).length;
           
-          // Calculate overall grade
+          // Calculate overall grade using the weighted calculation method
           const gradedSubmissions = courseSubmissions.filter(
             s => s.status === 'graded' && s.score !== null
           );
           
+          // Calculate total points earned and total possible points
+          let totalEarned = 0;
+          let totalPossible = 0;
           let overallGrade = 0;
           let letterGrade = 'N/A';
           
           if (gradedSubmissions.length > 0) {
-            const totalScore = gradedSubmissions.reduce((sum, submission) => sum + submission.score, 0);
-            overallGrade = Math.round(totalScore / gradedSubmissions.length);
+            // Get assignment details to calculate weighted scores
+            gradedSubmissions.forEach(submission => {
+              const assignment = courseAssignments.find(a => a.id === submission.assignment_id);
+              if (assignment) {
+                const maxPoints = assignment.max_score || 100;
+                totalEarned += submission.score || 0;
+                totalPossible += maxPoints;
+              }
+            });
             
-            // Use the new grading system
+            // Calculate as percentage
+            overallGrade = totalPossible > 0 ? Math.round((totalEarned / totalPossible) * 100) : 0;
+            
+            // Use the grade utility function
             letterGrade = calculateGrade(overallGrade);
           }
           
@@ -120,6 +133,8 @@ const StudentDashboard = () => {
             grade: letterGrade,
             gradeColor: getGradeColor(letterGrade),
             overallGrade: overallGrade || 'N/A',
+            totalEarned,
+            totalPossible,
             completedAssignments,
             totalAssignments,
             attendance: 90, // Placeholder
@@ -331,7 +346,13 @@ const StudentDashboard = () => {
               >
                 <div className="course-header">
                   <h4>{course.name} ({course.code})</h4>
-                  <div className="course-grade" style={{ backgroundColor: course.gradeColor }}>{course.grade}</div>
+                  <div 
+                    className="course-grade" 
+                    style={{ backgroundColor: course.gradeColor || '#9E9E9E' }}
+                    data-grade={course.grade}
+                  >
+                    {course.grade}
+                  </div>
                 </div>
                 <div className="course-stats">
                   <div className="stat-card">
@@ -339,8 +360,12 @@ const StudentDashboard = () => {
                     <small>Overall Grade</small>
                   </div>
                   <div className="stat-card">
-                    <div className="h3 mb-0">{course.attendance}%</div>
-                    <small>Attendance</small>
+                    <div className="h3 mb-0">
+                      {course.totalEarned !== undefined ? 
+                        `${course.totalEarned}/${course.totalPossible}` : 
+                        'N/A'}
+                    </div>
+                    <small>Points</small>
                   </div>
                   <div className="stat-card">
                     <div className="h3 mb-0">{course.completedAssignments}/{course.totalAssignments}</div>
