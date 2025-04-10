@@ -113,21 +113,64 @@
     border-radius: 2px;
 }
   
+/* Updated Course Grade Badge */
 .course-grade {
-    background-color: var(--primary-color);
-    color: white;
-    padding: 0.1rem 0.5rem;
-    border-radius: 9999px;
-    font-weight: 600;
-    font-size: 0.7rem;
-    box-shadow: 0 1px 3px rgba(52, 152, 219, 0.2);
-    transition: var(--transition);
-    min-width: 2rem;
-    text-align: center;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  transition: var(--transition);
+  min-width: 2rem;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .course-grade:hover {
-    transform: scale(1.03);
+  transform: scale(1.05);
+}
+
+/* Change color based on grade value */
+.course-grade[data-grade="A1"] {
+  background-color: #4CAF50;
+}
+
+.course-grade[data-grade="B2"] {
+  background-color: #8BC34A;
+}
+
+.course-grade[data-grade="B3"] {
+  background-color: #CDDC39;
+}
+
+.course-grade[data-grade="C4"] {
+  background-color: #FFEB3B;
+  color: #333;
+}
+
+.course-grade[data-grade="C5"] {
+  background-color: #FFC107;
+  color: #333;
+}
+
+.course-grade[data-grade="C6"] {
+  background-color: #FF9800;
+}
+
+.course-grade[data-grade="D7"] {
+  background-color: #FF5722;
+}
+
+.course-grade[data-grade="E8"] {
+  background-color: #F44336;
+}
+
+.course-grade[data-grade="F9"] {
+  background-color: #D32F2F;
 }
   
 /* Stats Cards - Enhanced */
