@@ -68,13 +68,55 @@
 }
 
 .course-grade-badge {
+  display: inline-block;
   background-color: var(--primary-color);
   color: white;
-  font-weight: 600;
-  font-size: 1rem;
-  padding: 0.4rem 0.8rem;
+  font-weight: 700;
+  font-size: 1.2rem;
+  padding: 0.5rem 1rem;
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-sm);
+  min-width: 2.5rem;
+  text-align: center;
+}
+
+/* Change color based on grade value */
+.course-grade-badge[data-grade="A1"] {
+  background-color: #4CAF50;
+}
+
+.course-grade-badge[data-grade="B2"] {
+  background-color: #8BC34A;
+}
+
+.course-grade-badge[data-grade="B3"] {
+  background-color: #CDDC39;
+}
+
+.course-grade-badge[data-grade="C4"] {
+  background-color: #FFEB3B;
+  color: #333;
+}
+
+.course-grade-badge[data-grade="C5"] {
+  background-color: #FFC107;
+  color: #333;
+}
+
+.course-grade-badge[data-grade="C6"] {
+  background-color: #FF9800;
+}
+
+.course-grade-badge[data-grade="D7"] {
+  background-color: #FF5722;
+}
+
+.course-grade-badge[data-grade="E8"] {
+  background-color: #F44336;
+}
+
+.course-grade-badge[data-grade="F9"] {
+  background-color: #D32F2F;
 }
 
 /* Tabs Styling */
@@ -277,7 +319,40 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-shadow: inset 0 0 0 4px var(--primary-color);
+  position: relative;
+  overflow: hidden;
+}
+
+.grade-circle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: conic-gradient(
+    var(--primary-color) calc(var(--grade-percent, 0) * 360deg),
+    transparent 0deg
+  );
+  z-index: 1;
+}
+
+.grade-circle::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  background-color: white;
+  border-radius: 50%;
+  z-index: 2;
+}
+
+.grade-circle .grade-percentage,
+.grade-circle .grade-label {
+  position: relative;
+  z-index: 3;
 }
 
 .grade-percentage {
@@ -590,20 +665,16 @@
   letter-spacing: 0.5px;
 }
 
-.assignment-column {
-  width: 35%;
-}
-
-.date-column, .status-column {
-  width: 15%;
+.date-column, .status-column, .grade-column {
+  width: 12%;
 }
 
 .score-column {
-  width: 15%;
+  width: 12%;
 }
 
 .percentage-column {
-  width: 20%;
+  width: 18%;
 }
 
 .grades-table td {
@@ -638,7 +709,7 @@
   font-size: 0.9rem;
 }
 
-.score-cell {
+.score-cell, .grade-cell {
   font-weight: 600;
   color: var(--primary-color);
 }
