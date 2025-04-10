@@ -8,6 +8,7 @@ import './styles/CourseDetails.css';
 import { getCourseDetails } from '../../backend/students/courses';
 import { calculateCourseGrade } from '../../backend/students/performance';
 import StudentLayout from '../../components/student/StudentLayout';
+import { calculateGrade } from '../../utils/gradeUtils';
 
 const CourseDetails = () => {
   const { courseId } = useParams();
@@ -21,58 +22,44 @@ const CourseDetails = () => {
   const [gradeLoading, setGradeLoading] = useState(false);
 
   useEffect(() => {
-    const fetchCourseDetails = async () => {
+    const fetchCourseData = async () => {
       try {
+        setLoading(true);
+        
         const { data: { user } } = await supabase.auth.getUser();
 
-        // Use the backend service to get course details
-        const { data: courseData, error: courseError } = await getCourseDetails(courseId);
-        if (courseError) throw courseError;
+        if (!user) {
+          throw new Error('User not authenticated');
+        }
         
-        setCourse(courseData.course);
-        setInstructor(courseData.instructor);
-
-        // Fetch all assignments for this course and student submissions in parallel
-        const [assignmentsResponse, submissionsResponse] = await Promise.all([
-          supabase
-            .from('assignments')
-            .select('*')
-            .eq('course_id', courseId)
-            .order('due_date', { ascending: true }),
-          supabase
-            .from('student_assignments')
-            .select('*')
-            .eq('student_id', user.id)
-        ]);
-          
-        if (assignmentsResponse.error) throw assignmentsResponse.error;
-        if (submissionsResponse.error) throw submissionsResponse.error;
+        const { data, error } = await getCourseDetails(courseId);
         
-        // Combine assignments with their submissions
-        const assignmentsWithSubmissions = assignmentsResponse.data.map(assignment => {
-          const submission = submissionsResponse.data.find(
-            sub => sub.assignment_id === assignment.id
-          );
-          
-          return {
-            ...assignment,
-            student_assignments: submission ? [submission] : [{
-              status: 'not_submitted',
-              score: null,
-              submitted_at: null
-            }]
-          };
-        });
-
-        setAssignments(assignmentsWithSubmissions);
+        if (error) throw error;
+        
+        setCourse(data.course);
+        
+        // Make sure assignments data is properly structured
+        if (data.assignments && Array.isArray(data.assignments)) {
+          setAssignments(data.assignments);
+        } else {
+          console.error('Invalid assignments data:', data.assignments);
+          setAssignments([]);
+        }
+        
+        setInstructor(data.instructor);
+        
+        // Load grade data on initial load
+        const gradeData = await calculateCourseGrade(courseId, user.id);
+        setCourseGrade(gradeData.data || null);
+        
+        setLoading(false);
       } catch (error) {
-        console.error('Error:', error);
-      } finally {
+        console.error('Error fetching course details:', error);
         setLoading(false);
       }
     };
 
-    fetchCourseDetails();
+    fetchCourseData();
   }, [courseId]);
 
   // Use the backend service to calculate course grade
@@ -99,13 +86,21 @@ const CourseDetails = () => {
     if (activeTab === 'grades' && !courseGrade) {
       const loadGrades = async () => {
         setGradeLoading(true);
-        const gradeData = await fetchCourseGrade();
-        setCourseGrade(gradeData);
-        setGradeLoading(false);
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user && courseId) {
+            const gradeData = await calculateCourseGrade(courseId, user.id);
+            setCourseGrade(gradeData?.data || null);
+          }
+        } catch (error) {
+          console.error('Error loading grades:', error);
+        } finally {
+          setGradeLoading(false);
+        }
       };
       loadGrades();
     }
-  }, [activeTab, courseGrade]);
+  }, [activeTab, courseGrade, courseId]);
 
   if (loading) {
     return (
@@ -125,9 +120,9 @@ const CourseDetails = () => {
   );
 
   // Filter assignments that have been graded for the chart
-  const gradedAssignments = assignments.filter(
-    a => a.student_assignments[0]?.status === 'graded'
-  );
+  const gradedAssignments = assignments && assignments.length > 0 ? assignments.filter(
+    a => a.student_assignments && a.student_assignments[0]?.status === 'graded'
+  ) : [];
   
   // Calculate overall grade
   let overallGrade = 0;
@@ -140,40 +135,29 @@ const CourseDetails = () => {
     );
     overallGrade = Math.round(totalScore / gradedAssignments.length);
     
-    // Determine letter grade
-    if (overallGrade >= 90) letterGrade = 'A';
-    else if (overallGrade >= 80) letterGrade = 'B';
-    else if (overallGrade >= 70) letterGrade = 'C';
-    else if (overallGrade >= 60) letterGrade = 'D';
-    else letterGrade = 'F';
-    
-    // Add +/- modifiers
-    if (letterGrade !== 'F') {
-      const remainder = overallGrade % 10;
-      if (remainder >= 7 && letterGrade !== 'A') letterGrade += '+';
-      else if (remainder <= 2 && letterGrade !== 'F') letterGrade += '-';
-    }
+    // Use standard grade calculation to ensure consistency
+    letterGrade = calculateGrade(overallGrade);
   }
   
   // Group assignments by status
-  const upcomingAssignments = assignments.filter(
-    a => a.student_assignments[0]?.status === 'not_submitted' && new Date(a.due_date) > new Date()
-  );
+  const upcomingAssignments = assignments && assignments.length > 0 ? assignments.filter(
+    a => a.student_assignments && a.student_assignments[0]?.status === 'not_submitted' && new Date(a.due_date) > new Date()
+  ) : [];
   
-  const pastDueAssignments = assignments.filter(
-    a => a.student_assignments[0]?.status === 'not_submitted' && new Date(a.due_date) <= new Date()
-  );
+  const pastDueAssignments = assignments && assignments.length > 0 ? assignments.filter(
+    a => a.student_assignments && a.student_assignments[0]?.status === 'not_submitted' && new Date(a.due_date) <= new Date()
+  ) : [];
   
-  const submittedAssignments = assignments.filter(
-    a => a.student_assignments[0]?.status === 'submitted'
-  );
+  const submittedAssignments = assignments && assignments.length > 0 ? assignments.filter(
+    a => a.student_assignments && a.student_assignments[0]?.status === 'submitted'
+  ) : [];
 
   return (
     <StudentLayout>
       <div className="course-details-container">
         <div className="course-details-header">
           <h1>{course.code} - {course.name}</h1>
-          <div className="course-grade-badge">{letterGrade}</div>
+         
         </div>
         
         <div className="course-details-tabs">
@@ -187,7 +171,7 @@ const CourseDetails = () => {
             className={`tab-button ${activeTab === 'assignments' ? 'active' : ''}`}
             onClick={() => setActiveTab('assignments')}
           >
-            Assignments ({assignments.length})
+            Assignments ({assignments?.length || 0})
           </button>
           <button 
             className={`tab-button ${activeTab === 'grades' ? 'active' : ''}`}
@@ -241,22 +225,22 @@ const CourseDetails = () => {
                   <div 
                     className="progress-bar" 
                     style={{ 
-                      width: `${Math.round((gradedAssignments.length + submittedAssignments.length) / 
-                        (assignments.length || 1) * 100)}%` 
+                      width: `${Math.round(((gradedAssignments?.length || 0) + (submittedAssignments?.length || 0)) / 
+                        Math.max(assignments?.length || 1, 1) * 100)}%` 
                     }}
                   ></div>
                 </div>
                 <div className="progress-stats">
                   <div className="stat">
-                    <span className="stat-value">{gradedAssignments.length + submittedAssignments.length}</span>
+                    <span className="stat-value">{(gradedAssignments?.length || 0) + (submittedAssignments?.length || 0)}</span>
                     <span className="stat-label">Completed</span>
                   </div>
                   <div className="stat">
-                    <span className="stat-value">{upcomingAssignments.length}</span>
+                    <span className="stat-value">{upcomingAssignments?.length || 0}</span>
                     <span className="stat-label">Upcoming</span>
                   </div>
                   <div className="stat">
-                    <span className="stat-value">{pastDueAssignments.length}</span>
+                    <span className="stat-value">{pastDueAssignments?.length || 0}</span>
                     <span className="stat-label">Past Due</span>
                   </div>
                 </div>
@@ -265,25 +249,34 @@ const CourseDetails = () => {
               <div className="course-stats-card">
                 <h3>Grade Summary</h3>
                 <div className="grade-summary">
-                  <div className="grade-circle">
-                    <span className="grade-percentage">{overallGrade || 'N/A'}</span>
+                  <div 
+                    className="grade-circle"
+                    style={{ 
+                      '--grade-percent': (courseGrade?.overallGrade || 0) / 100
+                    }}
+                  >
+                    <span className="grade-percentage">{courseGrade?.overallGrade || 'N/A'}</span>
                     <span className="grade-label">Overall</span>
                   </div>
                   <div className="grade-details">
                     <div className="grade-detail">
                       <span className="detail-label">Letter Grade:</span>
-                      <span className="detail-value">{letterGrade}</span>
+                      <span className="detail-value">{courseGrade?.letterGrade || 'N/A'}</span>
                     </div>
                     <div className="grade-detail">
                       <span className="detail-label">Graded Items:</span>
-                      <span className="detail-value">{gradedAssignments.length} of {assignments.length}</span>
+                      <span className="detail-value">{courseGrade?.gradedAssignments || 0} of {courseGrade?.totalAssignments || 0}</span>
+                    </div>
+                    <div className="grade-detail">
+                      <span className="detail-label">Points Earned:</span>
+                      <span className="detail-value">{courseGrade?.totalEarned || 0}/{courseGrade?.totalPossible || 0}</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
             
-            {upcomingAssignments.length > 0 && (
+            {upcomingAssignments?.length > 0 && (
               <div className="upcoming-assignments">
                 <h3>Upcoming Assignments</h3>
                 <div className="assignment-list">
@@ -307,13 +300,13 @@ const CourseDetails = () => {
               </div>
             )}
             
-            {gradedAssignments.length > 0 && (
+            {gradedAssignments?.length > 0 && (
               <div className="performance-chart-container">
                 <h3>Performance</h3>
                 <div className="chart-wrapper">
                   <PerformanceChart 
                     assignments={gradedAssignments} 
-                    title={`Performance in ${course.code}`}
+                    title={`Performance in ${course?.code || 'Course'}`}
                   />
                 </div>
               </div>
@@ -326,7 +319,7 @@ const CourseDetails = () => {
             <div className="assignments-header">
               <h2><FaClipboardList /> Course Assignments</h2>
             </div>
-            <AssignmentList assignments={assignments} />
+            <AssignmentList assignments={assignments || []} />
           </div>
         )}
         
@@ -374,17 +367,18 @@ const CourseDetails = () => {
                   <h3>Assignment Grades</h3>
                 </div>
                 <div className="grades-table-wrapper">
-                  <table className="grades-table">
-                    <thead>
-                      <tr>
+            <table className="grades-table">
+              <thead>
+                <tr>
                         <th className="assignment-column">Assignment</th>
                         <th className="date-column">Due Date</th>
                         <th className="status-column">Status</th>
                         <th className="score-column">Score</th>
+                        <th className="grade-column">Grade</th>
                         <th className="percentage-column">Percentage</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                </tr>
+              </thead>
+              <tbody>
                       {courseGrade.detailedGrades.map(assignment => (
                         <tr key={assignment.id} className={`grade-row status-${assignment.status}`}>
                           <td className="assignment-title">{assignment.title}</td>
@@ -394,12 +388,15 @@ const CourseDetails = () => {
                               {assignment.status === 'graded' ? 'Graded' : 
                               assignment.status === 'submitted' ? 'Submitted' : 
                               new Date(assignment.dueDate) < new Date() ? 'Past Due' : 'Pending'}
-                            </span>
-                          </td>
+                      </span>
+                    </td>
                           <td className="score-cell">
                             {assignment.status === 'graded' 
                               ? `${assignment.score || 0}/${assignment.maxScore}` 
-                              : '-'}
+                        : '-'}
+                    </td>
+                          <td className="grade-cell">
+                            {assignment.status === 'graded' ? assignment.letterGrade : '-'}
                           </td>
                           <td>
                             {assignment.percentage !== null ? (
@@ -412,10 +409,10 @@ const CourseDetails = () => {
                               </div>
                             ) : '-'}
                           </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
                 </div>
               </div>
             ) : (
