@@ -178,15 +178,22 @@ export const calculateCourseGrade = async (courseId, studentId) => {
     // Detailed grades for each assignment
     const detailedGrades = courseAssignments.map(assignment => {
       const submission = courseSubmissions.find(s => s.assignment_id === assignment.id);
+      const score = submission?.score || 0;
+      const maxScore = assignment.max_score || 100;
+      const percentage = submission?.score !== undefined && submission?.score !== null 
+        ? Math.round((score / maxScore) * 100) 
+        : null;
+      
       return {
         id: assignment.id,
         title: assignment.title,
         dueDate: assignment.due_date,
-        maxScore: assignment.max_score || 100,
+        maxScore: maxScore,
         score: submission?.score,
         status: submission?.status || 'pending',
         weight: assignment.weight || 1,
-        percentage: submission?.score ? Math.round((submission.score / (assignment.max_score || 100)) * 100) : null
+        percentage: percentage,
+        letterGrade: percentage !== null ? calculateGrade(percentage) : 'N/A'
       };
     });
     
