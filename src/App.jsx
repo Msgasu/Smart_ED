@@ -21,6 +21,7 @@ import CareerPrediction from './pages/student/CareerPrediction';
 // import FacultyDashboard from './pages/faculty/FacultyDashboard'
 // import GuardianDashboard from './pages/guardian/GuardianDashboard'
 import { Toaster } from 'react-hot-toast'
+import Notifications from './pages/Notifications'
 
 import Students from './components/admin/Students';
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
@@ -82,6 +83,9 @@ function App() {
         <Route path="/teacher/report/:studentId/:courseId" element={<TeacherReport />} />
         <Route path="/teacher/reports" element={<ReportsList />} />
         <Route path="/teacher/report-view/:reportId" element={<ReportView />} />
+        
+        {/* Notifications route */}
+        <Route path="/notifications" element={<Notifications />} />
         
         {/* Default redirect */}
         <Route path="/" element={<Navigate to="/signin" />} />
