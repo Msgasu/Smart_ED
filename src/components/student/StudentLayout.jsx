@@ -14,6 +14,7 @@ import {
   FaChartLine
 } from 'react-icons/fa';
 import './styles/StudentLayout.css';
+import NotificationsIcon from '../common/NotificationsIcon';
 
 const StudentLayout = ({ children }) => {
   const location = useLocation();
@@ -119,6 +120,17 @@ const StudentLayout = ({ children }) => {
       
       {/* Main Content */}
       <div className="student-main">
+        <header className="student-header">
+          <div className="header-title">
+            <h2>{userName ? `Welcome, ${userName}` : 'Student Portal'}</h2>
+          </div>
+          <div className="header-actions">
+            <NotificationsIcon />
+            <div className="avatar">
+              <span>{userName.split(' ').map(n => n[0]).join('')}</span>
+            </div>
+          </div>
+        </header>
         <div className="student-content">
           {children}
         </div>
