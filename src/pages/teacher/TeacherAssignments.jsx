@@ -214,7 +214,7 @@ const TeacherAssignments = () => {
                 <FaSearch />
                 <input 
                   type="text" 
-                  placeholder="Search assignments..." 
+                  placeholder="Search by title or type..." 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -244,7 +244,9 @@ const TeacherAssignments = () => {
                         onChange={handleInputChange}
                         required
                         className="form-control"
+                        placeholder="Enter a descriptive title for the assignment"
                       />
+                      <span className="field-hint">A clear title helps students understand the assignment quickly.</span>
                     </div>
                     
                     <div className="form-group">
@@ -256,7 +258,9 @@ const TeacherAssignments = () => {
                         onChange={handleInputChange}
                         className="form-control"
                         rows="3"
+                        placeholder="Provide detailed instructions and requirements for this assignment"
                       ></textarea>
+                      <span className="field-hint">Be specific about your expectations, deliverables, and any resources students should use.</span>
                     </div>
                     
                     <div className="form-row">
@@ -274,6 +278,33 @@ const TeacherAssignments = () => {
                           <option value="Exam">Exam</option>
                           <option value="Project">Project</option>
                         </select>
+                        
+                        <div className="badge-options">
+                          <div 
+                            className={`badge-option ${newAssignment.type === 'Homework' ? 'active' : ''}`}
+                            onClick={() => handleInputChange({target: {name: 'type', value: 'Homework'}})}
+                          >
+                            Homework
+                          </div>
+                          <div 
+                            className={`badge-option ${newAssignment.type === 'Quiz' ? 'active' : ''}`}
+                            onClick={() => handleInputChange({target: {name: 'type', value: 'Quiz'}})}
+                          >
+                            Quiz
+                          </div>
+                          <div 
+                            className={`badge-option ${newAssignment.type === 'Exam' ? 'active' : ''}`}
+                            onClick={() => handleInputChange({target: {name: 'type', value: 'Exam'}})}
+                          >
+                            Exam
+                          </div>
+                          <div 
+                            className={`badge-option ${newAssignment.type === 'Project' ? 'active' : ''}`}
+                            onClick={() => handleInputChange({target: {name: 'type', value: 'Project'}})}
+                          >
+                            Project
+                          </div>
+                        </div>
                       </div>
                       
                       <div className="form-group">
@@ -287,7 +318,15 @@ const TeacherAssignments = () => {
                           min="1"
                           required
                           className="form-control"
+                          placeholder="Points available"
                         />
+                        <div 
+                          className="score-range"
+                          style={{"--score-percentage": Math.min(newAssignment.max_score, 100)}}
+                        >
+                          <div className="score-indicator"></div>
+                        </div>
+                        <span className="field-hint">Typically between 10-100 points. Choose a value that reflects the assignment's complexity.</span>
                       </div>
                     </div>
                     
@@ -295,7 +334,6 @@ const TeacherAssignments = () => {
                       <div className="form-group">
                         <label htmlFor="due_date">Due Date</label>
                         <div className="input-with-icon">
-                          <FaCalendarAlt />
                           <input
                             type="date"
                             id="due_date"
@@ -304,13 +342,14 @@ const TeacherAssignments = () => {
                             onChange={handleInputChange}
                             className="form-control"
                           />
+                          <FaCalendarAlt />
                         </div>
+                        <span className="field-hint">Select a date that gives students sufficient time to complete the work.</span>
                       </div>
                       
                       <div className="form-group">
                         <label htmlFor="due_time">Due Time</label>
                         <div className="input-with-icon">
-                          <FaClock />
                           <input
                             type="time"
                             id="due_time"
@@ -319,20 +358,18 @@ const TeacherAssignments = () => {
                             onChange={handleInputChange}
                             className="form-control"
                           />
+                          <FaClock />
                         </div>
+                        <span className="field-hint">Recommended to set end-of-day (23:59) for less confusion.</span>
                       </div>
                     </div>
                     
                     <div className="form-actions">
+                      <button type="button" className="btn btn-secondary" onClick={toggleForm}>
+                        Cancel
+                      </button>
                       <button type="submit" className="btn btn-primary">
                         <FaPlus /> Create Assignment
-                      </button>
-                      <button 
-                        type="button" 
-                        className="btn btn-secondary" 
-                        onClick={toggleForm}
-                      >
-                        Cancel
                       </button>
                     </div>
                   </form>
