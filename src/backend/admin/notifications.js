@@ -65,7 +65,7 @@ export const getUserNotifications = async (options = {}) => {
       .from('notifications')
       .select(`
         *,
-        sender:sender_id(id, first_name, last_name, avatar_url)
+        sender:sender_id(id, first_name, last_name)
       `)
       .eq('recipient_id', user.id)
       .order('created_at', { ascending: false });
