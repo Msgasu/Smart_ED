@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { FaHome, FaUsers, FaChartBar, FaCog, FaSignOutAlt } from 'react-icons/fa';
+import { FaHome, FaUsers, FaChartBar, FaCog, FaSignOutAlt, FaBell } from 'react-icons/fa';
 import './styles/AdminLayout.css';
 
 const Sidebar = () => {
@@ -59,6 +59,14 @@ const Sidebar = () => {
             to="/admin/settings"
           >
             <FaCog /> <span>Settings</span>
+          </Link>
+        </div>
+        <div className="nav-item">
+          <Link 
+            className={`nav-link ${path === "/notifications" ? "active" : ""}`}
+            to="/notifications"
+          >
+            <FaBell /> <span>Notifications</span>
           </Link>
         </div>
         <div className="nav-item logout-container">
