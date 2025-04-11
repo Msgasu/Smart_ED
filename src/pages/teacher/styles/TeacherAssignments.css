@@ -37,30 +37,66 @@
 }
 
 /* Course Info Card */
+.course-info-card {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border-left: 4px solid var(--primary-color);
+}
+
+.course-info-card .card-header {
+  padding: 1.25rem 1.75rem;
+  background: linear-gradient(to right, rgba(52, 152, 219, 0.05), rgba(52, 152, 219, 0.1));
+  border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+.course-info-card .card-header h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.course-info-card .card-body {
+  padding: 1.5rem;
+}
+
 .course-details {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
 .detail-item {
   display: flex;
   align-items: flex-start;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.detail-item:last-child {
+  border-bottom: none;
 }
 
 .detail-item .label {
   font-weight: 600;
-  width: 120px;
+  width: 150px;
   color: var(--text-color);
+  font-size: 0.95rem;
 }
 
 .detail-item .value {
-  color: var(--text-light);
+  color: var(--text-color);
   flex: 1;
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 .detail-item .description {
-  line-height: 1.5;
+  line-height: 1.7;
+  color: var(--text-light);
 }
 
 /* Assignment Controls */
@@ -76,13 +112,20 @@
   align-items: center;
   background-color: white;
   border-radius: 30px;
-  padding: 0.5rem 1.25rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 0.75rem 1.5rem;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
   width: 300px;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.search-container:focus-within {
+  box-shadow: 0 3px 15px rgba(52, 152, 219, 0.1);
+  border-color: rgba(52, 152, 219, 0.3);
 }
 
 .search-container svg {
-  color: var(--text-light);
+  color: var(--primary-color);
   margin-right: 0.75rem;
   font-size: 0.9rem;
 }
@@ -92,43 +135,101 @@
   background: none;
   outline: none;
   width: 100%;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: var(--text-color);
 }
 
-/* Assignment Form */
+.search-container input::placeholder {
+  color: #b0b0b0;
+}
+
+/* Assignment Form Card */
+.assignment-form-card {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  animation: slideDown 0.4s ease;
+  border-top: 4px solid var(--primary-color);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.assignment-form-card .card-header {
+  padding: 1.25rem 1.75rem;
+  background: linear-gradient(to right, rgba(52, 152, 219, 0.05), rgba(52, 152, 219, 0.1));
+  border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+.assignment-form-card .card-header h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.assignment-form-card .card-body {
+  padding: 2rem;
+}
+
+/* Form Groups */
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
+  position: relative;
 }
 
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-color);
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
 }
 
 .form-control,
 .form-select {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  font-size: 0.9rem;
+  padding: 0.85rem 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
   transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .form-control:focus,
 .form-select:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+  box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.15);
   outline: none;
+}
+
+.form-control::placeholder {
+  color: #b0b0b0;
+}
+
+textarea.form-control {
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.6;
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  gap: 2rem;
+  margin-bottom: 1rem;
 }
 
 .input-with-icon {
@@ -137,113 +238,342 @@
 
 .input-with-icon svg {
   position: absolute;
-  left: 0.75rem;
+  left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--text-light);
+  color: var(--primary-color);
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
 }
 
 .input-with-icon input {
-  padding-left: 2.5rem;
+  padding-left: 3rem;
 }
 
+.input-with-icon input:focus + svg {
+  color: var(--primary-color);
+  transform: translateY(-50%) scale(1.1);
+}
+
+/* Form Actions */
 .form-actions {
   display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 1.25rem;
+  margin-top: 2rem;
+  justify-content: flex-end;
+}
+
+.form-actions .btn {
+  padding: 0.85rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.form-actions .btn svg {
+  font-size: 1rem;
+}
+
+.form-actions .btn-primary {
+  background-color: var(--primary-color);
+  border: none;
+  color: white;
+}
+
+.form-actions .btn-primary:hover {
+  background-color: #2980b9;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+}
+
+.form-actions .btn-secondary {
+  background-color: #f8f9fa;
+  border: 2px solid #e0e0e0;
+  color: #6c757d;
+}
+
+.form-actions .btn-secondary:hover {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+/* Animated Form Fields */
+.form-control:focus ~ label,
+.form-select:focus ~ label {
+  color: var(--primary-color);
+}
+
+/* Field type styles */
+select.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236c757d' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 16px 12px;
+  padding-right: 2.5rem;
+}
+
+/* Type badges in the form */
+.badge-options {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.badge-option {
+  padding: 0.5rem 1rem;
+  border-radius: 30px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: #f8f9fa;
+  border: 2px solid #e0e0e0;
+  color: #6c757d;
+}
+
+.badge-option:hover {
+  border-color: #bfc6cd;
+}
+
+.badge-option.active {
+  background-color: rgba(52, 152, 219, 0.1);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* Add hints below fields */
+.field-hint {
+  display: block;
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-top: 0.5rem;
+}
+
+/* Custom number input styling */
+input[type="number"].form-control {
+  appearance: textfield;
+}
+
+input[type="number"].form-control::-webkit-outer-spin-button,
+input[type="number"].form-control::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Score range indicator */
+.score-range {
+  position: relative;
+  height: 4px;
+  background-color: #e0e0e0;
+  border-radius: 2px;
+  margin-top: 0.75rem;
+}
+
+.score-indicator {
+  position: absolute;
+  height: 10px;
+  width: 10px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  top: 50%;
+  transform: translate(-50%, -50%);
+  left: calc(var(--score-percentage) * 1%);
+}
+
+/* Assignments List Card */
+.assignments-list-card {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.assignments-list-card .card-header {
+  padding: 1.25rem 1.75rem;
+  background: linear-gradient(to right, rgba(52, 152, 219, 0.05), rgba(52, 152, 219, 0.1));
+  border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+.assignments-list-card .card-header h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.assignments-list-card .card-body {
+  padding: 0; /* Remove padding for table to stretch fully */
 }
 
 /* Assignments Table */
 .assignments-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .assignments-table th,
 .assignments-table td {
-  padding: 1rem;
+  padding: 1.25rem 1.5rem;
   text-align: left;
   border-bottom: 1px solid var(--border-color);
 }
 
+.assignments-table tr:last-child td {
+  border-bottom: none;
+}
+
 .assignments-table th {
-  background-color: var(--bg-light);
+  background-color: rgba(52, 152, 219, 0.05);
   font-weight: 600;
   color: var(--text-color);
+  font-size: 0.95rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.assignments-table tr {
+  transition: background-color 0.3s;
+}
+
+.assignments-table tr:hover {
+  background-color: rgba(52, 152, 219, 0.03);
 }
 
 .assignments-table th.sortable {
   cursor: pointer;
   transition: background-color 0.3s ease;
+  user-select: none;
+  padding-right: 2rem;
+  position: relative;
+}
+
+.assignments-table th.sortable:after {
+  content: "↑↓";
+  position: absolute;
+  right: 0.75rem;
+  opacity: 0.3;
+  font-size: 0.8rem;
 }
 
 .assignments-table th.sortable:hover {
   background-color: rgba(52, 152, 219, 0.1);
 }
 
+.assignments-table th.sortable[data-sort="asc"]:after {
+  content: "↑";
+  opacity: 1;
+  color: var(--primary-color);
+}
+
+.assignments-table th.sortable[data-sort="desc"]:after {
+  content: "↓";
+  opacity: 1;
+  color: var(--primary-color);
+}
+
+/* Assignment badges */
 .badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
   border-radius: 30px;
-  font-size: 0.8rem;
-  font-weight: 500;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s;
 }
 
 .type-homework {
   background-color: rgba(52, 152, 219, 0.1);
   color: var(--primary-color);
+  border: 1px solid rgba(52, 152, 219, 0.2);
 }
 
 .type-quiz {
   background-color: rgba(46, 204, 113, 0.1);
-  color: #2ecc71;
+  color: #27ae60;
+  border: 1px solid rgba(46, 204, 113, 0.2);
 }
 
 .type-exam {
   background-color: rgba(231, 76, 60, 0.1);
   color: #e74c3c;
+  border: 1px solid rgba(231, 76, 60, 0.2);
 }
 
 .type-project {
   background-color: rgba(155, 89, 182, 0.1);
   color: #9b59b6;
+  border: 1px solid rgba(155, 89, 182, 0.2);
 }
 
+/* Due date styling */
 .due-date {
   display: flex;
   align-items: center;
-  color: var(--text-light);
+  color: var(--text-color);
   font-size: 0.9rem;
-}
-
-.due-date svg {
-  margin-right: 0.5rem;
-  color: #f39c12;
-}
-
-.action-buttons {
-  display: flex;
   gap: 0.5rem;
 }
 
+.due-date svg {
+  color: #f39c12;
+}
+
+.due-date.overdue {
+  color: #e74c3c;
+}
+
+.due-date.overdue svg {
+  color: #e74c3c;
+}
+
+.due-date.upcoming {
+  color: #27ae60;
+}
+
+.due-date.upcoming svg {
+  color: #27ae60;
+}
+
+/* Action buttons */
+.action-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
 .btn-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: white;
   color: var(--text-color);
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--border-color);
   cursor: pointer;
   transition: all 0.3s ease;
+  font-size: 0.95rem;
 }
 
 .btn-icon:hover {
   background-color: var(--primary-color);
   color: white;
   border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
 }
 
 .btn-icon.delete {
