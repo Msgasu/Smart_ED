@@ -14,6 +14,7 @@ import {
 } from 'react-icons/fa';
 import { supabase } from '../../lib/supabase';
 import './styles/TeacherLayout.css';
+import NotificationsIcon from '../common/NotificationsIcon';
 
 const TeacherLayout = ({ children }) => {
   const location = useLocation();
@@ -176,6 +177,17 @@ const TeacherLayout = ({ children }) => {
       
       {/* Main Content */}
       <div className="teacher-main">
+        <header className="teacher-header">
+          <div className="header-title">
+            <h2>{userName ? `Welcome, ${userName}` : 'Teacher Portal'}</h2>
+          </div>
+          <div className="header-actions">
+            <NotificationsIcon />
+            <div className="avatar">
+              <span>{userName.split(' ').map(n => n[0]).join('')}</span>
+            </div>
+          </div>
+        </header>
         <div className="teacher-content">
           {children}
         </div>
