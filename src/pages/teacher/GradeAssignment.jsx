@@ -5,7 +5,8 @@ import { toast } from 'react-hot-toast';
 import TeacherLayout from '../../components/teacher/TeacherLayout.jsx';
 import { getAssignmentDetails } from '../../backend/teachers/assignments';
 import { getSubmissionsByAssignment, bulkGradeSubmissions } from '../../backend/teachers/grading';
-import { FaSave, FaArrowLeft, FaFilter, FaSearch } from 'react-icons/fa';
+import { FaSave, FaArrowLeft, FaFilter, FaSearch, FaCheck, FaTimes, FaClock } from 'react-icons/fa';
+import './styles/GradeAssignment.css';
 
 const GradeAssignment = () => {
   const { assignmentId } = useParams();
@@ -14,8 +15,10 @@ const GradeAssignment = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [grades, setGrades] = useState({});
+  const [feedback, setFeedback] = useState({});
   const [filter, setFilter] = useState('all'); // 'all', 'graded', 'ungraded'
   const [searchTerm, setSearchTerm] = useState('');
+  const [saveStatus, setSaveStatus] = useState({ saving: false, saved: false });
 
   useEffect(() => {
     const fetchAssignmentDetails = async () => {
@@ -31,16 +34,20 @@ const GradeAssignment = () => {
         
         // Initialize grades object with existing grades
         const gradesObj = {};
+        const feedbackObj = {};
+        
         submissionsData.students.forEach(student => {
           gradesObj[student.id] = {
             score: student.submission.score,
-            // feedback: student.submission.feedback,
             status: student.submission.status,
             id: student.submission.id
           };
+          
+          feedbackObj[student.id] = student.submission.feedback || '';
         });
         
         setGrades(gradesObj);
+        setFeedback(feedbackObj);
         setStudents(submissionsData.students);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -62,21 +69,25 @@ const GradeAssignment = () => {
         status: 'graded'
       }
     }));
+    
+    // Clear saved status when changes are made
+    setSaveStatus({ saving: false, saved: false });
   };
 
-  // const handleFeedbackChange = (studentId, feedback) => {
-  //   setGrades(prev => ({
-  //     ...prev,
-  //     [studentId]: {
-  //       ...prev[studentId],
-  //       feedback,
-  //       status: 'graded'
-  //     }
-  //   }));
-  // };
+  const handleFeedbackChange = (studentId, value) => {
+    setFeedback(prev => ({
+      ...prev,
+      [studentId]: value
+    }));
+    
+    // Clear saved status when changes are made
+    setSaveStatus({ saving: false, saved: false });
+  };
 
   const saveGrades = async () => {
     try {
+      setSaveStatus({ saving: true, saved: false });
+      
       // Prepare grades for bulk update
       const gradesToSave = [];
       
@@ -88,7 +99,7 @@ const GradeAssignment = () => {
             assignmentId,
             gradeData: {
               score: data.score,
-              // feedback: data.feedback || ''
+              feedback: feedback[studentId] || ''
             }
           });
         }
@@ -100,6 +111,12 @@ const GradeAssignment = () => {
       if (error) throw error;
       
       toast.success(`Successfully graded ${data.totalSuccess} submissions`);
+      setSaveStatus({ saving: false, saved: true });
+      
+      // Hide the saved indicator after a delay
+      setTimeout(() => {
+        setSaveStatus(prev => ({ ...prev, saved: false }));
+      }, 3000);
       
       // Refresh data
       const { data: refreshData, error: refreshError } = await getSubmissionsByAssignment(assignmentId);
@@ -110,7 +127,36 @@ const GradeAssignment = () => {
     } catch (error) {
       console.error('Error saving grades:', error);
       toast.error('Failed to save grades');
+      setSaveStatus({ saving: false, saved: false });
     }
+  };
+
+  // Calculate class statistics
+  const calculateStats = () => {
+    const stats = {
+      total: students.length,
+      graded: students.filter(s => s.submission.status === 'graded').length,
+      submitted: students.filter(s => s.submission.status === 'submitted' && s.submission.status !== 'graded').length,
+      notSubmitted: students.filter(s => s.submission.status === 'not_submitted').length,
+      average: 0,
+      highest: 0,
+      lowest: 100
+    };
+    
+    // Calculate scores for graded submissions
+    const scores = students
+      .filter(s => s.submission.status === 'graded' && s.submission.score !== null)
+      .map(s => s.submission.score);
+    
+    if (scores.length > 0) {
+      stats.average = Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length);
+      stats.highest = Math.max(...scores);
+      stats.lowest = Math.min(...scores);
+    } else {
+      stats.lowest = 0;
+    }
+    
+    return stats;
   };
 
   // Filter students based on filter and search term
@@ -118,6 +164,8 @@ const GradeAssignment = () => {
     // Apply status filter
     if (filter === 'graded' && student.submission.status !== 'graded') return false;
     if (filter === 'ungraded' && student.submission.status === 'graded') return false;
+    if (filter === 'submitted' && !(student.submission.status === 'submitted' && student.submission.status !== 'graded')) return false;
+    if (filter === 'not_submitted' && student.submission.status !== 'not_submitted') return false;
     
     // Apply search filter
     if (searchTerm) {
@@ -127,6 +175,8 @@ const GradeAssignment = () => {
     
     return true;
   });
+
+  const stats = calculateStats();
 
   if (loading) {
     return (
@@ -140,34 +190,101 @@ const GradeAssignment = () => {
     <TeacherLayout>
       <div className="grading-page">
         <div className="page-header">
+          <div className="title-section">
           <h1 className="page-title">
             {assignment ? `Grade: ${assignment.title}` : 'Grade Assignment'}
           </h1>
+            <div className="back-link">
+              <Link to={`/teacher/assignments/${assignment?.course_id}`}>
+                <FaArrowLeft /> Back to Assignments
+              </Link>
+            </div>
+          </div>
           <button 
-            className="btn-primary save-grades-btn"
+            className={`save-grades-btn ${saveStatus.saving ? 'saving' : ''} ${saveStatus.saved ? 'saved' : ''}`}
             onClick={saveGrades}
+            disabled={saveStatus.saving}
           >
-            <FaSave /> Save All Grades
+            {saveStatus.saving ? (
+              <>Saving Grades...</>
+            ) : saveStatus.saved ? (
+              <><FaCheck /> Grades Saved</>
+            ) : (
+              <><FaSave /> Save All Grades</>
+            )}
           </button>
-        </div>
-        
-        <div className="back-link">
-          <Link to={`/teacher/assignments/${assignment?.course_id}`}>
-            <FaArrowLeft /> Back to Assignments
-          </Link>
         </div>
         
         <div className="assignment-details-card">
           <h2>Assignment Details</h2>
           {assignment && (
-            <>
-              <p><strong>Course:</strong> {assignment.courses.code} - {assignment.courses.name}</p>
-              <p><strong>Title:</strong> {assignment.title}</p>
-              <p><strong>Type:</strong> {assignment.type}</p>
-              <p><strong>Due Date:</strong> {new Date(assignment.due_date).toLocaleString()}</p>
-              <p><strong>Max Score:</strong> {assignment.max_score}</p>
-            </>
+            <div className="assignment-details-grid">
+              <div className="detail-item">
+                <span className="label">Course:</span>
+                <span className="value">{assignment.courses.code} - {assignment.courses.name}</span>
+              </div>
+              <div className="detail-item">
+                <span className="label">Title:</span>
+                <span className="value">{assignment.title}</span>
+              </div>
+              <div className="detail-item">
+                <span className="label">Type:</span>
+                <span className="value">
+                  <span className={`type-badge type-${assignment.type.toLowerCase()}`}>
+                    {assignment.type}
+                  </span>
+                </span>
+              </div>
+              <div className="detail-item">
+                <span className="label">Due Date:</span>
+                <span className="value due-date">
+                  <FaClock /> {new Date(assignment.due_date).toLocaleString()}
+                </span>
+              </div>
+              <div className="detail-item">
+                <span className="label">Max Score:</span>
+                <span className="value max-points">{assignment.max_score} points</span>
+              </div>
+            </div>
           )}
+        </div>
+        
+        <div className="grading-stats-card">
+          <h2>Class Statistics</h2>
+          <div className="stats-grid">
+            <div className="stat-item">
+              <div className="stat-value">{stats.total}</div>
+              <div className="stat-label">Total Students</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-value">{stats.submitted}</div>
+              <div className="stat-label">Submitted</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-value">{stats.graded}</div>
+              <div className="stat-label">Graded</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-value">{stats.notSubmitted}</div>
+              <div className="stat-label">Not Submitted</div>
+            </div>
+            {stats.graded > 0 && (
+              <>
+                <div className="stat-item">
+                  <div className="stat-value">{stats.average}</div>
+                  <div className="stat-label">Average Score</div>
+                </div>
+                <div className="stat-item">
+                  <div className="stat-value">{stats.highest}</div>
+                  <div className="stat-label">Highest Score</div>
+                </div>
+                <div className="stat-item">
+                  <div className="stat-value">{stats.lowest}</div>
+                  <div className="stat-label">Lowest Score</div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
         
         <div className="grading-filters">
@@ -179,8 +296,10 @@ const GradeAssignment = () => {
               className="filter-select"
             >
               <option value="all">All Students</option>
+              <option value="submitted">Submitted</option>
               <option value="graded">Graded</option>
               <option value="ungraded">Ungraded</option>
+              <option value="not_submitted">Not Submitted</option>
             </select>
           </div>
           
@@ -196,25 +315,6 @@ const GradeAssignment = () => {
           </div>
         </div>
         
-        <div className="submission-stats">
-          <div className="stat-item">
-            <span className="stat-label">Total Students:</span>
-            <span className="stat-value">{students.length}</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Graded:</span>
-            <span className="stat-value">
-              {students.filter(s => s.submission.status === 'graded').length}
-            </span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Ungraded:</span>
-            <span className="stat-value">
-              {students.filter(s => s.submission.status !== 'graded').length}
-            </span>
-          </div>
-        </div>
-        
         <div className="grading-table-container">
           <table className="grading-table">
             <thead>
@@ -222,7 +322,7 @@ const GradeAssignment = () => {
                 <th>Student</th>
                 <th>Status</th>
                 <th>Score</th>
-                {/* <th>Feedback</th> */}
+                <th>Feedback</th>
               </tr>
             </thead>
             <tbody>
@@ -232,8 +332,13 @@ const GradeAssignment = () => {
                 </tr>
               ) : (
                 filteredStudents.map(student => (
-                  <tr key={student.id}>
-                    <td>{student.first_name} {student.last_name}</td>
+                  <tr key={student.id} className={`${student.submission.status}`}>
+                    <td className="student-name">
+                      <div className="student-info">
+                        <span className="student-full-name">{student.first_name} {student.last_name}</span>
+                        <span className="student-email">{student.email}</span>
+                      </div>
+                    </td>
                     <td>
                       <span className={`status-badge status-${student.submission.status}`}>
                         {student.submission.status === 'graded' ? 'Graded' : 
@@ -241,6 +346,7 @@ const GradeAssignment = () => {
                       </span>
                     </td>
                     <td>
+                      <div className="score-field">
                       <input
                         type="number"
                         min="0"
@@ -248,17 +354,22 @@ const GradeAssignment = () => {
                         value={grades[student.id]?.score || ''}
                         onChange={(e) => handleScoreChange(student.id, e.target.value)}
                         className="score-input"
+                          placeholder="Score"
+                          disabled={student.submission.status === 'not_submitted'}
                       />
                       <span className="max-score">/ {assignment?.max_score || 100}</span>
+                      </div>
                     </td>
-                    {/* <td>
+                    <td>
                       <textarea
-                        value={grades[student.id]?.feedback || ''}
+                        value={feedback[student.id] || ''}
                         onChange={(e) => handleFeedbackChange(student.id, e.target.value)}
-                        placeholder="Add feedback..."
                         className="feedback-input"
-                      />
-                    </td> */}
+                        placeholder="Enter feedback"
+                        rows="2"
+                        disabled={student.submission.status === 'not_submitted'}
+                      ></textarea>
+                    </td>
                   </tr>
                 ))
               )}
@@ -268,10 +379,17 @@ const GradeAssignment = () => {
         
         <div className="save-button-container">
           <button 
-            className="btn-primary save-grades-btn"
+            className={`save-grades-btn ${saveStatus.saving ? 'saving' : ''} ${saveStatus.saved ? 'saved' : ''}`}
             onClick={saveGrades}
+            disabled={saveStatus.saving}
           >
-            <FaSave /> Save All Grades
+            {saveStatus.saving ? (
+              <>Saving Grades...</>
+            ) : saveStatus.saved ? (
+              <><FaCheck /> Grades Saved</>
+            ) : (
+              <><FaSave /> Save All Grades</>
+            )}
           </button>
         </div>
       </div>
