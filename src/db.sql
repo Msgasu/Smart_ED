@@ -9,6 +9,9 @@ DROP TABLE IF EXISTS student_assignments CASCADE;
 DROP TABLE IF EXISTS assignments CASCADE;
 DROP TABLE IF EXISTS courses CASCADE;
 DROP TABLE IF EXISTS profiles CASCADE;
+DROP TABLE IF EXISTS courses CASCADE;
+DROP TABLE IF EXISTS student_grades CASCADE;
+DROP TABLE IF EXISTS student_reports CASCADE;
 
 -- Create the profiles table (base user information)
 CREATE TABLE profiles (
@@ -108,19 +111,114 @@ CREATE TABLE assignments (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Student Assignments (submissions and scores)
-CREATE TABLE student_assignments (
+
+-- Create or update student_assignments table
+CREATE TABLE IF NOT EXISTS student_assignments (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     assignment_id UUID REFERENCES assignments(id) NOT NULL,
     student_id UUID REFERENCES profiles(id) NOT NULL,
     score INTEGER,
     submitted_at TIMESTAMP WITH TIME ZONE,
     status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'submitted', 'graded')),
+    description TEXT,
+    comment TEXT,
+    feedback TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(assignment_id, student_id)
 );
 
+-- Create assignment_files table for file uploads
+CREATE TABLE IF NOT EXISTS assignment_files (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    assignment_id UUID NOT NULL REFERENCES assignments(id) ON DELETE CASCADE,
+    student_id UUID NOT NULL REFERENCES profiles(id),
+    student_assignment_id UUID REFERENCES student_assignments(id),
+    filename TEXT NOT NULL,
+    path TEXT NOT NULL,
+    file_type TEXT,
+    file_size INTEGER,
+    url TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(assignment_id, student_id, filename)
+);
+
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_assignment_files_assignment_student 
+    ON assignment_files(assignment_id, student_id);
+    
+CREATE INDEX IF NOT EXISTS idx_student_assignments_assignment 
+    ON student_assignments(assignment_id);
+    
+CREATE INDEX IF NOT EXISTS idx_student_assignments_student 
+    ON student_assignments(student_id);
+
+-- Create function to automatically update the updated_at column
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+   NEW.updated_at = CURRENT_TIMESTAMP;
+   RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Create trigger on student_assignments
+DROP TRIGGER IF EXISTS set_updated_at_student_assignments ON student_assignments;
+CREATE TRIGGER set_updated_at_student_assignments
+BEFORE UPDATE ON student_assignments
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+-- Create trigger on assignment_files
+DROP TRIGGER IF EXISTS set_updated_at_assignment_files ON assignment_files;
+CREATE TRIGGER set_updated_at_assignment_files
+BEFORE UPDATE ON assignment_files
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+-- Example RLS policies (implement in Supabase dashboard)
+-- Allow students to view their own assignments
+/*
+CREATE POLICY "Students can view their own assignments" 
+ON student_assignments 
+FOR SELECT 
+TO authenticated 
+USING (student_id = auth.uid());
+
+-- Allow students to update their own assignments (for submission)
+CREATE POLICY "Students can update their own assignments" 
+ON student_assignments 
+FOR UPDATE 
+TO authenticated 
+USING (student_id = auth.uid());
+
+-- Allow teachers to view assignments for their courses
+CREATE POLICY "Teachers can view assignments for their courses" 
+ON student_assignments 
+FOR SELECT 
+TO authenticated 
+USING (
+  EXISTS (
+    SELECT 1 FROM faculty_courses fc
+    JOIN assignments a ON fc.course_id = a.course_id
+    WHERE fc.faculty_id = auth.uid() AND a.id = assignment_id
+  )
+);
+
+-- Allow teachers to update assignments for their courses (for grading)
+CREATE POLICY "Teachers can update assignments for their courses" 
+ON student_assignments 
+FOR UPDATE 
+TO authenticated 
+USING (
+  EXISTS (
+    SELECT 1 FROM faculty_courses fc
+    JOIN assignments a ON fc.course_id = a.course_id
+    WHERE fc.faculty_id = auth.uid() AND a.id = assignment_id
+  )
+);
+*/
 -- Student Reports Table
 CREATE TABLE student_reports (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -156,7 +254,6 @@ CREATE TABLE student_grades (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
-
 
 -- Insert sample courses
 INSERT INTO courses (code, name, description, created_at, updated_at) VALUES
@@ -203,3 +300,66 @@ INSERT INTO profiles (
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
 );
+
+-- Create the notifications table for the Smart ED platform
+CREATE TABLE IF NOT EXISTS public.notifications (
+    id UUID DEFAULT extensions.uuid_generate_v4() PRIMARY KEY,
+    sender_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    recipient_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+-- Add RLS policies for the notifications table
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+
+-- Allow users to view their own notifications
+CREATE POLICY "Users can view their own notifications"
+    ON public.notifications
+    FOR SELECT
+    USING (auth.uid() = recipient_id OR auth.uid() = sender_id);
+
+-- Allow users to create notifications if they are authenticated
+CREATE POLICY "Users can create notifications"
+    ON public.notifications
+    FOR INSERT
+    WITH CHECK (auth.uid() = sender_id);
+
+-- Allow users to update their own notifications (e.g., mark as read)
+CREATE POLICY "Users can update their own notifications"
+    ON public.notifications
+    FOR UPDATE
+    USING (auth.uid() = recipient_id)
+    WITH CHECK (auth.uid() = recipient_id);
+
+-- Create index for faster queries
+CREATE INDEX IF NOT EXISTS notifications_recipient_id_idx ON public.notifications (recipient_id);
+CREATE INDEX IF NOT EXISTS notifications_created_at_idx ON public.notifications (created_at DESC);
+
+-- Update the public.profiles table to include a notification count
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS unread_notifications INTEGER DEFAULT 0;
+
+-- Function to update unread notification count when a new notification is added
+CREATE OR REPLACE FUNCTION public.update_unread_notification_count()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE public.profiles
+  SET unread_notifications = (
+    SELECT COUNT(*)
+    FROM public.notifications
+    WHERE recipient_id = NEW.recipient_id AND is_read = FALSE
+  )
+  WHERE id = NEW.recipient_id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger to update unread notification count on insert or update
+DROP TRIGGER IF EXISTS update_notification_count ON public.notifications;
+CREATE TRIGGER update_notification_count
+AFTER INSERT OR UPDATE OF is_read ON public.notifications
+FOR EACH ROW
+EXECUTE FUNCTION public.update_unread_notification_count();
