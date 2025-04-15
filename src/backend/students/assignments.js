@@ -193,4 +193,203 @@ export const submitAssignment = async (assignmentId, studentId, submissionData) 
     console.error('Error submitting assignment:', error);
     return { data: null, error };
   }
+};
+
+/**
+ * Upload a file for an assignment submission
+ * @param {string} assignmentId - The assignment ID
+ * @param {string} studentId - The student ID
+ * @param {File} file - The file to upload
+ * @param {string} studentAssignmentId - Optional student assignment ID (if already submitted)
+ * @returns {Promise<Object>} - The upload result
+ */
+export const uploadAssignmentFile = async (assignmentId, studentId, file, studentAssignmentId = null) => {
+  try {
+    if (!assignmentId || !studentId || !file) {
+      throw new Error('Assignment ID, Student ID, and file are required');
+    }
+    
+    // Generate a unique filename to prevent collisions
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${assignmentId}_${studentId}_${Date.now()}.${fileExt}`;
+    const filePath = `assignment_files/${assignmentId}/${fileName}`;
+    
+    console.log("Uploading file to path:", filePath);
+    
+    // Upload file to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase
+      .storage
+      .from('assignments')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true // Overwrite existing files
+      });
+      
+    if (uploadError) {
+      console.error("Upload error:", uploadError);
+      throw uploadError;
+    }
+    
+    console.log("Upload successful:", uploadData);
+    
+    // Construct a direct public URL for the file
+    // Get the supabase URL directly from the client
+    const supabaseUrl = supabase.supabaseUrl || 'https://sxndojgvrhjmclveyfoz.supabase.co';
+    const fileUrl = `${supabaseUrl}/storage/v1/object/public/assignments/${filePath}`;
+    
+    console.log("Generated direct public URL:", fileUrl);
+    
+    // Save file record in the database
+    const { data: fileData, error: fileError } = await supabase
+      .from('assignment_files')
+      .insert([{
+        assignment_id: assignmentId,
+        student_id: studentId,
+        student_assignment_id: studentAssignmentId,
+        filename: file.name,
+        path: filePath,
+        file_type: file.type,
+        file_size: file.size,
+        url: fileUrl
+      }])
+      .select()
+      .single();
+      
+    if (fileError) {
+      console.error("Database insert error:", fileError);
+      throw fileError;
+    }
+    
+    return { data: fileData, error: null };
+  } catch (error) {
+    console.error('Error uploading assignment file:', error);
+    return { data: null, error };
+  }
+};
+
+/**
+ * Get submitted files for an assignment
+ * @param {string} assignmentId - The assignment ID
+ * @param {string} studentId - The student ID
+ * @returns {Promise<Object>} - The files data
+ */
+export const getAssignmentFiles = async (assignmentId, studentId) => {
+  try {
+    if (!assignmentId || !studentId) {
+      throw new Error('Assignment ID and Student ID are required');
+    }
+    
+    console.log(`Fetching files for assignment ${assignmentId} and student ${studentId}`);
+    
+    // Get files for this assignment/student
+    const { data, error } = await supabase
+      .from('assignment_files')
+      .select('*')
+      .eq('assignment_id', assignmentId)
+      .eq('student_id', studentId)
+      .order('created_at', { ascending: false });
+      
+    if (error) {
+      console.error("Error fetching assignment files:", error);
+      throw error;
+    }
+    
+    console.log(`Found ${data?.length || 0} files`);
+    
+    // Ensure URLs are up-to-date and using direct public URLs
+    if (data && data.length > 0) {
+      const filesWithDirectUrls = data.map(file => {
+        // Check if the URL already exists and is valid
+        if (file.url && file.url.startsWith('http')) {
+          console.log(`File ${file.id} already has a valid URL: ${file.url.substring(0, 30)}...`);
+          return file;
+        }
+        
+        // If URL is missing or invalid, generate a direct public URL
+        const supabaseUrl = supabase.supabaseUrl || 'https://sxndojgvrhjmclveyfoz.supabase.co';
+        const directUrl = `${supabaseUrl}/storage/v1/object/public/assignments/${file.path}`;
+        
+        console.log(`Generated direct URL for file ${file.id}: ${directUrl.substring(0, 30)}...`);
+        
+        return {
+          ...file,
+          url: directUrl
+        };
+      });
+      
+      return { data: filesWithDirectUrls, error: null };
+    }
+    
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error fetching assignment files:', error);
+    return { data: null, error };
+  }
+};
+
+/**
+ * Delete an assignment file
+ * @param {string} fileId - The file ID
+ * @param {string} studentId - The student ID 
+ * @returns {Promise<Object>} - The deletion result
+ */
+export const deleteAssignmentFile = async (fileId, studentId) => {
+  try {
+    if (!fileId || !studentId) {
+      throw new Error('File ID and Student ID are required');
+    }
+    
+    console.log(`Attempting to delete file ${fileId} for student ${studentId}`);
+    
+    // Get file details first
+    const { data: fileData, error: fetchError } = await supabase
+      .from('assignment_files')
+      .select('*')
+      .eq('id', fileId)
+      .eq('student_id', studentId)
+      .single();
+      
+    if (fetchError) {
+      console.error("Error fetching file data:", fetchError);
+      throw fetchError;
+    }
+    
+    if (!fileData) {
+      throw new Error('File not found or you do not have permission to delete it');
+    }
+    
+    console.log(`Found file to delete: ${fileData.filename}, path: ${fileData.path}`);
+    
+    // Delete from storage
+    const { data: deleteData, error: storageError } = await supabase
+      .storage
+      .from('assignments')
+      .remove([fileData.path]);
+      
+    if (storageError) {
+      console.error("Error deleting from storage:", storageError);
+      throw storageError;
+    }
+    
+    console.log("Storage deletion result:", deleteData);
+    
+    // Delete record from database
+    const { data: dbData, error: dbError } = await supabase
+      .from('assignment_files')
+      .delete()
+      .eq('id', fileId)
+      .select();
+      
+    if (dbError) {
+      console.error("Error deleting from database:", dbError);
+      throw dbError;
+    }
+    
+    console.log("Database deletion result:", dbData);
+    
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error deleting assignment file:', error);
+    return { success: false, error };
+  }
 }; 
