@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
-import { FaCheck, FaClock, FaFileUpload, FaCalendarAlt, FaTrophy, FaBook, FaExclamationTriangle } from 'react-icons/fa';
+import { FaCheck, FaClock, FaFileUpload, FaCalendarAlt, FaTrophy, FaBook, FaExclamationTriangle, FaEye } from 'react-icons/fa';
+import { submitAssignment } from '../../backend/students/assignments';
+import { useNavigate } from 'react-router-dom';
 import './styles/AssignmentList.css';
 
 const AssignmentList = ({ assignments, onSubmissionUpdate, studentId }) => {
@@ -10,6 +12,7 @@ const AssignmentList = ({ assignments, onSubmissionUpdate, studentId }) => {
   const [assignmentStatuses, setAssignmentStatuses] = useState({});
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (studentId) {
@@ -100,33 +103,11 @@ const AssignmentList = ({ assignments, onSubmissionUpdate, studentId }) => {
         throw new Error('Student ID is not available');
       }
 
-      const { data, error } = await supabase
-        .from('student_assignments')
-        .upsert({
-          assignment_id: assignmentId,
-          student_id: userId,
-          status: 'submitted',
-          submitted_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      
-      // Update local state
-      setAssignmentStatuses(prev => ({
-        ...prev,
-        [assignmentId]: {
-          status: 'submitted',
-          submitted_at: new Date().toISOString()
-        }
-      }));
-      
-      toast.success('Assignment submitted successfully!');
-      if (onSubmissionUpdate) onSubmissionUpdate();
+      // Navigate to detailed view for file upload
+      navigate(`/student/assignments/${assignmentId}`);
     } catch (error) {
-      console.error('Error submitting assignment:', error);
-      toast.error('Failed to submit assignment: ' + error.message);
+      console.error('Error navigating to assignment submission:', error);
+      toast.error('Failed to navigate to assignment submission: ' + error.message);
     }
   };
 
@@ -288,16 +269,13 @@ const AssignmentList = ({ assignments, onSubmissionUpdate, studentId }) => {
                       </button>
                     )}
                     
-                    {status === 'submitted' && (
-                      <div className="submission-info">
-                        <span>Submitted on {new Date(assignmentStatus.submitted_at).toLocaleDateString()}</span>
-                      </div>
-                    )}
-                    
-                    {status === 'graded' && (
-                      <div className="grade-info">
-                        <span>Grade: {assignmentStatus.score}/{assignment.max_score}</span>
-                      </div>
+                    {(status === 'submitted' || status === 'graded') && (
+                      <button 
+                        className="view-button"
+                        onClick={() => navigate(`/student/assignments/${assignment.id}`)}
+                      >
+                        <FaEye /> View Submission
+                      </button>
                     )}
                   </div>
                 </div>
