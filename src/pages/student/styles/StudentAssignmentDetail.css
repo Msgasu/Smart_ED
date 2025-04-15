@@ -1,0 +1,186 @@
+.assignment-detail-container {
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.back-link {
+  margin-bottom: 1.5rem;
+}
+
+.back-link a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #4a5568;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.back-link a:hover {
+  color: #3182ce;
+}
+
+/* Assignment header */
+.assignment-detail-header {
+  margin-bottom: 2rem;
+}
+
+.assignment-detail-header h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 1rem;
+}
+
+.assignment-meta {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+  gap: 1.5rem;
+}
+
+.assignment-course,
+.assignment-type,
+.assignment-due-date,
+.assignment-score {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #4a5568;
+}
+
+.assignment-course svg,
+.assignment-type svg,
+.assignment-due-date svg,
+.assignment-score svg {
+  color: #3182ce;
+  font-size: 1rem;
+}
+
+.assignment-due-date.overdue {
+  color: #e53e3e;
+}
+
+.assignment-due-date.overdue svg {
+  color: #e53e3e;
+}
+
+.time-remaining {
+  font-weight: 600;
+  margin-left: 0.5rem;
+  background-color: #edf2f7;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.assignment-due-date.overdue .time-remaining {
+  background-color: #fed7d7;
+  color: #e53e3e;
+}
+
+/* Content area */
+.assignment-detail-content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap:
+}
+
+.assignment-description-card,
+.assignment-submission-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #edf2f7;
+}
+
+.assignment-description-card h2,
+.assignment-submission-card h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.assignment-description {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #4a5568;
+  white-space: pre-wrap;
+}
+
+/* Loading and error states */
+.loading-container,
+.error-container,
+.not-found-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  gap: 1rem;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #edf2f7;
+  border-top: 3px solid #3182ce;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-message,
+.not-found-message {
+  font-size: 1.1rem;
+  color: #e53e3e;
+  text-align: center;
+}
+
+.error-container button,
+.not-found-container button {
+  padding: 0.6rem 1.25rem;
+  background-color: #3182ce;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.error-container button:hover,
+.not-found-container button:hover {
+  background-color: #2c5282;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .assignment-detail-container {
+    padding: 1rem;
+  }
+  
+  .assignment-detail-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .assignment-meta {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+} 
