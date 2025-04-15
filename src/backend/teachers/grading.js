@@ -265,4 +265,33 @@ export const bulkGradeSubmissions = async (grades) => {
     console.error('Error bulk grading submissions:', error);
     return { data: null, error };
   }
+};
+
+/**
+ * Get files uploaded by a student for a specific assignment
+ * @param {string} assignmentId - The assignment ID 
+ * @param {string} studentId - The student ID
+ * @returns {Promise<Object>} - The submission files
+ */
+export const getStudentSubmissionFiles = async (assignmentId, studentId) => {
+  try {
+    if (!assignmentId || !studentId) {
+      throw new Error('Assignment ID and Student ID are required');
+    }
+    
+    // Get files for this assignment/student combination
+    const { data, error } = await supabase
+      .from('assignment_files')
+      .select('*')
+      .eq('assignment_id', assignmentId)
+      .eq('student_id', studentId)
+      .order('created_at', { ascending: false });
+      
+    if (error) throw error;
+    
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error fetching student submission files:', error);
+    return { data: null, error };
+  }
 }; 
