@@ -13,6 +13,7 @@ import StudentDashboard from './pages/student/StudentDashboard'
 import StudentCourses from './pages/student/StudentCourses'
 import CourseDetails from './pages/student/CourseDetails'
 import StudentAssignments from './pages/student/StudentAssignments'
+import StudentAssignmentDetail from './pages/student/StudentAssignmentDetail'
 // Import the new Grade Projection page
 // Remove the old import for GradeProjection
 // import GradeProjection from './pages/student/GradeProjection';
@@ -67,6 +68,7 @@ function App() {
         <Route path="/student/courses" element={<StudentCourses />} />
         <Route path="/student/courses/:courseId" element={<CourseDetails />} />
         <Route path="/student/assignments" element={<StudentAssignments />} />
+        <Route path="/student/assignments/:assignmentId" element={<StudentAssignmentDetail />} />
         {/* Update route for Career Prediction */}
         <Route path="/student/career-prediction" element={<CareerPrediction />} />
         
