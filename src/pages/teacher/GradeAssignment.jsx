@@ -4,8 +4,8 @@ import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import TeacherLayout from '../../components/teacher/TeacherLayout.jsx';
 import { getAssignmentDetails } from '../../backend/teachers/assignments';
-import { getSubmissionsByAssignment, bulkGradeSubmissions } from '../../backend/teachers/grading';
-import { FaSave, FaArrowLeft, FaFilter, FaSearch, FaCheck, FaTimes, FaClock } from 'react-icons/fa';
+import { getSubmissionsByAssignment, bulkGradeSubmissions, getStudentSubmissionFiles } from '../../backend/teachers/grading';
+import { FaSave, FaArrowLeft, FaFilter, FaSearch, FaCheck, FaTimes, FaClock, FaFile, FaFileAlt, FaFilePdf, FaFileImage, FaFileWord, FaFileExcel, FaDownload, FaTimes as FaClose } from 'react-icons/fa';
 import './styles/GradeAssignment.css';
 
 const GradeAssignment = () => {
@@ -19,6 +19,10 @@ const GradeAssignment = () => {
   const [filter, setFilter] = useState('all'); // 'all', 'graded', 'ungraded'
   const [searchTerm, setSearchTerm] = useState('');
   const [saveStatus, setSaveStatus] = useState({ saving: false, saved: false });
+  const [showFilesModal, setShowFilesModal] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [submissionFiles, setSubmissionFiles] = useState([]);
+  const [loadingFiles, setLoadingFiles] = useState(false);
 
   useEffect(() => {
     const fetchAssignmentDetails = async () => {
@@ -129,6 +133,50 @@ const GradeAssignment = () => {
       toast.error('Failed to save grades');
       setSaveStatus({ saving: false, saved: false });
     }
+  };
+
+  // View student submission files
+  const viewStudentFiles = async (student) => {
+    try {
+      setLoadingFiles(true);
+      setSelectedStudent(student);
+      setShowFilesModal(true);
+      
+      const { data, error } = await getStudentSubmissionFiles(assignmentId, student.id);
+      if (error) throw error;
+      
+      setSubmissionFiles(data || []);
+    } catch (error) {
+      console.error('Error fetching student files:', error);
+      toast.error('Failed to load submission files');
+    } finally {
+      setLoadingFiles(false);
+    }
+  };
+
+  // Close the files modal
+  const closeFilesModal = () => {
+    setShowFilesModal(false);
+    setSelectedStudent(null);
+    setSubmissionFiles([]);
+  };
+
+  // Helper function to get the appropriate file icon based on file type
+  const getFileIcon = (fileType) => {
+    if (!fileType) return <FaFileAlt />;
+    if (fileType.includes('pdf')) return <FaFilePdf />;
+    if (fileType.includes('image')) return <FaFileImage />;
+    if (fileType.includes('word') || fileType.includes('document')) return <FaFileWord />;
+    if (fileType.includes('sheet') || fileType.includes('excel')) return <FaFileExcel />;
+    return <FaFileAlt />;
+  };
+
+  // Helper function to format file size
+  const formatFileSize = (size) => {
+    if (!size) return 'Unknown size';
+    if (size < 1024) return size + ' B';
+    if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB';
+    return (size / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
   // Calculate class statistics
@@ -321,6 +369,7 @@ const GradeAssignment = () => {
               <tr>
                 <th>Student</th>
                 <th>Status</th>
+                <th>Files</th>
                 <th>Score</th>
                 <th>Feedback</th>
               </tr>
@@ -328,7 +377,7 @@ const GradeAssignment = () => {
             <tbody>
               {filteredStudents.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="no-results">No students match the current filters</td>
+                  <td colSpan="5" className="no-results">No students match the current filters</td>
                 </tr>
               ) : (
                 filteredStudents.map(student => (
@@ -344,6 +393,16 @@ const GradeAssignment = () => {
                         {student.submission.status === 'graded' ? 'Graded' : 
                          student.submission.status === 'submitted' ? 'Submitted' : 'Not Submitted'}
                       </span>
+                    </td>
+                    <td>
+                      {student.submission.status !== 'not_submitted' && (
+                        <button 
+                          className="view-files-btn"
+                          onClick={() => viewStudentFiles(student)}
+                        >
+                          <FaFile /> View Files
+                        </button>
+                      )}
                     </td>
                     <td>
                       <div className="score-field">
@@ -392,6 +451,77 @@ const GradeAssignment = () => {
             )}
           </button>
         </div>
+        
+        {/* Submission Files Modal */}
+        {showFilesModal && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h2>
+                  {selectedStudent?.first_name} {selectedStudent?.last_name}'s Submission
+                </h2>
+                <button className="close-modal-btn" onClick={closeFilesModal}>
+                  <FaClose />
+                </button>
+              </div>
+              
+              <div className="modal-body">
+                {loadingFiles ? (
+                  <div className="loading-files">Loading submission files...</div>
+                ) : submissionFiles.length === 0 ? (
+                  <div className="no-files">
+                    <p>No files have been uploaded for this submission.</p>
+                    {selectedStudent?.submission?.description && (
+                      <div className="submission-notes">
+                        <h3>Submission Notes:</h3>
+                        <p>{selectedStudent.submission.description}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="files-container">
+                    {selectedStudent?.submission?.description && (
+                      <div className="submission-notes">
+                        <h3>Submission Notes:</h3>
+                        <p>{selectedStudent.submission.description}</p>
+                      </div>
+                    )}
+                    <h3>Submitted Files:</h3>
+                    <div className="files-list">
+                      {submissionFiles.map(file => (
+                        <div key={file.id} className="submission-file-item">
+                          <div className="file-icon">
+                            {getFileIcon(file.file_type)}
+                          </div>
+                          <div className="file-details">
+                            <div className="file-name">{file.filename}</div>
+                            <div className="file-meta">
+                              {formatFileSize(file.file_size)} • {new Date(file.created_at).toLocaleString()}
+                            </div>
+                          </div>
+                          <a 
+                            href={file.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="download-file-btn"
+                          >
+                            <FaDownload /> Download
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="modal-footer">
+                <button className="close-btn" onClick={closeFilesModal}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </TeacherLayout>
   );
