@@ -8,9 +8,10 @@ import { getChartData } from '../../backend/students/performance';
 import StudentLayout from './StudentLayout';
 import AssignmentList from './AssignmentList';
 import { calculateGrade, getGradeColor } from '../../utils/gradeUtils';
+import { getUserNotifications } from '../../backend/admin/notifications';
 
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
-import { FaHome, FaBook, FaChartLine, FaCalendarAlt, FaCog, FaCheckCircle, FaTimes, FaSignOutAlt } from 'react-icons/fa';
+import { FaHome, FaBook, FaChartLine, FaCalendarAlt, FaCog, FaCheckCircle, FaTimes, FaSignOutAlt, FaBell, FaEnvelope, FaClipboardList, FaExclamationTriangle } from 'react-icons/fa';
 
 // Register ChartJS components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
@@ -23,6 +24,8 @@ const StudentDashboard = () => {
   const [submissionsResponse, setSubmissionsResponse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [upcomingAssignments, setUpcomingAssignments] = useState([]);
   const navigate = useNavigate();
   const [userId, setUserId] = useState(null);
   
@@ -144,6 +147,31 @@ const StudentDashboard = () => {
         });
         
         setCourses(enhancedCourses);
+
+        // Process upcoming assignments
+        const now = new Date();
+        const futureAssignments = assignmentsResponse.data
+          .filter(assignment => new Date(assignment.due_date) > now)
+          .sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+        
+        // Get course information for each assignment
+        const upcomingWithCourseInfo = futureAssignments.map(assignment => {
+          const course = coursesData.find(c => c.course_id === assignment.course_id);
+          return {
+            ...assignment,
+            courseName: course?.courses?.name || 'Unknown Course',
+            courseCode: course?.courses?.code || ''
+          };
+        });
+        
+        setUpcomingAssignments(upcomingWithCourseInfo);
+
+        // Fetch notifications
+        const { data: notificationsData } = await getUserNotifications();
+        if (notificationsData) {
+          setNotifications(notificationsData.slice(0, 5)); // Get the 5 most recent notifications
+        }
+        
         setLoading(false);
       } catch (err) {
         console.error('Error fetching student data:', err);
@@ -276,6 +304,21 @@ const StudentDashboard = () => {
     }
   };
 
+  // Smaller chart options for the dashboard
+  const smallChartOptions = {
+    ...chartOptions,
+    plugins: {
+      ...chartOptions.plugins,
+      legend: {
+        ...chartOptions.plugins.legend,
+        display: false
+      },
+      title: {
+        display: false
+      }
+    }
+  };
+
   // Close sidebar when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -295,6 +338,29 @@ const StudentDashboard = () => {
       document.removeEventListener('click', handleClickOutside);
     };
   }, [showCoursesSidebar]);
+
+  // Format date for notifications
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
+  };
+
+  // Calculate days left until due date
+  const getDaysLeft = (dueDate) => {
+    const now = new Date();
+    const due = new Date(dueDate);
+    const diffTime = due - now;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  // get urgency class for assignment
+  const getUrgencyClass = (dueDate) => {
+    const daysLeft = getDaysLeft(dueDate);
+    if (daysLeft <= 1) return 'urgent';
+    if (daysLeft <= 3) return 'soon';
+    return '';
+  };
 
   if (loading) {
     return (
@@ -325,69 +391,196 @@ const StudentDashboard = () => {
   return (
     <StudentLayout>
       <div className="dashboard-content">
-        {/* User profile section */}
-        {/* <div className="user-profile">
-          <div className="user-info">
-            <div className="user-name">{studentData?.first_name} {studentData?.last_name}</div>
-            <div className="user-role">{studentData?.role}</div>
-          </div>
-          <img src={studentData?.avatar_url || "/profile.jpg"} alt="Profile" />
-        </div> */}
-
         <div className="container-fluid">
-          {/* Course Performance Cards */}
-          {courses.length > 0 ? (
-            courses.map(course => (
-              <div 
-                key={course.id} 
-                className="course-performance" 
-                onClick={() => handleCourseClick(course.id)}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className="course-header">
-                  <h4>{course.name} ({course.code})</h4>
-                  <div 
-                    className="course-grade" 
-                    style={{ backgroundColor: course.gradeColor || '#9E9E9E' }}
-                    data-grade={course.grade}
-                  >
-                    {course.grade}
+          {/* Dashboard Overview Section */}
+          <div className="dashboard-overview">
+            <div className="dashboard-grid">
+              {/* Notifications and Upcoming Assignments */}
+              <div className="notifications-assignments-section">
+                {/* Upcoming Assignments Widget */}
+                <div className="upcoming-assignments-widget">
+                  <div className="widget-header">
+                    <h3><FaCalendarAlt /> Upcoming Assignments</h3>
+                    <button 
+                      className="view-all-btn" 
+                      onClick={() => navigate('/student/assignments')}
+                    >
+                      View All
+                    </button>
+                  </div>
+                  <div className="widget-content">
+                    {upcomingAssignments.length > 0 ? (
+                      upcomingAssignments.slice(0, 5).map(assignment => {
+                        // Check if this assignment has been submitted
+                        const submission = submissionsResponse?.data?.find(
+                          s => s.assignment_id === assignment.id
+                        );
+                        const isSubmitted = submission && 
+                          (submission.status === 'submitted' || submission.status === 'graded');
+                        
+                        return (
+                          <div 
+                            key={assignment.id} 
+                            className={`upcoming-assignment-item ${getUrgencyClass(assignment.due_date)} ${isSubmitted ? 'submitted' : ''}`}
+                            onClick={() => navigate(`/student/assignments/${assignment.id}`)}
+                          >
+                            <div className="assignment-details">
+                              <div className="assignment-name">{assignment.title}</div>
+                              <div className="assignment-course">{assignment.courseCode} - {assignment.courseName}</div>
+                            </div>
+                            <div className="assignment-due">
+                              <span className="due-label">Due:</span> {new Date(assignment.due_date).toLocaleDateString()}
+                              <div className="days-left">
+                                {isSubmitted ? (
+                                  <span className="submitted-status">
+                                    <FaCheckCircle /> Submitted
+                                  </span>
+                                ) : (
+                                  getDaysLeft(assignment.due_date) <= 0 
+                                    ? 'Due today!' 
+                                    : `${getDaysLeft(assignment.due_date)} days left`
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="no-items-message">
+                        <p>No upcoming assignments</p>
+                      </div>
+                    )}
                   </div>
                 </div>
-                <div className="course-stats">
-                  <div className="stat-card">
-                    <div className="h3 mb-0">{course.overallGrade !== 'N/A' ? `${course.overallGrade}%` : 'N/A'}</div>
-                    <small>Overall Grade</small>
+
+                {/* Notifications Widget */}
+                <div className="notifications-widget">
+                  <div className="widget-header">
+                    <h3><FaBell /> Recent Notifications</h3>
+                    <button 
+                      className="view-all-btn" 
+                      onClick={() => navigate('/notifications')}
+                    >
+                      View All
+                    </button>
                   </div>
-                  <div className="stat-card">
-                    <div className="h3 mb-0">
-                      {course.totalEarned !== undefined ? 
-                        `${course.totalEarned}/${course.totalPossible}` : 
-                        'N/A'}
-                    </div>
-                    <small>Points</small>
+                  <div className="widget-content">
+                    {notifications.length > 0 ? (
+                      notifications.map(notification => (
+                        <div key={notification.id} className={`notification-item ${!notification.is_read ? 'unread' : ''}`}>
+                          <div className="notification-icon">
+                            {notification.type === 'assignment' ? <FaClipboardList /> : 
+                             notification.type === 'module' ? <FaBook /> : <FaEnvelope />}
+                          </div>
+                          <div className="notification-content">
+                            <div className="notification-title">{notification.title}</div>
+                            <div className="notification-message">{notification.message}</div>
+                            <div className="notification-time">{formatDate(notification.created_at)}</div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="no-items-message">
+                        <p>No new notifications</p>
+                      </div>
+                    )}
                   </div>
-                  <div className="stat-card">
-                    <div className="h3 mb-0">{course.completedAssignments}/{course.totalAssignments}</div>
-                    <small>Assignments</small>
-                  </div>
-                </div>
-                <div className="chart-container">
-                  <Line data={getChartData(course.id)} options={chartOptions} />
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="no-courses-message">
-              <p>You are not enrolled in any courses yet.</p>
-              <button 
-                className="btn-primary" 
-                onClick={() => navigate('/student/courses')}
-              >
-                Browse Available Courses
-              </button>
+
+              {/* Course List and Module Section */}
+              <div className="courses-modules-section">
+                {/* Course Cards */}
+                <div className="my-courses-widget">
+                  <div className="widget-header">
+                    <h3><FaBook /> My Courses</h3>
+                    <button 
+                      className="view-all-btn" 
+                      onClick={() => setShowCoursesSidebar(true)}
+                    >
+                      View All
+                    </button>
+                  </div>
+                  <div className="widget-content">
+                    {courses.length > 0 ? (
+                      <div className="course-grid">
+                        {courses.map(course => (
+                          <div 
+                            key={course.id} 
+                            className="course-card" 
+                            onClick={() => handleCourseClick(course.id)}
+                          >
+                            <div className="course-card-header">
+                              <div className="course-code">{course.code}</div>
+                              <div 
+                                className="course-grade" 
+                                style={{ backgroundColor: course.gradeColor || '#9E9E9E' }}
+                              >
+                                {course.grade}
+                              </div>
+                            </div>
+                            <div className="course-name">{course.name}</div>
+                            <div className="course-stats-simple">
+                              <div className="stat-item">
+                                <span className="stat-label">Overall:</span>
+                                <span className="stat-value">{course.overallGrade !== 'N/A' ? `${course.overallGrade}%` : 'N/A'}</span>
+                              </div>
+                              <div className="stat-item">
+                                <span className="stat-label">Assignments:</span>
+                                <span className="stat-value">{course.completedAssignments}/{course.totalAssignments}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="no-courses-message">
+                        <p>You are not enrolled in any courses yet.</p>
+                        <button 
+                          className="btn-primary" 
+                          onClick={() => navigate('/student/courses')}
+                        >
+                          Browse Available Courses
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Recent Activity/Modules Widget */}
+                <div className="modules-widget">
+                  <div className="widget-header">
+                    <h3><FaBook /> Recent Modules</h3>
+                    <button 
+                      className="view-all-btn" 
+                      onClick={() => navigate('/student/modules')}
+                    >
+                      View All
+                    </button>
+                  </div>
+                  <div className="widget-content">
+                    {courses.length > 0 ? (
+                      <div className="module-list">
+                        {courses.slice(0, 3).map(course => (
+                          <div key={course.id} className="module-item" onClick={() => handleCourseClick(course.id)}>
+                            <div className="module-icon"><FaBook /></div>
+                            <div className="module-content">
+                              <div className="module-title">{course.name}</div>
+                              <div className="module-course">{course.code}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="no-items-message">
+                        <p>No modules available</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Courses sidebar popup */}
@@ -432,8 +625,9 @@ const StudentDashboard = () => {
           </div>
         </div>
 
-        {/* Add AssignmentList component */}
+        {/* All Assignments Section */}
         <div className="assignments-section">
+          <h2 className="section-title">All Assignments</h2>
           <AssignmentList 
             assignments={assignmentsResponse?.data || []} 
             studentId={userId}
