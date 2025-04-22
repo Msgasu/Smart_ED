@@ -716,6 +716,27 @@
   background-color: #3182ce;
 }
 
+/* Download button states */
+.download-file-btn.downloading {
+  background-color: #e2e8f0;
+  cursor: not-allowed;
+}
+
+/* Spinner animation for download */
+.spinner-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .modal-content {
