@@ -359,4 +359,26 @@
   .submit-btn, .update-btn {
     max-width: 100%;
   }
+}
+
+/* Download button states */
+.download-btn.downloading {
+  color: #1890ff;
+  background-color: #e6f7ff;
+  cursor: not-allowed;
+}
+
+/* Spinner animation for download */
+.spinner-icon {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(24, 144, 255, 0.3);
+  border-top: 2px solid #1890ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 } 
