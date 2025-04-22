@@ -13,6 +13,8 @@ const AssignmentSubmission = ({ assignmentId, studentId }) => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [description, setDescription] = useState('');
   const fileInputRef = useRef();
+  const [downloading, setDownloading] = useState(null);
+  const [iframeUrl, setIframeUrl] = useState(null);
 
   useEffect(() => {
     checkSubmission();
@@ -145,43 +147,65 @@ const AssignmentSubmission = ({ assignmentId, studentId }) => {
     return (size / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
-  // Update the download handler to use direct URL construction
   const handleFileDownload = async (file, e) => {
     e.preventDefault();
     try {
-      console.log("File to download:", file);
+      setDownloading(file.id);
+      console.log("Complete file object:", file);
       
-      // Try a direct download with the stored URL first
-      if (file.url && file.url.startsWith('http')) {
-        console.log("Using stored URL:", file.url);
-        
-        // For debugging - show the URL in a toast
-        toast.success(`Attempting download with URL: ${file.url.substring(0, 30)}...`);
-        
-        // Open in new tab
+      if (file.path) {
+        try {
+          const fullPath = file.path.startsWith('assignment_files/') 
+            ? file.path 
+            : `assignment_files/${file.path}`;
+          
+          console.log("Attempting to download with path:", fullPath);
+          
+          // Generate a signed URL with longer expiration time (1 hour)
+          const { data, error } = await supabase
+            .storage
+            .from('assignments')
+            .createSignedUrl(fullPath, 3600);
+          
+          if (error) {
+            console.error("Error generating signed URL:", error);
+            throw error;
+          }
+          
+          if (data?.signedUrl) {
+            console.log("Successfully generated signed URL:", data.signedUrl);
+            window.open(data.signedUrl, '_blank');
+            toast.success('Download started in new tab!');
+            setTimeout(() => setDownloading(null), 2000);
+            return;
+          } else {
+            throw new Error("No signed URL returned");
+          }
+        } catch (error) {
+          console.error("Download failed:", error);
+          
+          // Try the URL stored in the database as a fallback
+          if (file.url && file.url.startsWith('http')) {
+            console.log("Trying stored URL as fallback...");
+            window.open(file.url, '_blank');
+            toast.success('Trying alternative download method...');
+            return;
+          }
+          
+          throw error;
+        }
+      } else if (file.url && file.url.startsWith('http')) {
+        // If no path but URL is available
         window.open(file.url, '_blank');
-        return;
+        toast.success('Opening download link...');
+      } else {
+        toast.error('No download link available for this file');
       }
-      
-      // If no URL is available or it's not valid, construct a direct URL
-      console.log("Constructing a direct public URL");
-      
-      // Get the base Supabase URL
-      const supabaseUrl = supabase.supabaseUrl || window.location.origin;
-      console.log("Supabase URL:", supabaseUrl);
-      
-      // Construct direct public URL
-      const directUrl = `${supabaseUrl}/storage/v1/object/public/assignments/${file.path}`;
-      console.log("Direct URL:", directUrl);
-      
-      // For debugging - show the URL in a toast
-      toast.success(`Attempting with direct URL: ${directUrl.substring(0, 30)}...`);
-      
-      // Open in new tab
-      window.open(directUrl, '_blank');
     } catch (error) {
       console.error("Error downloading file:", error);
       toast.error('Error downloading file: ' + error.message);
+    } finally {
+      setDownloading(null);
     }
   };
 
@@ -235,17 +259,20 @@ const AssignmentSubmission = ({ assignmentId, studentId }) => {
                       </div>
                     </div>
                     <div className="file-actions">
-                      <a 
-                        href="#"  
-                        className="download-btn"
+                      <button
+                        className={`download-btn ${downloading === file.id ? 'downloading' : ''}`}
                         onClick={(e) => handleFileDownload(file, e)}
+                        disabled={downloading === file.id}
                       >
-                        <FaDownload />
-                      </a>
+                        {downloading === file.id ? 
+                          <div className="spinner-icon"></div> : 
+                          <FaDownload />
+                        }
+                      </button>
                       <button 
                         onClick={() => handleDeleteFile(file.id)} 
                         className="delete-btn"
-                        disabled={submission.status === 'graded'}
+                        disabled={submission.status === 'graded' || downloading === file.id}
                       >
                         <FaTrash />
                       </button>
