@@ -1,9 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { FaPlus, FaTrash, FaEdit, FaCalendarAlt, FaClock, FaBook, FaFileAlt, FaSearch } from 'react-icons/fa';
+import {
+  FaPlus, FaTrash, FaEdit, FaCalendarAlt, FaClock, FaBook, 
+  FaFileAlt, FaSearch, FaCloudUploadAlt, FaFileDownload, 
+  FaCheck, FaListUl, FaTimes, FaCheckCircle, FaChevronUp, FaChevronDown
+} from 'react-icons/fa';
 import TeacherLayout from '../../components/teacher/TeacherLayout.jsx';
-import { getCourseDetails } from '../../backend/teachers/courses';
+import { 
+  getCourseDetails, 
+  uploadCourseSyllabus, 
+  getCourseSyllabus, 
+  createCourseTodo, 
+  getCourseTodos, 
+  updateCourseTodo, 
+  deleteCourseTodo 
+} from '../../backend/teachers/courses';
 import { getAssignments, createAssignment, deleteAssignment } from '../../backend/teachers/assignments';
+import { uploadFile, downloadFile } from '../../backend/storage';
+import { toast } from 'react-hot-toast';
 import './styles/TeacherAssignments.css';
 
 const TeacherAssignments = () => {
@@ -23,6 +37,61 @@ const TeacherAssignments = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('due_date');
   const [sortDir, setSortDir] = useState('asc');
+  
+  // New state variables for syllabus
+  const [syllabus, setSyllabus] = useState(null);
+  const [syllabusFile, setSyllabusFile] = useState(null);
+  const [uploadingSyllabus, setUploadingSyllabus] = useState(false);
+  const [syllabusFormVisible, setSyllabusFormVisible] = useState(false);
+  const fileInputRef = useRef(null);
+  
+  // New state variables for weekly to-dos
+  const [todos, setTodos] = useState([]);
+  const [newTodo, setNewTodo] = useState({
+    title: '',
+    description: '',
+    week_number: 1,
+    start_date: '',
+    end_date: '',
+    priority: 'medium'
+  });
+  const [todoFormVisible, setTodoFormVisible] = useState(false);
+  const [loadingTodos, setLoadingTodos] = useState(false);
+  const [editingTodoId, setEditingTodoId] = useState(null);
+  
+  // New state variables for collapsible widgets
+  const [expandedWidgets, setExpandedWidgets] = useState(() => {
+    // Load saved widget states from localStorage
+    const savedState = localStorage.getItem('teacher_dashboard_widget_state');
+    if (savedState) {
+      try {
+        return JSON.parse(savedState);
+      } catch (err) {
+        console.error('Error parsing saved widget state:', err);
+      }
+    }
+    
+    // Default state if nothing is saved
+    return {
+      syllabus: true,
+      todos: true
+    };
+  });
+  
+  // Toggle widget expanded/collapsed state
+  const toggleWidget = (widgetName) => {
+    setExpandedWidgets(prevState => {
+      const newState = {
+        ...prevState,
+        [widgetName]: !prevState[widgetName]
+      };
+      
+      // Save to localStorage
+      localStorage.setItem('teacher_dashboard_widget_state', JSON.stringify(newState));
+      
+      return newState;
+    });
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -30,6 +99,8 @@ const TeacherAssignments = () => {
         setLoading(true);
         await fetchCourse();
         await fetchAssignments();
+        await fetchSyllabus();
+        await fetchTodos();
       } catch (error) {
         console.error("Error loading data:", error);
       } finally {
@@ -61,6 +132,30 @@ const TeacherAssignments = () => {
       setAssignments(data || []);
     } catch (error) {
       console.error('Error fetching assignments:', error);
+    }
+  };
+
+  const fetchSyllabus = async () => {
+    try {
+      // Use the backend service to get syllabus
+      const { data, error } = await getCourseSyllabus(courseId);
+      
+      if (error) throw error;
+      setSyllabus(data);
+    } catch (error) {
+      console.error('Error fetching syllabus:', error);
+    }
+  };
+
+  const fetchTodos = async () => {
+    try {
+      // Use the backend service to get todos
+      const { data, error } = await getCourseTodos(courseId);
+      
+      if (error) throw error;
+      setTodos(data || []);
+    } catch (error) {
+      console.error('Error fetching todos:', error);
     }
   };
 
@@ -137,6 +232,218 @@ const TeacherAssignments = () => {
     } else {
       setSortBy(field);
       setSortDir('asc');
+    }
+  };
+  
+  // Syllabus handling functions
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSyllabusFile(file);
+    }
+  };
+  
+  const toggleSyllabusForm = () => {
+    setSyllabusFormVisible(!syllabusFormVisible);
+    if (!syllabusFormVisible) {
+      setSyllabusFile(null);
+    }
+  };
+  
+  const handleSyllabusUpload = async (e) => {
+    e.preventDefault();
+    
+    if (!syllabusFile) {
+      toast.error("Please select a file to upload");
+      return;
+    }
+    
+    try {
+      setUploadingSyllabus(true);
+      
+      // Upload file to storage
+      const { data: fileData, error: fileError } = await uploadFile(
+        syllabusFile, 
+        'syllabi',
+        `courses/${courseId}`
+      );
+      
+      if (fileError) throw fileError;
+      
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+      
+      // Save syllabus record to database
+      const syllabusData = {
+        course_id: courseId,
+        faculty_id: user.id,
+        title: document.getElementById('syllabus-title').value,
+        description: document.getElementById('syllabus-description').value,
+        term: document.getElementById('syllabus-term').value,
+        academic_year: document.getElementById('syllabus-academic-year').value,
+        ...fileData
+      };
+      
+      const { data, error } = await uploadCourseSyllabus(syllabusData);
+      
+      if (error) throw error;
+      
+      setSyllabus(data);
+      setSyllabusFormVisible(false);
+      setSyllabusFile(null);
+      toast.success("Syllabus uploaded successfully");
+    } catch (error) {
+      console.error('Error uploading syllabus:', error);
+      toast.error("Failed to upload syllabus");
+    } finally {
+      setUploadingSyllabus(false);
+    }
+  };
+  
+  const handleDownloadSyllabus = async () => {
+    if (!syllabus) return;
+    
+    try {
+      // Use the download link directly if available
+      if (syllabus.url) {
+        window.open(syllabus.url, '_blank');
+        return;
+      }
+      
+      // Otherwise create a signed URL
+      const { data, error } = await downloadFile(syllabus.path, 'syllabi');
+      
+      if (error) throw error;
+      
+      window.open(data.signedUrl, '_blank');
+    } catch (error) {
+      console.error('Error downloading syllabus:', error);
+      toast.error("Failed to download syllabus");
+    }
+  };
+  
+  // Weekly to-do functions
+  const toggleTodoForm = (todoId = null) => {
+    if (todoId) {
+      // Editing existing to-do
+      const todoToEdit = todos.find(todo => todo.id === todoId);
+      if (todoToEdit) {
+        setNewTodo({ ...todoToEdit });
+        setEditingTodoId(todoId);
+      }
+    } else {
+      // Creating new to-do
+      setNewTodo({
+        title: '',
+        description: '',
+        week_number: todos.length > 0 ? Math.max(...todos.map(t => t.week_number)) + 1 : 1,
+        start_date: '',
+        end_date: '',
+        priority: 'medium'
+      });
+      setEditingTodoId(null);
+    }
+    
+    setTodoFormVisible(!todoFormVisible);
+  };
+  
+  const handleTodoInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewTodo(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  const handleCreateOrUpdateTodo = async (e) => {
+    e.preventDefault();
+    
+    try {
+      setLoadingTodos(true);
+      
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+      
+      const todoData = {
+        ...newTodo,
+        course_id: courseId,
+        faculty_id: user.id
+      };
+      
+      let data, error;
+      
+      if (editingTodoId) {
+        // Update existing to-do
+        ({ data, error } = await updateCourseTodo(editingTodoId, todoData));
+      } else {
+        // Create new to-do
+        ({ data, error } = await createCourseTodo(todoData));
+      }
+      
+      if (error) throw error;
+      
+      // Reset form and refresh to-dos
+      setNewTodo({
+        title: '',
+        description: '',
+        week_number: todos.length > 0 ? Math.max(...todos.map(t => t.week_number)) + 1 : 1,
+        start_date: '',
+        end_date: '',
+        priority: 'medium'
+      });
+      
+      setTodoFormVisible(false);
+      setEditingTodoId(null);
+      await fetchTodos();
+      toast.success(editingTodoId ? "To-do updated successfully" : "To-do created successfully");
+    } catch (error) {
+      console.error('Error with course to-do:', error);
+      toast.error("Failed to save to-do item");
+    } finally {
+      setLoadingTodos(false);
+    }
+  };
+  
+  const handleDeleteTodo = async (todoId) => {
+    if (window.confirm('Are you sure you want to delete this to-do item?')) {
+      try {
+        const { error } = await deleteCourseTodo(todoId);
+        
+        if (error) throw error;
+        
+        // Refresh to-dos
+        await fetchTodos();
+        toast.success("To-do deleted successfully");
+      } catch (error) {
+        console.error('Error deleting to-do:', error);
+        toast.error("Failed to delete to-do item");
+      }
+    }
+  };
+  
+  const handleTodoStatusChange = async (todoId, newStatus) => {
+    try {
+      const todoToUpdate = todos.find(todo => todo.id === todoId);
+      if (!todoToUpdate) return;
+      
+      const { error } = await updateCourseTodo(todoId, { status: newStatus });
+      
+      if (error) throw error;
+      
+      // Refresh to-dos
+      await fetchTodos();
+      toast.success("To-do status updated");
+    } catch (error) {
+      console.error('Error updating to-do status:', error);
+      toast.error("Failed to update to-do status");
     }
   };
 
@@ -224,6 +531,348 @@ const TeacherAssignments = () => {
                 <FaPlus /> Create Assignment
               </button>
             </div>
+            
+            {/* Syllabus Widget */}
+            {expandedWidgets.syllabus ? (
+              <div className="syllabus-widget">
+                <div className="card-header">
+                  <h2>
+                    <FaFileAlt /> Course Syllabus
+                  </h2>
+                  <div className="widget-actions">
+                    <button 
+                      className="toggle-widget-btn"
+                      onClick={() => toggleWidget('syllabus')}
+                      aria-label="Collapse"
+                    >
+                      <FaChevronUp />
+                    </button>
+                  </div>
+                </div>
+                <div className="card-body">
+                  {syllabus ? (
+                    <div className="syllabus-content">
+                      <div className="syllabus-details">
+                        <h3>{syllabus.title}</h3>
+                        <p>{syllabus.description}</p>
+                        <div className="syllabus-meta">
+                          <span>Term: {syllabus.term}</span>
+                          <span>Academic Year: {syllabus.academic_year}</span>
+                          <span>Uploaded: {new Date(syllabus.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                      <div className="syllabus-actions">
+                        <button 
+                          className="btn btn-secondary" 
+                          onClick={handleDownloadSyllabus}
+                        >
+                          <FaFileDownload /> Download Syllabus
+                        </button>
+                        <button 
+                          className="btn btn-primary" 
+                          onClick={toggleSyllabusForm}
+                        >
+                          <FaCloudUploadAlt /> Update Syllabus
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="empty-state">
+                      <FaFileAlt className="empty-icon" />
+                      <h3>No Syllabus Uploaded</h3>
+                      <p>Upload a syllabus for this course.</p>
+                      <button className="btn btn-primary" onClick={toggleSyllabusForm}>
+                        <FaCloudUploadAlt /> Upload Syllabus
+                      </button>
+                    </div>
+                  )}
+                </div>
+                
+                {syllabusFormVisible && (
+                  <div className="syllabus-form">
+                    <h3>{syllabus ? 'Update Syllabus' : 'Upload Syllabus'}</h3>
+                    <form onSubmit={handleSyllabusUpload}>
+                      <div className="form-group">
+                        <label htmlFor="syllabus-title">Title</label>
+                        <input 
+                          type="text" 
+                          id="syllabus-title" 
+                          className="form-control" 
+                          placeholder="Course Syllabus Title"
+                          defaultValue={syllabus?.title || `${course?.name || 'Course'} Syllabus`}
+                          required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="syllabus-description">Description</label>
+                        <textarea 
+                          id="syllabus-description" 
+                          className="form-control" 
+                          placeholder="Brief description of the syllabus content"
+                          defaultValue={syllabus?.description || ''}
+                          rows="3"
+                        ></textarea>
+                      </div>
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label htmlFor="syllabus-term">Term</label>
+                          <select 
+                            id="syllabus-term" 
+                            className="form-select"
+                            defaultValue={syllabus?.term || 'Fall'}
+                          >
+                            <option value="Fall">Fall</option>
+                            <option value="Spring">Spring</option>
+                            <option value="Summer">Summer</option>
+                            <option value="Winter">Winter</option>
+                          </select>
+                        </div>
+                        <div className="form-group">
+                          <label htmlFor="syllabus-academic-year">Academic Year</label>
+                          <input 
+                            type="text" 
+                            id="syllabus-academic-year" 
+                            className="form-control" 
+                            placeholder="e.g. 2023-2024"
+                            defaultValue={syllabus?.academic_year || new Date().getFullYear()}
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="syllabus-file">Syllabus File (PDF)</label>
+                        <input
+                          type="file"
+                          id="syllabus-file"
+                          accept=".pdf,.doc,.docx"
+                          onChange={handleFileChange}
+                          ref={fileInputRef}
+                          className="form-control-file"
+                          required={!syllabus}
+                        />
+                        <span className="field-hint">Upload a PDF or Word document</span>
+                      </div>
+                      <div className="form-actions">
+                        <button type="button" className="btn btn-secondary" onClick={toggleSyllabusForm}>
+                          Cancel
+                        </button>
+                        <button type="submit" className="btn btn-primary" disabled={uploadingSyllabus}>
+                          {uploadingSyllabus ? 'Uploading...' : (syllabus ? 'Update' : 'Upload')}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button 
+                className="collapsed-widget-btn"
+                onClick={() => toggleWidget('syllabus')}
+                aria-label="Expand Syllabus"
+              >
+                <FaFileAlt /> <span>Course Syllabus</span> <FaChevronDown />
+              </button>
+            )}
+            
+            {/* Weekly To-Dos Widget */}
+            {expandedWidgets.todos ? (
+              <div className="todos-widget">
+                <div className="card-header">
+                  <h2>
+                    <FaListUl /> Weekly To-Dos
+                  </h2>
+                  <div className="widget-actions">
+                    <button 
+                      className="toggle-widget-btn"
+                      onClick={() => toggleWidget('todos')}
+                      aria-label="Collapse"
+                    >
+                      <FaChevronUp />
+                    </button>
+                    <button className="btn btn-primary" onClick={() => toggleTodoForm()}>
+                      <FaPlus /> Add To-Do
+                    </button>
+                  </div>
+                </div>
+                <div className="card-body">
+                  {todos.length > 0 ? (
+                    <div className="todos-list">
+                      {todos.map(todo => (
+                        <div key={todo.id} className={`todo-item priority-${todo.priority} ${todo.status === 'completed' ? 'completed' : ''}`}>
+                          <div className="todo-header">
+                            <div className="todo-title-status">
+                              <span className="todo-week">Week {todo.week_number}</span>
+                              <h3>{todo.title}</h3>
+                              <div className="todo-status">
+                                <button 
+                                  className={`status-btn ${todo.status === 'pending' ? 'active' : ''}`}
+                                  onClick={() => handleTodoStatusChange(todo.id, 'pending')}
+                                >
+                                  Pending
+                                </button>
+                                <button 
+                                  className={`status-btn ${todo.status === 'in_progress' ? 'active' : ''}`}
+                                  onClick={() => handleTodoStatusChange(todo.id, 'in_progress')}
+                                >
+                                  In Progress
+                                </button>
+                                <button 
+                                  className={`status-btn ${todo.status === 'completed' ? 'active' : ''}`}
+                                  onClick={() => handleTodoStatusChange(todo.id, 'completed')}
+                                >
+                                  <FaCheckCircle /> Completed
+                                </button>
+                              </div>
+                            </div>
+                            <div className="todo-actions">
+                              <button 
+                                className="btn-icon edit"
+                                onClick={() => toggleTodoForm(todo.id)}
+                                title="Edit To-Do"
+                              >
+                                <FaEdit />
+                              </button>
+                              <button 
+                                className="btn-icon delete"
+                                onClick={() => handleDeleteTodo(todo.id)}
+                                title="Delete To-Do"
+                              >
+                                <FaTrash />
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <div className="todo-description">
+                            {todo.description}
+                          </div>
+                          
+                          <div className="todo-footer">
+                            <div className="todo-dates">
+                              <span>From: {todo.start_date && new Date(todo.start_date).toLocaleDateString()}</span>
+                              <span>To: {todo.end_date && new Date(todo.end_date).toLocaleDateString()}</span>
+                            </div>
+                            <div className="todo-priority">
+                              Priority: <span className="priority-label">{todo.priority}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="empty-state">
+                      <FaListUl className="empty-icon" />
+                      <h3>No To-Dos Created</h3>
+                      <p>Create weekly to-dos to help manage your course schedule.</p>
+                      <button className="btn btn-primary" onClick={() => toggleTodoForm()}>
+                        <FaPlus /> Create First To-Do
+                      </button>
+                    </div>
+                  )}
+                </div>
+                
+                {todoFormVisible && (
+                  <div className="todo-form">
+                    <h3>{editingTodoId ? 'Edit To-Do' : 'Create New To-Do'}</h3>
+                    <form onSubmit={handleCreateOrUpdateTodo}>
+                      <div className="form-group">
+                        <label htmlFor="title">Title</label>
+                        <input 
+                          type="text" 
+                          id="title" 
+                          name="title"
+                          className="form-control" 
+                          placeholder="To-Do Title"
+                          value={newTodo.title}
+                          onChange={handleTodoInputChange}
+                          required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="description">Description</label>
+                        <textarea 
+                          id="description" 
+                          name="description"
+                          className="form-control" 
+                          placeholder="Details about what needs to be done"
+                          value={newTodo.description}
+                          onChange={handleTodoInputChange}
+                          rows="3"
+                        ></textarea>
+                      </div>
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label htmlFor="week_number">Week Number</label>
+                          <input 
+                            type="number" 
+                            id="week_number" 
+                            name="week_number"
+                            className="form-control" 
+                            value={newTodo.week_number}
+                            onChange={handleTodoInputChange}
+                            min="1"
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label htmlFor="priority">Priority</label>
+                          <select 
+                            id="priority" 
+                            name="priority"
+                            className="form-select"
+                            value={newTodo.priority}
+                            onChange={handleTodoInputChange}
+                          >
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label htmlFor="start_date">Start Date</label>
+                          <input 
+                            type="date" 
+                            id="start_date" 
+                            name="start_date"
+                            className="form-control" 
+                            value={newTodo.start_date}
+                            onChange={handleTodoInputChange}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label htmlFor="end_date">End Date</label>
+                          <input 
+                            type="date" 
+                            id="end_date" 
+                            name="end_date"
+                            className="form-control" 
+                            value={newTodo.end_date}
+                            onChange={handleTodoInputChange}
+                          />
+                        </div>
+                      </div>
+                      <div className="form-actions">
+                        <button type="button" className="btn btn-secondary" onClick={() => toggleTodoForm()}>
+                          Cancel
+                        </button>
+                        <button type="submit" className="btn btn-primary" disabled={loadingTodos}>
+                          {loadingTodos ? 'Saving...' : (editingTodoId ? 'Update To-Do' : 'Create To-Do')}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button 
+                className="collapsed-widget-btn"
+                onClick={() => toggleWidget('todos')}
+                aria-label="Expand Weekly To-Dos"
+              >
+                <FaListUl /> <span>Weekly To-Dos</span> <FaChevronDown />
+              </button>
+            )}
             
             {formVisible && (
               <div className="assignment-form-card">
