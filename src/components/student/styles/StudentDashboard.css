@@ -316,42 +316,152 @@
   gap: 1.5rem;
 }
 
-/* Upcoming Assignment Items - Enhanced */
+/* Upcoming Assignment Item Styles - Enhanced */
 .upcoming-assignment-item {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
   padding: 0.85rem;
   border-radius: 8px;
-  background-color: #f9fafb;
-  margin-bottom: 0.85rem;
-  border-left: 4px solid #0ea5e9;
-  transition: transform 0.2s, box-shadow 0.2s;
+  background-color: white;
+  margin-bottom: 0.75rem;
   cursor: pointer;
+  border-left: 3px solid #3498db;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative; /* Added for the hide button positioning */
 }
 
 .upcoming-assignment-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
-  background-color: #f0f7ff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Urgent assignment (due within 1 day) */
 .upcoming-assignment-item.urgent {
-  border-left-color: #ef4444;
+  border-left-color: #e53e3e; 
 }
 
 .upcoming-assignment-item.urgent .days-left {
-  color: #ef4444;
+  color: #e53e3e;
   font-weight: 600;
 }
 
+/* Soon assignment (due within 3 days) */
 .upcoming-assignment-item.soon {
-  border-left-color: #f59e0b;
+  border-left-color: #dd6b20;
 }
 
 .upcoming-assignment-item.soon .days-left {
-  color: #f59e0b;
+  color: #dd6b20;
   font-weight: 600;
+}
+
+/* Overdue assignment styles */
+.upcoming-assignment-item.overdue {
+  border-left-color: #e53e3e;
+  background-color: #fff5f5;
+}
+
+.due-label.overdue {
+  color: #e53e3e;
+  font-weight: 600;
+}
+
+.days-left.overdue {
+  color: #e53e3e;
+  font-weight: 600;
+}
+
+/* Submitted assignment styles */
+.upcoming-assignment-item.submitted {
+  border-left-color: #38a169;
+  background-color: #f0fff4;
+}
+
+.submission-status {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #38a169;
+  font-weight: 600;
+}
+
+.submission-status svg {
+  font-size: 0.875rem;
+}
+
+/* Late submission styles */
+.upcoming-assignment-item.submitted.late {
+  border-left-color: #dd6b20;
+  background-color: #fffaf0;
+}
+
+.submission-status .late-tag {
+  background-color: #dd6b20;
+  color: white;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+  margin-left: 0.35rem;
+}
+
+.submission-date {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 0.25rem;
+}
+
+/* Hide assignment button */
+.hide-assignment-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  color: #a0aec0;
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0; /* Hidden by default */
+  transition: opacity 0.2s, color 0.2s, background-color 0.2s;
+}
+
+.upcoming-assignment-item:hover .hide-assignment-btn {
+  opacity: 1; /* Show on hover */
+}
+
+.hide-assignment-btn:hover {
+  color: #e53e3e;
+  background-color: #f7fafc;
+}
+
+/* Ensure widgets have appropriate spacing */
+.overdue-assignments-widget,
+.submitted-assignments-widget {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.overdue-assignments-widget .widget-header h3,
+.submitted-assignments-widget .widget-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.overdue-assignments-widget .widget-header h3 {
+  color: #e53e3e;
+}
+
+.submitted-assignments-widget .widget-header h3 {
+  color: #38a169;
 }
 
 .assignment-due {
