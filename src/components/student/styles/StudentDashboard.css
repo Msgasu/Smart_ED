@@ -618,8 +618,6 @@
   border-bottom: 1px solid #edf2f7;
 }
 
-
-
 .widget-header h3 {
   margin: 0;
   font-size: 1rem;
@@ -1005,54 +1003,39 @@
 /* Dashboard Overview */
 
 /* Collapsed Widget Button Styles */
-.collapsed-widget-button {
+.collapsed-widget-btn {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   width: 100%;
-  background-color: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1rem;
+  padding: 12px 20px;
+  margin-bottom: 16px;
+  background-color: var(--bg-light);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-color);
+  text-align: left;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: #e1f0fa;
+  transition: var(--transition);
+  box-shadow: var(--shadow);
 }
 
-.collapsed-widget-button:hover {
+.collapsed-widget-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-  border-color: #cbd5e0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.collapsed-widget-button .widget-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  background-color: #ebf8ff;
-  border-radius: 50%;
-  color: #3182ce;
-  margin-right: 1rem;
+.collapsed-widget-btn svg {
+  margin-right: 10px;
+  font-size: 18px;
+  color: var(--primary-color);
 }
 
-.collapsed-widget-button .widget-title {
-  font-weight: 600;
-  color: #2d3748;
-  font-size: 1rem;
-  margin: 0;
+.collapsed-widget-btn span {
   flex: 1;
-  display: flex;
-  align-items: center;
 }
 
-.collapsed-widget-button .expand-icon {
-  color: #718096;
-  transition: transform 0.3s ease;
-}
-
-.collapsed-widget-button:hover .expand-icon {
-  color: #3182ce;
-  transform: scale(1.1);
+.collapsed-widget-btn.overdue svg {
+  color: #dc3545;
 }
