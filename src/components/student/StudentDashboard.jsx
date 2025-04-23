@@ -9,9 +9,10 @@ import StudentLayout from './StudentLayout';
 import AssignmentList from './AssignmentList';
 import { calculateGrade, getGradeColor } from '../../utils/gradeUtils';
 import { getUserNotifications } from '../../backend/admin/notifications';
+import { toast } from 'react-hot-toast';
 
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
-import { FaHome, FaBook, FaChartLine, FaCalendarAlt, FaCog, FaCheckCircle, FaTimes, FaSignOutAlt, FaBell, FaEnvelope, FaClipboardList, FaExclamationTriangle } from 'react-icons/fa';
+import { FaHome, FaBook, FaChartLine, FaCalendarAlt, FaCog, FaCheckCircle, FaTimes, FaSignOutAlt, FaBell, FaEnvelope, FaClipboardList, FaExclamationTriangle, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
 // Register ChartJS components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
@@ -28,6 +29,65 @@ const StudentDashboard = () => {
   const [upcomingAssignments, setUpcomingAssignments] = useState([]);
   const navigate = useNavigate();
   const [userId, setUserId] = useState(null);
+  
+  // State for collapsible widgets
+  const [expandedWidgets, setExpandedWidgets] = useState(() => {
+    // Load saved widget states from localStorage
+    const savedState = localStorage.getItem('dashboard_widget_state');
+    if (savedState) {
+      try {
+        return JSON.parse(savedState);
+      } catch (err) {
+        console.error('Error parsing saved widget state:', err);
+      }
+    }
+    
+    // Default state if nothing is saved
+    return {
+      upcomingAssignments: true,
+      overdueAssignments: true,
+      submittedAssignments: true,
+      notifications: true,
+      courses: true,
+      modules: true,
+      allAssignments: true
+    };
+  });
+  
+  // Toggle widget expanded/collapsed state
+  const toggleWidget = (widgetName) => {
+    setExpandedWidgets(prevState => {
+      const newState = {
+        ...prevState,
+        [widgetName]: !prevState[widgetName]
+      };
+      
+      // Save to localStorage
+      localStorage.setItem('dashboard_widget_state', JSON.stringify(newState));
+      
+      return newState;
+    });
+  };
+  
+  // Toggle all widgets at once
+  const toggleAllWidgets = (expandAll) => {
+    const newState = {
+      upcomingAssignments: expandAll,
+      overdueAssignments: expandAll,
+      submittedAssignments: expandAll,
+      notifications: expandAll,
+      courses: expandAll,
+      modules: expandAll,
+      allAssignments: expandAll
+    };
+    
+    // Save to localStorage and update state
+    localStorage.setItem('dashboard_widget_state', JSON.stringify(newState));
+    setExpandedWidgets(newState);
+    
+    // Show confirmation to user
+    toast.success(expandAll ? 'Expanded all sections' : 'Collapsed all sections');
+  };
   
   // Fetch student data and courses
   useEffect(() => {
@@ -480,120 +540,119 @@ const StudentDashboard = () => {
     <StudentLayout>
       <div className="dashboard-content">
         <div className="container-fluid">
+          {/* Dashboard Controls */}
+          <div className="dashboard-controls">
+            <button 
+              className="dashboard-control-btn"
+              onClick={() => toggleAllWidgets(true)}
+              title="Expand all sections"
+            >
+              <FaChevronDown /> Expand All
+            </button>
+            <button 
+              className="dashboard-control-btn"
+              onClick={() => toggleAllWidgets(false)}
+              title="Collapse all sections"
+            >
+              <FaChevronUp /> Collapse All
+            </button>
+          </div>
+          
           {/* Dashboard Overview Section */}
           <div className="dashboard-overview">
             <div className="dashboard-grid">
               {/* Notifications and Upcoming Assignments */}
               <div className="notifications-assignments-section">
                 {/* Upcoming Assignments Widget */}
-                <div className="upcoming-assignments-widget">
-                  <div className="widget-header">
-                    <h3><FaCalendarAlt /> Upcoming Assignments</h3>
-                    <button 
-                      className="view-all-btn" 
-                      onClick={() => navigate('/student/assignments')}
-                    >
-                      View All
-                    </button>
-                  </div>
-                  <div className="widget-content">
-                    {filteredUpcomingAssignments().length > 0 ? (
-                      filteredUpcomingAssignments().map(assignment => {
-                        return (
-                          <div 
-                            key={assignment.id} 
-                            className={`upcoming-assignment-item ${getUrgencyClass(assignment.due_date)}`}
-                            onClick={() => navigate(`/student/assignments/${assignment.id}`)}
-                          >
-                            <div className="assignment-details">
-                              <div className="assignment-name">{assignment.title}</div>
-                              <div className="assignment-course">{assignment.courseCode} - {assignment.courseName}</div>
-                            </div>
-                            <div className="assignment-due">
-                              <span className="due-label">Due:</span> {new Date(assignment.due_date).toLocaleDateString()}
-                              <div className="days-left">
-                                {getDaysLeft(assignment.due_date) <= 0 
-                                  ? 'Due today!' 
-                                  : `${getDaysLeft(assignment.due_date)} days left`
-                                }
+                {expandedWidgets.upcomingAssignments ? (
+                  <div className="upcoming-assignments-widget">
+                    <div className="widget-header">
+                      <h3><FaCalendarAlt /> Upcoming Assignments</h3>
+                      <div className="widget-actions">
+                        <button 
+                          className="toggle-widget-btn"
+                          onClick={() => toggleWidget('upcomingAssignments')}
+                          aria-label="Collapse"
+                        >
+                          <FaChevronUp />
+                        </button>
+                        <button 
+                          className="view-all-btn" 
+                          onClick={() => navigate('/student/assignments')}
+                        >
+                          View All
+                        </button>
+                      </div>
+                    </div>
+                    <div className="widget-content">
+                      {filteredUpcomingAssignments().length > 0 ? (
+                        filteredUpcomingAssignments().map(assignment => {
+                          return (
+                            <div 
+                              key={assignment.id} 
+                              className={`upcoming-assignment-item ${getUrgencyClass(assignment.due_date)}`}
+                              onClick={() => navigate(`/student/assignments/${assignment.id}`)}
+                            >
+                              <div className="assignment-details">
+                                <div className="assignment-name">{assignment.title}</div>
+                                <div className="assignment-course">{assignment.courseCode} - {assignment.courseName}</div>
+                              </div>
+                              <div className="assignment-due">
+                                <span className="due-label">Due:</span> {new Date(assignment.due_date).toLocaleDateString()}
+                                <div className="days-left">
+                                  {getDaysLeft(assignment.due_date) <= 0 
+                                    ? 'Due today!' 
+                                    : `${getDaysLeft(assignment.due_date)} days left`
+                                  }
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="no-items-message">
-                        <p>No upcoming assignments</p>
-                      </div>
-                    )}
+                          );
+                        })
+                      ) : (
+                        <div className="no-items-message">
+                          <p>No upcoming assignments</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <button 
+                    className="collapsed-widget-btn"
+                    onClick={() => toggleWidget('upcomingAssignments')}
+                    aria-label="Expand Upcoming Assignments"
+                  >
+                    <FaCalendarAlt /> <span>Upcoming Assignments</span> <FaChevronDown />
+                  </button>
+                )}
 
                 {/* Overdue Assignments Widget */}
                 {filteredOverdueAssignments().length > 0 && (
-                  <div className="overdue-assignments-widget">
-                    <div className="widget-header">
-                      <h3><FaExclamationTriangle /> Overdue Assignments</h3>
-                      <button 
-                        className="view-all-btn" 
-                        onClick={() => navigate('/student/assignments?filter=overdue')}
-                      >
-                        View All
-                      </button>
-                    </div>
-                    <div className="widget-content">
-                      {filteredOverdueAssignments().map(assignment => (
-                        <div 
-                          key={assignment.id} 
-                          className="upcoming-assignment-item overdue"
-                          onClick={() => navigate(`/student/assignments/${assignment.id}`)}
-                        >
-                          <div className="assignment-details">
-                            <div className="assignment-name">{assignment.title}</div>
-                            <div className="assignment-course">{assignment.courseCode} - {assignment.courseName}</div>
-                          </div>
-                          <div className="assignment-due">
-                            <span className="due-label overdue">Overdue:</span> {new Date(assignment.due_date).toLocaleDateString()}
-                            <div className="days-left overdue">
-                              {Math.abs(getDaysLeft(assignment.due_date))} days past due
-                            </div>
-                            <button 
-                              className="hide-assignment-btn"
-                              onClick={(e) => hideAssignment(assignment.id, e)}
-                              title="Remove from dashboard"
-                            >
-                              <FaTimes />
-                            </button>
-                          </div>
+                  expandedWidgets.overdueAssignments ? (
+                    <div className="overdue-assignments-widget">
+                      <div className="widget-header">
+                        <h3><FaExclamationTriangle /> Overdue Assignments</h3>
+                        <div className="widget-actions">
+                          <button 
+                            className="toggle-widget-btn"
+                            onClick={() => toggleWidget('overdueAssignments')}
+                            aria-label="Collapse"
+                          >
+                            <FaChevronUp />
+                          </button>
+                          <button 
+                            className="view-all-btn" 
+                            onClick={() => navigate('/student/assignments?filter=overdue')}
+                          >
+                            View All
+                          </button>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Submitted Assignments Widget */}
-                {filteredSubmittedAssignments().length > 0 && (
-                  <div className="submitted-assignments-widget">
-                    <div className="widget-header">
-                      <h3><FaCheckCircle /> Submitted Assignments</h3>
-                      <button 
-                        className="view-all-btn" 
-                        onClick={() => navigate('/student/assignments?filter=submitted')}
-                      >
-                        View All
-                      </button>
-                    </div>
-                    <div className="widget-content">
-                      {filteredSubmittedAssignments().map(assignment => {
-                        const submission = submissionsResponse?.data?.find(
-                          s => s.assignment_id === assignment.id
-                        );
-                        const isLate = isLateSubmission(assignment.due_date, submission?.submitted_at);
-                        
-                        return (
+                      </div>
+                      <div className="widget-content">
+                        {filteredOverdueAssignments().map(assignment => (
                           <div 
                             key={assignment.id} 
-                            className={`upcoming-assignment-item submitted ${isLate ? 'late' : ''}`}
+                            className="upcoming-assignment-item overdue"
                             onClick={() => navigate(`/student/assignments/${assignment.id}`)}
                           >
                             <div className="assignment-details">
@@ -601,12 +660,9 @@ const StudentDashboard = () => {
                               <div className="assignment-course">{assignment.courseCode} - {assignment.courseName}</div>
                             </div>
                             <div className="assignment-due">
-                              <div className="submission-status">
-                                <FaCheckCircle /> {submission?.status === 'graded' ? 'Graded' : 'Submitted'}
-                                {isLate && <span className="late-tag">LATE</span>}
-                              </div>
-                              <div className="submission-date">
-                                {new Date(submission?.submitted_at || Date.now()).toLocaleDateString()}
+                              <span className="due-label overdue">Overdue:</span> {new Date(assignment.due_date).toLocaleDateString()}
+                              <div className="days-left overdue">
+                                {Math.abs(getDaysLeft(assignment.due_date))} days past due
                               </div>
                               <button 
                                 className="hide-assignment-btn"
@@ -617,137 +673,273 @@ const StudentDashboard = () => {
                               </button>
                             </div>
                           </div>
-                        );
-                      })}
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <button 
+                      className="collapsed-widget-btn overdue"
+                      onClick={() => toggleWidget('overdueAssignments')}
+                      aria-label="Expand Overdue Assignments"
+                    >
+                      <FaExclamationTriangle /> <span>Overdue Assignments</span> <FaChevronDown />
+                    </button>
+                  )
+                )}
+
+                {/* Submitted Assignments Widget */}
+                {filteredSubmittedAssignments().length > 0 && (
+                  expandedWidgets.submittedAssignments ? (
+                    <div className="submitted-assignments-widget">
+                      <div className="widget-header">
+                        <h3><FaCheckCircle /> Submitted Assignments</h3>
+                        <div className="widget-actions">
+                          <button 
+                            className="toggle-widget-btn"
+                            onClick={() => toggleWidget('submittedAssignments')}
+                            aria-label="Collapse"
+                          >
+                            <FaChevronUp />
+                          </button>
+                          <button 
+                            className="view-all-btn" 
+                            onClick={() => navigate('/student/assignments?filter=submitted')}
+                          >
+                            View All
+                          </button>
+                        </div>
+                      </div>
+                      <div className="widget-content">
+                        {filteredSubmittedAssignments().map(assignment => {
+                          const submission = submissionsResponse?.data?.find(
+                            s => s.assignment_id === assignment.id
+                          );
+                          const isLate = isLateSubmission(assignment.due_date, submission?.submitted_at);
+                          
+                          return (
+                            <div 
+                              key={assignment.id} 
+                              className={`upcoming-assignment-item submitted ${isLate ? 'late' : ''}`}
+                              onClick={() => navigate(`/student/assignments/${assignment.id}`)}
+                            >
+                              <div className="assignment-details">
+                                <div className="assignment-name">{assignment.title}</div>
+                                <div className="assignment-course">{assignment.courseCode} - {assignment.courseName}</div>
+                              </div>
+                              <div className="assignment-due">
+                                <div className="submission-status">
+                                  <FaCheckCircle /> {submission?.status === 'graded' ? 'Graded' : 'Submitted'}
+                                  {isLate && <span className="late-tag">LATE</span>}
+                                </div>
+                                <div className="submission-date">
+                                  {new Date(submission?.submitted_at || Date.now()).toLocaleDateString()}
+                                </div>
+                                <button 
+                                  className="hide-assignment-btn"
+                                  onClick={(e) => hideAssignment(assignment.id, e)}
+                                  title="Remove from dashboard"
+                                >
+                                  <FaTimes />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <button 
+                      className="collapsed-widget-btn submitted"
+                      onClick={() => toggleWidget('submittedAssignments')}
+                      aria-label="Expand Submitted Assignments"
+                    >
+                      <FaCheckCircle /> <span>Submitted Assignments</span> <FaChevronDown />
+                    </button>
+                  )
                 )}
 
                 {/* Notifications Widget */}
-                <div className="notifications-widget">
-                  <div className="widget-header">
-                    <h3><FaBell /> Recent Notifications</h3>
-                    <button 
-                      className="view-all-btn" 
-                      onClick={() => navigate('/notifications')}
-                    >
-                      View All
-                    </button>
-                  </div>
-                  <div className="widget-content">
-                    {notifications.length > 0 ? (
-                      notifications.map(notification => (
-                        <div key={notification.id} className={`notification-item ${!notification.is_read ? 'unread' : ''}`}>
-                          <div className="notification-icon">
-                            {notification.type === 'assignment' ? <FaClipboardList /> : 
-                             notification.type === 'module' ? <FaBook /> : <FaEnvelope />}
-                          </div>
-                          <div className="notification-content">
-                            <div className="notification-title">{notification.title}</div>
-                            <div className="notification-message">{notification.message}</div>
-                            <div className="notification-time">{formatDate(notification.created_at)}</div>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="no-items-message">
-                        <p>No new notifications</p>
+                {expandedWidgets.notifications ? (
+                  <div className="notifications-widget">
+                    <div className="widget-header">
+                      <h3><FaBell /> Recent Notifications</h3>
+                      <div className="widget-actions">
+                        <button 
+                          className="toggle-widget-btn"
+                          onClick={() => toggleWidget('notifications')}
+                          aria-label="Collapse"
+                        >
+                          <FaChevronUp />
+                        </button>
+                        <button 
+                          className="view-all-btn" 
+                          onClick={() => navigate('/notifications')}
+                        >
+                          View All
+                        </button>
                       </div>
-                    )}
+                    </div>
+                    <div className="widget-content">
+                      {notifications.length > 0 ? (
+                        notifications.map(notification => (
+                          <div key={notification.id} className={`notification-item ${!notification.is_read ? 'unread' : ''}`}>
+                            <div className="notification-icon">
+                              {notification.type === 'assignment' ? <FaClipboardList /> : 
+                               notification.type === 'module' ? <FaBook /> : <FaEnvelope />}
+                            </div>
+                            <div className="notification-content">
+                              <div className="notification-title">{notification.title}</div>
+                              <div className="notification-message">{notification.message}</div>
+                              <div className="notification-time">{formatDate(notification.created_at)}</div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="no-items-message">
+                          <p>No new notifications</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <button 
+                    className="collapsed-widget-btn"
+                    onClick={() => toggleWidget('notifications')}
+                    aria-label="Expand Notifications"
+                  >
+                    <FaBell /> <span>Recent Notifications</span> <FaChevronDown />
+                  </button>
+                )}
               </div>
 
               {/* Course List and Module Section */}
               <div className="courses-modules-section">
                 {/* Course Cards */}
-                <div className="my-courses-widget">
-                  <div className="widget-header">
-                    <h3><FaBook /> My Courses</h3>
-                    <button 
-                      className="view-all-btn" 
-                      onClick={() => setShowCoursesSidebar(true)}
-                    >
-                      View All
-                    </button>
-                  </div>
-                  <div className="widget-content">
-                    {courses.length > 0 ? (
-                      <div className="course-grid">
-                        {courses.map(course => (
-                          <div 
-                            key={course.id} 
-                            className="course-card" 
-                            onClick={() => handleCourseClick(course.id)}
-                          >
-                            <div className="course-card-header">
-                              <div className="course-code">{course.code}</div>
-                              <div 
-                                className="course-grade" 
-                                style={{ backgroundColor: course.gradeColor || '#9E9E9E' }}
-                              >
-                                {course.grade}
-                              </div>
-                            </div>
-                            <div className="course-name">{course.name}</div>
-                            <div className="course-stats-simple">
-                              <div className="stat-item">
-                                <span className="stat-label">Overall:</span>
-                                <span className="stat-value">{course.overallGrade !== 'N/A' ? `${course.overallGrade}%` : 'N/A'}</span>
-                              </div>
-                              <div className="stat-item">
-                                <span className="stat-label">Assignments:</span>
-                                <span className="stat-value">{course.completedAssignments}/{course.totalAssignments}</span>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="no-courses-message">
-                        <p>You are not enrolled in any courses yet.</p>
+                {expandedWidgets.courses ? (
+                  <div className="my-courses-widget">
+                    <div className="widget-header">
+                      <h3><FaBook /> My Courses</h3>
+                      <div className="widget-actions">
                         <button 
-                          className="btn-primary" 
-                          onClick={() => navigate('/student/courses')}
+                          className="toggle-widget-btn"
+                          onClick={() => toggleWidget('courses')}
+                          aria-label="Collapse"
                         >
-                          Browse Available Courses
+                          <FaChevronUp />
+                        </button>
+                        <button 
+                          className="view-all-btn" 
+                          onClick={() => setShowCoursesSidebar(true)}
+                        >
+                          View All
                         </button>
                       </div>
-                    )}
+                    </div>
+                    <div className="widget-content">
+                      {courses.length > 0 ? (
+                        <div className="course-grid">
+                          {courses.map(course => (
+                            <div 
+                              key={course.id} 
+                              className="course-card" 
+                              onClick={() => handleCourseClick(course.id)}
+                            >
+                              <div className="course-card-header">
+                                <div className="course-code">{course.code}</div>
+                                <div 
+                                  className="course-grade" 
+                                  style={{ backgroundColor: course.gradeColor || '#9E9E9E' }}
+                                >
+                                  {course.grade}
+                                </div>
+                              </div>
+                              <div className="course-name">{course.name}</div>
+                              <div className="course-stats-simple">
+                                <div className="stat-item">
+                                  <span className="stat-label">Overall:</span>
+                                  <span className="stat-value">{course.overallGrade !== 'N/A' ? `${course.overallGrade}%` : 'N/A'}</span>
+                                </div>
+                                <div className="stat-item">
+                                  <span className="stat-label">Assignments:</span>
+                                  <span className="stat-value">{course.completedAssignments}/{course.totalAssignments}</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="no-courses-message">
+                          <p>You are not enrolled in any courses yet.</p>
+                          <button 
+                            className="btn-primary" 
+                            onClick={() => navigate('/student/courses')}
+                          >
+                            Browse Available Courses
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <button 
+                    className="collapsed-widget-btn"
+                    onClick={() => toggleWidget('courses')}
+                    aria-label="Expand My Courses"
+                  >
+                    <FaBook /> <span>My Courses</span> <FaChevronDown />
+                  </button>
+                )}
 
                 {/* Recent Activity/Modules Widget */}
-                <div className="modules-widget">
-                  <div className="widget-header">
-                    <h3><FaBook /> Recent Modules</h3>
-                    <button 
-                      className="view-all-btn" 
-                      onClick={() => navigate('/student/modules')}
-                    >
-                      View All
-                    </button>
-                  </div>
-                  <div className="widget-content">
-                    {courses.length > 0 ? (
-                      <div className="module-list">
-                        {courses.slice(0, 3).map(course => (
-                          <div key={course.id} className="module-item" onClick={() => handleCourseClick(course.id)}>
-                            <div className="module-icon"><FaBook /></div>
-                            <div className="module-content">
-                              <div className="module-title">{course.name}</div>
-                              <div className="module-course">{course.code}</div>
+                {expandedWidgets.modules ? (
+                  <div className="modules-widget">
+                    <div className="widget-header">
+                      <h3><FaBook /> Recent Modules</h3>
+                      <div className="widget-actions">
+                        <button 
+                          className="toggle-widget-btn"
+                          onClick={() => toggleWidget('modules')}
+                          aria-label="Collapse"
+                        >
+                          <FaChevronUp />
+                        </button>
+                        <button 
+                          className="view-all-btn" 
+                          onClick={() => navigate('/student/modules')}
+                        >
+                          View All
+                        </button>
+                      </div>
+                    </div>
+                    <div className="widget-content">
+                      {courses.length > 0 ? (
+                        <div className="module-list">
+                          {courses.slice(0, 3).map(course => (
+                            <div key={course.id} className="module-item" onClick={() => handleCourseClick(course.id)}>
+                              <div className="module-icon"><FaBook /></div>
+                              <div className="module-content">
+                                <div className="module-title">{course.name}</div>
+                                <div className="module-course">{course.code}</div>
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="no-items-message">
-                        <p>No modules available</p>
-                      </div>
-                    )}
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="no-items-message">
+                          <p>No modules available</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <button 
+                    className="collapsed-widget-btn"
+                    onClick={() => toggleWidget('modules')}
+                    aria-label="Expand Recent Modules"
+                  >
+                    <FaBook /> <span>Recent Modules</span> <FaChevronDown />
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -797,15 +989,26 @@ const StudentDashboard = () => {
 
         {/* All Assignments Section */}
         <div className="assignments-section">
-          <h2 className="section-title">All Assignments</h2>
-          <AssignmentList 
-            assignments={assignmentsResponse?.data || []} 
-            studentId={userId}
-            onSubmissionUpdate={() => {
-              // Refresh assignments after submission
-              fetchStudentData();
-            }}
-          />
+          <div className="section-header">
+            <h2 className="section-title"><FaClipboardList /> All Assignments</h2>
+            <button 
+              className="toggle-section-btn"
+              onClick={() => toggleWidget('allAssignments')}
+              aria-label={expandedWidgets.allAssignments ? "Collapse" : "Expand"}
+            >
+              {expandedWidgets.allAssignments ? <FaChevronUp /> : <FaChevronDown />}
+            </button>
+          </div>
+          {expandedWidgets.allAssignments && (
+            <AssignmentList 
+              assignments={assignmentsResponse?.data || []} 
+              studentId={userId}
+              onSubmissionUpdate={() => {
+                // Refresh assignments after submission
+                fetchStudentData();
+              }}
+            />
+          )}
         </div>
       </div>
     </StudentLayout>
