@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { FaCheck, FaClock, FaFileUpload, FaCalendarAlt, FaTrophy, FaBook, FaExclamationTriangle, FaEye } from 'react-icons/fa';
 import { submitAssignment } from '../../backend/students/assignments';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './styles/AssignmentList.css';
 
 const AssignmentList = ({ assignments, onSubmissionUpdate, studentId }) => {
@@ -13,6 +13,17 @@ const AssignmentList = ({ assignments, onSubmissionUpdate, studentId }) => {
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check for filter parameter in URL
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const filterParam = queryParams.get('filter');
+    
+    if (filterParam && ['all', 'pending', 'overdue', 'submitted', 'graded'].includes(filterParam)) {
+      setFilter(filterParam);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     if (studentId) {
@@ -31,6 +42,24 @@ const AssignmentList = ({ assignments, onSubmissionUpdate, studentId }) => {
       getUserId();
     }
   }, [studentId]);
+
+  // Update URL when filter changes
+  const handleFilterChange = (newFilter) => {
+    setFilter(newFilter);
+    
+    // Update URL without page reload
+    const queryParams = new URLSearchParams(location.search);
+    if (newFilter === 'all') {
+      queryParams.delete('filter');
+    } else {
+      queryParams.set('filter', newFilter);
+    }
+    
+    navigate({
+      pathname: location.pathname,
+      search: queryParams.toString()
+    }, { replace: true });
+  };
 
   // Fetch all assignment statuses when userId or assignments change
   useEffect(() => {
@@ -127,23 +156,40 @@ const AssignmentList = ({ assignments, onSubmissionUpdate, studentId }) => {
     return new Date(dueDate) < new Date();
   };
 
-  const getStatusColor = (status, dueDate) => {
+  // Check if a submission was late
+  const isLateSubmission = (dueDate, submissionDate) => {
+    if (!dueDate || !submissionDate) return false;
+    return new Date(submissionDate) > new Date(dueDate);
+  };
+
+  const getStatusColor = (status, dueDate, submittedAt) => {
     if (status === 'graded') return '#4CAF50'; // Green for graded
-    if (status === 'submitted') return '#2196F3'; // Blue for submitted
+    if (status === 'submitted') {
+      // Check if submission was late
+      if (isLateSubmission(dueDate, submittedAt)) {
+        return '#FF9800'; // Orange for late submission
+      }
+      return '#2196F3'; // Blue for on-time submission
+    }
     if (status === 'pending' && isOverdue(dueDate)) return '#F44336'; // Red for overdue
     return '#FF9800'; // Orange for pending
   };
 
-  const getStatusIcon = (status, dueDate) => {
+  const getStatusIcon = (status, dueDate, submittedAt) => {
     if (status === 'graded') return <FaCheck />;
     if (status === 'submitted') return <FaCheck />;
     if (status === 'pending' && isOverdue(dueDate)) return <FaExclamationTriangle />;
     return <FaClock />;
   };
 
-  const getStatusText = (status, dueDate) => {
+  const getStatusText = (status, dueDate, submittedAt) => {
     if (status === 'graded') return 'Graded';
-    if (status === 'submitted') return 'Submitted';
+    if (status === 'submitted') {
+      if (isLateSubmission(dueDate, submittedAt)) {
+        return 'Submitted Late';
+      }
+      return 'Submitted';
+    }
     if (status === 'pending' && isOverdue(dueDate)) return 'Overdue';
     return 'Pending';
   };
@@ -157,31 +203,31 @@ const AssignmentList = ({ assignments, onSubmissionUpdate, studentId }) => {
         <div className="filter-buttons">
           <button 
             className={filter === 'all' ? 'active' : ''} 
-            onClick={() => setFilter('all')}
+            onClick={() => handleFilterChange('all')}
           >
             All
           </button>
           <button 
             className={filter === 'pending' ? 'active' : ''} 
-            onClick={() => setFilter('pending')}
+            onClick={() => handleFilterChange('pending')}
           >
             Pending
           </button>
           <button 
             className={filter === 'overdue' ? 'active' : ''} 
-            onClick={() => setFilter('overdue')}
+            onClick={() => handleFilterChange('overdue')}
           >
             Overdue
           </button>
           <button 
             className={filter === 'submitted' ? 'active' : ''} 
-            onClick={() => setFilter('submitted')}
+            onClick={() => handleFilterChange('submitted')}
           >
             Submitted
           </button>
           <button 
             className={filter === 'graded' ? 'active' : ''} 
-            onClick={() => setFilter('graded')}
+            onClick={() => handleFilterChange('graded')}
           >
             Graded
           </button>
@@ -221,7 +267,7 @@ const AssignmentList = ({ assignments, onSubmissionUpdate, studentId }) => {
             const assignmentStatus = assignmentStatuses[assignment.id];
             const status = assignmentStatus?.status || 'pending';
             const dueDate = assignment.due_date;
-            const statusColor = getStatusColor(status, dueDate);
+            const statusColor = getStatusColor(status, dueDate, assignmentStatus?.submitted_at);
             
             return (
               <div 
@@ -233,8 +279,8 @@ const AssignmentList = ({ assignments, onSubmissionUpdate, studentId }) => {
                   <div className="card-header">
                     <h3>{assignment.title}</h3>
                     <div className="status-badge" style={{ backgroundColor: statusColor }}>
-                      {getStatusIcon(status, dueDate)}
-                      <span>{getStatusText(status, dueDate)}</span>
+                      {getStatusIcon(status, dueDate, assignmentStatus?.submitted_at)}
+                      <span>{getStatusText(status, dueDate, assignmentStatus?.submitted_at)}</span>
                     </div>
                   </div>
                   
