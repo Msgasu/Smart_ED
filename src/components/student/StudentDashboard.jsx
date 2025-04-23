@@ -354,12 +354,100 @@ const StudentDashboard = () => {
     return diffDays;
   };
 
+  // Check if assignment is overdue
+  const isOverdue = (dueDate) => {
+    return getDaysLeft(dueDate) < 0;
+  };
+
   // get urgency class for assignment
   const getUrgencyClass = (dueDate) => {
     const daysLeft = getDaysLeft(dueDate);
+    if (daysLeft < 0) return 'overdue';
     if (daysLeft <= 1) return 'urgent';
     if (daysLeft <= 3) return 'soon';
     return '';
+  };
+
+  // Check if submission was late
+  const isLateSubmission = (dueDate, submissionDate) => {
+    if (!dueDate || !submissionDate) return false;
+    return new Date(submissionDate) > new Date(dueDate);
+  };
+  
+  // Hide assignment from upcoming list
+  const [hiddenAssignments, setHiddenAssignments] = useState([]);
+  
+  const hideAssignment = (assignmentId, e) => {
+    e.stopPropagation(); // Prevent navigation to assignment page
+    setHiddenAssignments(prev => [...prev, assignmentId]);
+    toast.success('Assignment removed from dashboard');
+  };
+
+  // Filter assignments for different sections
+  const filteredUpcomingAssignments = () => {
+    if (!upcomingAssignments) return [];
+    
+    return upcomingAssignments
+      .filter(assignment => {
+        // Filter out hidden assignments
+        if (hiddenAssignments.includes(assignment.id)) return false;
+        
+        // Check if assignment is due in the future and not submitted
+        const submission = submissionsResponse?.data?.find(
+          s => s.assignment_id === assignment.id
+        );
+        
+        const isSubmitted = submission && 
+          (submission.status === 'submitted' || submission.status === 'graded');
+        
+        // Only show upcoming assignments that aren't overdue and aren't submitted
+        return !isOverdue(assignment.due_date) && !isSubmitted;
+      })
+      .slice(0, 5); // Only show 5 assignments
+  };
+  
+  const filteredOverdueAssignments = () => {
+    if (!upcomingAssignments) return [];
+    
+    return upcomingAssignments
+      .filter(assignment => {
+        // Filter out hidden assignments
+        if (hiddenAssignments.includes(assignment.id)) return false;
+        
+        // Check if assignment is overdue and not submitted
+        const submission = submissionsResponse?.data?.find(
+          s => s.assignment_id === assignment.id
+        );
+        
+        const isSubmitted = submission && 
+          (submission.status === 'submitted' || submission.status === 'graded');
+        
+        // Only show overdue assignments that aren't submitted
+        return isOverdue(assignment.due_date) && !isSubmitted;
+      })
+      .slice(0, 5); // Only show 5 assignments
+  };
+  
+  const filteredSubmittedAssignments = () => {
+    if (!upcomingAssignments) return [];
+    
+    return upcomingAssignments
+      .filter(assignment => {
+        // Filter out hidden assignments
+        if (hiddenAssignments.includes(assignment.id)) return false;
+        
+        // Check if assignment is submitted
+        const submission = submissionsResponse?.data?.find(
+          s => s.assignment_id === assignment.id
+        );
+        
+        const isSubmitted = submission && 
+          (submission.status === 'submitted' || submission.status === 'graded');
+        
+        // Only show submitted assignments
+        return isSubmitted;
+      })
+      .slice(0, 5); // Only show 5 assignments
   };
 
   if (loading) {
@@ -409,19 +497,12 @@ const StudentDashboard = () => {
                     </button>
                   </div>
                   <div className="widget-content">
-                    {upcomingAssignments.length > 0 ? (
-                      upcomingAssignments.slice(0, 5).map(assignment => {
-                        // Check if this assignment has been submitted
-                        const submission = submissionsResponse?.data?.find(
-                          s => s.assignment_id === assignment.id
-                        );
-                        const isSubmitted = submission && 
-                          (submission.status === 'submitted' || submission.status === 'graded');
-                        
+                    {filteredUpcomingAssignments().length > 0 ? (
+                      filteredUpcomingAssignments().map(assignment => {
                         return (
                           <div 
                             key={assignment.id} 
-                            className={`upcoming-assignment-item ${getUrgencyClass(assignment.due_date)} ${isSubmitted ? 'submitted' : ''}`}
+                            className={`upcoming-assignment-item ${getUrgencyClass(assignment.due_date)}`}
                             onClick={() => navigate(`/student/assignments/${assignment.id}`)}
                           >
                             <div className="assignment-details">
@@ -431,15 +512,10 @@ const StudentDashboard = () => {
                             <div className="assignment-due">
                               <span className="due-label">Due:</span> {new Date(assignment.due_date).toLocaleDateString()}
                               <div className="days-left">
-                                {isSubmitted ? (
-                                  <span className="submitted-status">
-                                    <FaCheckCircle /> Submitted
-                                  </span>
-                                ) : (
-                                  getDaysLeft(assignment.due_date) <= 0 
-                                    ? 'Due today!' 
-                                    : `${getDaysLeft(assignment.due_date)} days left`
-                                )}
+                                {getDaysLeft(assignment.due_date) <= 0 
+                                  ? 'Due today!' 
+                                  : `${getDaysLeft(assignment.due_date)} days left`
+                                }
                               </div>
                             </div>
                           </div>
@@ -452,6 +528,100 @@ const StudentDashboard = () => {
                     )}
                   </div>
                 </div>
+
+                {/* Overdue Assignments Widget */}
+                {filteredOverdueAssignments().length > 0 && (
+                  <div className="overdue-assignments-widget">
+                    <div className="widget-header">
+                      <h3><FaExclamationTriangle /> Overdue Assignments</h3>
+                      <button 
+                        className="view-all-btn" 
+                        onClick={() => navigate('/student/assignments?filter=overdue')}
+                      >
+                        View All
+                      </button>
+                    </div>
+                    <div className="widget-content">
+                      {filteredOverdueAssignments().map(assignment => (
+                        <div 
+                          key={assignment.id} 
+                          className="upcoming-assignment-item overdue"
+                          onClick={() => navigate(`/student/assignments/${assignment.id}`)}
+                        >
+                          <div className="assignment-details">
+                            <div className="assignment-name">{assignment.title}</div>
+                            <div className="assignment-course">{assignment.courseCode} - {assignment.courseName}</div>
+                          </div>
+                          <div className="assignment-due">
+                            <span className="due-label overdue">Overdue:</span> {new Date(assignment.due_date).toLocaleDateString()}
+                            <div className="days-left overdue">
+                              {Math.abs(getDaysLeft(assignment.due_date))} days past due
+                            </div>
+                            <button 
+                              className="hide-assignment-btn"
+                              onClick={(e) => hideAssignment(assignment.id, e)}
+                              title="Remove from dashboard"
+                            >
+                              <FaTimes />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Submitted Assignments Widget */}
+                {filteredSubmittedAssignments().length > 0 && (
+                  <div className="submitted-assignments-widget">
+                    <div className="widget-header">
+                      <h3><FaCheckCircle /> Submitted Assignments</h3>
+                      <button 
+                        className="view-all-btn" 
+                        onClick={() => navigate('/student/assignments?filter=submitted')}
+                      >
+                        View All
+                      </button>
+                    </div>
+                    <div className="widget-content">
+                      {filteredSubmittedAssignments().map(assignment => {
+                        const submission = submissionsResponse?.data?.find(
+                          s => s.assignment_id === assignment.id
+                        );
+                        const isLate = isLateSubmission(assignment.due_date, submission?.submitted_at);
+                        
+                        return (
+                          <div 
+                            key={assignment.id} 
+                            className={`upcoming-assignment-item submitted ${isLate ? 'late' : ''}`}
+                            onClick={() => navigate(`/student/assignments/${assignment.id}`)}
+                          >
+                            <div className="assignment-details">
+                              <div className="assignment-name">{assignment.title}</div>
+                              <div className="assignment-course">{assignment.courseCode} - {assignment.courseName}</div>
+                            </div>
+                            <div className="assignment-due">
+                              <div className="submission-status">
+                                <FaCheckCircle /> {submission?.status === 'graded' ? 'Graded' : 'Submitted'}
+                                {isLate && <span className="late-tag">LATE</span>}
+                              </div>
+                              <div className="submission-date">
+                                {new Date(submission?.submitted_at || Date.now()).toLocaleDateString()}
+                              </div>
+                              <button 
+                                className="hide-assignment-btn"
+                                onClick={(e) => hideAssignment(assignment.id, e)}
+                                title="Remove from dashboard"
+                              >
+                                <FaTimes />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {/* Notifications Widget */}
                 <div className="notifications-widget">
