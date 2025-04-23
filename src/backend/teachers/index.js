@@ -1,5 +1,14 @@
 import { getTeacherProfile } from './profile';
-import { getTeacherCourses, getCourseDetails } from './courses';
+import { 
+  getTeacherCourses, 
+  getCourseDetails,
+  uploadCourseSyllabus,
+  getCourseSyllabus,
+  createCourseTodo,
+  getCourseTodos,
+  updateCourseTodo,
+  deleteCourseTodo
+} from './courses';
 import { getAssignments, createAssignment, deleteAssignment, getAssignmentDetails } from './assignments';
 import { getStudents, getStudentDetails, getStudentAnalytics, getClassPerformanceStats } from './students';
 import { getSubmissions, gradeSubmission, getSubmissionsByAssignment } from './grading';
@@ -41,5 +50,12 @@ export {
   saveReportDetails,
   saveSubjectGrade,
   deleteSubjectGrade,
-  calculateClassScoreFromAssignments
+  calculateClassScoreFromAssignments,
+  // Course syllabus and to-dos
+  uploadCourseSyllabus,
+  getCourseSyllabus,
+  createCourseTodo,
+  getCourseTodos,
+  updateCourseTodo,
+  deleteCourseTodo
 }; 
