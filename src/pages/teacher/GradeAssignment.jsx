@@ -7,7 +7,6 @@ import { getAssignmentDetails } from '../../backend/teachers/assignments';
 import { getSubmissionsByAssignment, bulkGradeSubmissions, getStudentSubmissionFiles } from '../../backend/teachers/grading';
 import { FaSave, FaArrowLeft, FaFilter, FaSearch, FaCheck, FaTimes, FaClock, FaFile, FaFileAlt, FaFilePdf, FaFileImage, FaFileWord, FaFileExcel, FaDownload, FaTimes as FaClose } from 'react-icons/fa';
 import './styles/GradeAssignment.css';
-import Swal from 'sweetalert2';
 
 const GradeAssignment = () => {
   const { assignmentId } = useParams();
@@ -24,7 +23,6 @@ const GradeAssignment = () => {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [submissionFiles, setSubmissionFiles] = useState([]);
   const [loadingFiles, setLoadingFiles] = useState(false);
-  const [downloading, setDownloading] = useState(null);
 
   useEffect(() => {
     const fetchAssignmentDetails = async () => {
@@ -227,88 +225,6 @@ const GradeAssignment = () => {
   });
 
   const stats = calculateStats();
-
-  // Add this function to handle file downloads
-  const handleFileDownload = async (file, e) => {
-    if (e) e.preventDefault();
-    
-    try {
-      setDownloading(file.id);
-      console.log("Attempting to download file:", file);
-      
-      if (file.path) {
-        try {
-          // Make sure the path is correctly formatted
-          const fullPath = file.path.startsWith('assignment_files/') 
-            ? file.path 
-            : `assignment_files/${file.path}`;
-          
-          console.log("Generating signed URL for path:", fullPath);
-          
-          // Generate a signed URL
-          const { data, error } = await supabase
-            .storage
-            .from('assignments')
-            .createSignedUrl(fullPath, 3600);
-            
-          if (error) {
-            console.error("Error generating signed URL:", error);
-            toast.error("Failed to generate download link");
-            throw error;
-          }
-          
-          if (data?.signedUrl) {
-            console.log("Download URL generated:", data.signedUrl);
-            
-            // Try to download using fetch and programmatically trigger download
-            try {
-              const response = await fetch(data.signedUrl);
-              if (!response.ok) throw new Error(`Server returned ${response.status}`);
-              
-              const blob = await response.blob();
-              const downloadUrl = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = downloadUrl;
-              a.download = file.filename || 'download';
-              document.body.appendChild(a);
-              a.click();
-              URL.revokeObjectURL(downloadUrl);
-              document.body.removeChild(a);
-              
-              toast.success("Download started!");
-            } catch (fetchError) {
-              console.error("Direct download failed:", fetchError);
-              
-              // Fallback to window.open
-              window.open(data.signedUrl, '_blank');
-              toast.success('Download opened in new tab!');
-            }
-          }
-        } catch (error) {
-          console.error("Download failed:", error);
-          
-          // Try direct URL as fallback
-          if (file.url && file.url.startsWith('http')) {
-            toast.info("Trying alternative download method...");
-            window.open(file.url, '_blank');
-          } else {
-            throw error;
-          }
-        }
-      } else if (file.url && file.url.startsWith('http')) {
-        // If no path but URL is available
-        toast.info("Using direct URL");
-        window.open(file.url, '_blank');
-      } else {
-        toast.error("No download information available");
-      }
-    } catch (error) {
-      console.error("Error downloading file:", error);
-      toast.error("Download failed: " + error.message);
-    } finally {
-      setDownloading(null);
-    }
-  };
 
   if (loading) {
     return (
@@ -583,16 +499,14 @@ const GradeAssignment = () => {
                               {formatFileSize(file.file_size)} • {new Date(file.created_at).toLocaleString()}
                             </div>
                           </div>
-                          <button 
-                            onClick={(e) => handleFileDownload(file, e)}
+                          <a 
+                            href={file.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
                             className="download-file-btn"
-                            disabled={downloading === file.id}
                           >
-                            {downloading === file.id ? 
-                              <div className="spinner-icon"></div> : 
-                              <><FaDownload /> Download</>
-                            }
-                          </button>
+                            <FaDownload /> Download
+                          </a>
                         </div>
                       ))}
                     </div>
