@@ -158,4 +158,167 @@ export const createCourse = async (courseData, teacherId) => {
     console.error('Error creating course:', error);
     return { data: null, error };
   }
+};
+
+/**
+ * Upload a course syllabus
+ * @param {Object} syllabusData - The syllabus data including file information
+ * @returns {Promise<Object>} - The created syllabus record
+ */
+export const uploadCourseSyllabus = async (syllabusData) => {
+  try {
+    if (!syllabusData || !syllabusData.course_id || !syllabusData.faculty_id) {
+      throw new Error('Course ID, Faculty ID, and file information are required');
+    }
+    
+    // Create the syllabus record
+    const { data, error } = await supabase
+      .from('course_syllabi')
+      .insert([syllabusData])
+      .select()
+      .single();
+      
+    if (error) throw error;
+    
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error uploading syllabus:', error);
+    return { data: null, error };
+  }
+};
+
+/**
+ * Get course syllabus
+ * @param {string} courseId - The course ID
+ * @returns {Promise<Object>} - The course syllabus
+ */
+export const getCourseSyllabus = async (courseId) => {
+  try {
+    if (!courseId) {
+      throw new Error('Course ID is required');
+    }
+    
+    const { data, error } = await supabase
+      .from('course_syllabi')
+      .select('*')
+      .eq('course_id', courseId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+      
+    if (error && error.code !== 'PGRST116') throw error; // PGRST116 is the "no rows returned" error
+    
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error fetching course syllabus:', error);
+    return { data: null, error };
+  }
+};
+
+/**
+ * Create a course to-do item
+ * @param {Object} todoData - The to-do data
+ * @returns {Promise<Object>} - The created to-do
+ */
+export const createCourseTodo = async (todoData) => {
+  try {
+    if (!todoData || !todoData.course_id || !todoData.faculty_id) {
+      throw new Error('Course ID, Faculty ID and to-do details are required');
+    }
+    
+    // Create the to-do
+    const { data, error } = await supabase
+      .from('course_todos')
+      .insert([todoData])
+      .select()
+      .single();
+      
+    if (error) throw error;
+    
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error creating course to-do:', error);
+    return { data: null, error };
+  }
+};
+
+/**
+ * Get course to-dos
+ * @param {string} courseId - The course ID
+ * @returns {Promise<Object>} - The course to-dos
+ */
+export const getCourseTodos = async (courseId) => {
+  try {
+    if (!courseId) {
+      throw new Error('Course ID is required');
+    }
+    
+    const { data, error } = await supabase
+      .from('course_todos')
+      .select('*')
+      .eq('course_id', courseId)
+      .order('week_number', { ascending: true });
+      
+    if (error) throw error;
+    
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error fetching course to-dos:', error);
+    return { data: null, error };
+  }
+};
+
+/**
+ * Update a course to-do item
+ * @param {string} todoId - The to-do ID
+ * @param {Object} todoData - The updated to-do data
+ * @returns {Promise<Object>} - The updated to-do
+ */
+export const updateCourseTodo = async (todoId, todoData) => {
+  try {
+    if (!todoId) {
+      throw new Error('To-do ID is required');
+    }
+    
+    // Update the to-do
+    const { data, error } = await supabase
+      .from('course_todos')
+      .update(todoData)
+      .eq('id', todoId)
+      .select()
+      .single();
+      
+    if (error) throw error;
+    
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error updating course to-do:', error);
+    return { data: null, error };
+  }
+};
+
+/**
+ * Delete a course to-do item
+ * @param {string} todoId - The to-do ID
+ * @returns {Promise<Object>} - The result of the deletion
+ */
+export const deleteCourseTodo = async (todoId) => {
+  try {
+    if (!todoId) {
+      throw new Error('To-do ID is required');
+    }
+    
+    // Delete the to-do
+    const { error } = await supabase
+      .from('course_todos')
+      .delete()
+      .eq('id', todoId);
+      
+    if (error) throw error;
+    
+    return { data: true, error: null };
+  } catch (error) {
+    console.error('Error deleting course to-do:', error);
+    return { data: null, error };
+  }
 }; 
