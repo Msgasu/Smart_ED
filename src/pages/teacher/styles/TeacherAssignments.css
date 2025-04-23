@@ -645,4 +645,337 @@ input[type="number"].form-control::-webkit-inner-spin-button {
   .assignments-table td:nth-child(3) {
     display: none;
   }
+}
+
+/* Add styles for the collapsed widget buttons */
+.collapsed-widget-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px 20px;
+  margin-bottom: 16px;
+  background-color: var(--surface-color, #f8f9fa);
+  border: 1px solid var(--border-color, #e9ecef);
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-color, #343a40);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.collapsed-widget-btn:hover {
+  background-color: var(--hover-bg, #e9ecef);
+}
+
+.collapsed-widget-btn svg {
+  margin-right: 10px;
+  font-size: 18px;
+  color: var(--primary-color, #4361ee);
+}
+
+.collapsed-widget-btn span {
+  flex: 1;
+}
+
+/* Widget Header Styles */
+.widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-color, #e9ecef);
+}
+
+.widget-header h2,
+.widget-header h3 {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  font-size: 18px;
+  color: var(--heading-color, #212529);
+}
+
+.widget-header h2 svg,
+.widget-header h3 svg {
+  margin-right: 10px;
+  color: var(--primary-color, #4361ee);
+}
+
+.widget-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.toggle-widget-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted, #6c757d);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.toggle-widget-btn:hover {
+  color: var(--text-color, #343a40);
+}
+
+/* Syllabus Widget Styles */
+.syllabus-widget {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.syllabus-content {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.syllabus-details h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 18px;
+  color: var(--heading-color, #212529);
+}
+
+.syllabus-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 16px;
+  color: var(--text-muted, #6c757d);
+  font-size: 14px;
+}
+
+.syllabus-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.syllabus-form {
+  padding: 20px;
+  background-color: var(--surface-alt, #f0f2f5);
+  border-top: 1px solid var(--border-color, #e9ecef);
+}
+
+.syllabus-form h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 16px;
+  color: var(--heading-color, #212529);
+}
+
+/* Todo Widget Styles */
+.todos-widget {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.todos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.todo-item {
+  border: 1px solid var(--border-color, #e9ecef);
+  border-radius: 6px;
+  padding: 16px;
+  background-color: var(--surface-color, #f8f9fa);
+  transition: box-shadow 0.2s ease;
+}
+
+.todo-item:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
+}
+
+.todo-item.completed {
+  border-left: 4px solid var(--success-color, #198754);
+  opacity: 0.8;
+}
+
+.todo-item.priority-high {
+  border-left: 4px solid var(--danger-color, #dc3545);
+}
+
+.todo-item.priority-medium {
+  border-left: 4px solid var(--warning-color, #ffc107);
+}
+
+.todo-item.priority-low {
+  border-left: 4px solid var(--info-color, #0dcaf0);
+}
+
+.todo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.todo-title-status {
+  flex: 1;
+}
+
+.todo-week {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted, #6c757d);
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  display: inline-block;
+}
+
+.todo-title-status h3 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  color: var(--heading-color, #212529);
+}
+
+.todo-status {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.status-btn {
+  background: none;
+  border: 1px solid var(--border-color, #e9ecef);
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-muted, #6c757d);
+}
+
+.status-btn.active {
+  background-color: var(--primary-color, #4361ee);
+  color: white;
+  border-color: var(--primary-color, #4361ee);
+}
+
+.status-btn svg {
+  margin-right: 4px;
+}
+
+.todo-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.todo-description {
+  color: var(--text-color, #343a40);
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.todo-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--text-muted, #6c757d);
+}
+
+.todo-dates {
+  display: flex;
+  gap: 16px;
+}
+
+.priority-label {
+  text-transform: capitalize;
+  font-weight: 500;
+}
+
+.todo-item.priority-high .priority-label {
+  color: var(--danger-color, #dc3545);
+}
+
+.todo-item.priority-medium .priority-label {
+  color: var(--warning-color, #ffc107);
+}
+
+.todo-item.priority-low .priority-label {
+  color: var(--info-color, #0dcaf0);
+}
+
+.todo-form {
+  padding: 20px;
+  background-color: var(--surface-alt, #f0f2f5);
+  border-top: 1px solid var(--border-color, #e9ecef);
+}
+
+.todo-form h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 16px;
+  color: var(--heading-color, #212529);
+}
+
+/* Form Elements */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.form-row .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .form-row .form-group {
+    margin-bottom: 0;
+  }
+  
+  .todo-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .todo-dates {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .syllabus-meta {
+    flex-direction: column;
+    gap: 4px;
+  }
 } 
