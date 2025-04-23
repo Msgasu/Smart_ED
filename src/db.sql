@@ -363,3 +363,61 @@ CREATE TRIGGER update_notification_count
 AFTER INSERT OR UPDATE OF is_read ON public.notifications
 FOR EACH ROW
 EXECUTE FUNCTION public.update_unread_notification_count();
+
+-- Create or update course_syllabi table for storing syllabus files
+CREATE TABLE IF NOT EXISTS course_syllabi (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    course_id UUID REFERENCES courses(id) ON DELETE CASCADE NOT NULL,
+    faculty_id UUID REFERENCES profiles(id) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    term VARCHAR(50) NOT NULL,
+    academic_year VARCHAR(20) NOT NULL,
+    filename TEXT NOT NULL,
+    path TEXT NOT NULL,
+    file_type TEXT,
+    file_size INTEGER,
+    url TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(course_id, term, academic_year)
+);
+
+-- Create or update course_todos table for weekly to-dos
+CREATE TABLE IF NOT EXISTS course_todos (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    course_id UUID REFERENCES courses(id) ON DELETE CASCADE NOT NULL,
+    faculty_id UUID REFERENCES profiles(id) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    week_number INTEGER NOT NULL,
+    start_date DATE,
+    end_date DATE,
+    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'completed', 'archived')),
+    priority VARCHAR(20) DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes for better query performance
+CREATE INDEX IF NOT EXISTS idx_course_syllabi_course_id 
+    ON course_syllabi(course_id);
+    
+CREATE INDEX IF NOT EXISTS idx_course_todos_course_id 
+    ON course_todos(course_id);
+    
+CREATE INDEX IF NOT EXISTS idx_course_todos_week_number 
+    ON course_todos(week_number);
+
+-- Create triggers to update the updated_at column
+DROP TRIGGER IF EXISTS set_updated_at_course_syllabi ON course_syllabi;
+CREATE TRIGGER set_updated_at_course_syllabi
+BEFORE UPDATE ON course_syllabi
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS set_updated_at_course_todos ON course_todos;
+CREATE TRIGGER set_updated_at_course_todos
+BEFORE UPDATE ON course_todos
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
