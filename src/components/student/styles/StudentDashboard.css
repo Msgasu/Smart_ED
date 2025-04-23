@@ -614,15 +614,118 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.25rem;
-  border-bottom: 1px solid #f0f0f0;
-  background-color: #fcfcfc;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #edf2f7;
 }
 
+
+
+.widget-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2d3748;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.widget-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Toggle button for collapsible widgets */
+.toggle-widget-btn {
+  background: none;
+  border: none;
+  color: #718096;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+}
+
+.toggle-widget-btn:hover {
+  background-color: #edf2f7;
+  color: #3182ce;
+}
+
+/* View All button */
+.view-all-btn {
+  background: none;
+  border: none;
+  color: #3182ce;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.view-all-btn:hover {
+  background-color: #ebf8ff;
+}
+
+/* Section header styles */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toggle-section-btn {
+  background: none;
+  border: none;
+  color: #718096;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+}
+
+.toggle-section-btn:hover {
+  background-color: #edf2f7;
+  color: #3182ce;
+}
+
+/* Animation for collapsible widgets */
 .widget-content {
-  padding: 1.25rem;
+  padding: 1rem;
   overflow-y: auto;
-  flex: 1;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Make notifications more prominent */
@@ -692,14 +795,6 @@
   .course-grid {
     grid-template-columns: 1fr;
   }
-}
-
-/* Section Title */
-.section-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 1.5rem 0 1rem;
-  color: #333;
 }
 
 /* Loading and Error States */
@@ -861,20 +956,6 @@
   color: #999;
 }
 
-/* View All Button - Updated color */
-.view-all-btn {
-  background: none;
-  border: none;
-  color: #0ea5e9;
-  font-size: 0.8rem;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.view-all-btn:hover {
-  text-decoration: underline;
-}
-
 /* Styles for submitted assignments */
 .upcoming-assignment-item.submitted {
   border-left-color: #10b981; /* Green color for submitted */
@@ -891,4 +972,87 @@
 
 .submitted-status svg {
   color: #10b981;
+}
+
+/* Dashboard Controls */
+.dashboard-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.dashboard-control-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.85rem;
+  color: #4a5568;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dashboard-control-btn:hover {
+  background-color: #edf2f7;
+  color: #3182ce;
+  border-color: #cbd5e0;
+}
+
+/* Dashboard Overview */
+
+/* Collapsed Widget Button Styles */
+.collapsed-widget-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background-color: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: #e1f0fa;
+}
+
+.collapsed-widget-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  border-color: #cbd5e0;
+}
+
+.collapsed-widget-button .widget-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background-color: #ebf8ff;
+  border-radius: 50%;
+  color: #3182ce;
+  margin-right: 1rem;
+}
+
+.collapsed-widget-button .widget-title {
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 1rem;
+  margin: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.collapsed-widget-button .expand-icon {
+  color: #718096;
+  transition: transform 0.3s ease;
+}
+
+.collapsed-widget-button:hover .expand-icon {
+  color: #3182ce;
+  transform: scale(1.1);
 }
