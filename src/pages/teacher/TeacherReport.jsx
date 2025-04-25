@@ -500,6 +500,36 @@ const TeacherReport = () => {
     }
   }, [termSelectRef.current?.value, academicYearRef.current?.value]);
 
+  // Add effect to listen for term and academic year changes and reload report
+  useEffect(() => {
+    if (!termSelectRef?.current || !academicYearRef?.current) return;
+    
+    const handleTermChange = async () => {
+      if (termSelectRef.current && academicYearRef.current) {
+        const term = termSelectRef.current.value;
+        const year = academicYearRef.current.value;
+        
+        if (term && year) {
+          await loadSavedReport();
+        }
+      }
+    };
+    
+    termSelectRef.current.addEventListener('change', handleTermChange);
+    academicYearRef.current.addEventListener('change', handleTermChange);
+    academicYearRef.current.addEventListener('blur', handleTermChange);
+    
+    return () => {
+      if (termSelectRef.current) {
+        termSelectRef.current.removeEventListener('change', handleTermChange);
+      }
+      if (academicYearRef.current) {
+        academicYearRef.current.removeEventListener('change', handleTermChange);
+        academicYearRef.current.removeEventListener('blur', handleTermChange);
+      }
+    };
+  }, [termSelectRef?.current, academicYearRef?.current]);
+
   const handleSaveReport = async () => {
     try {
       setSaving(true);
@@ -727,6 +757,9 @@ const TeacherReport = () => {
             averageRef={averageInputRef}
             subjects={subjects}
             onSubjectsChange={setSubjects}
+            studentId={studentId}
+            termRef={termSelectRef}
+            academicYearRef={academicYearRef}
           />
         </div>
       </div>
