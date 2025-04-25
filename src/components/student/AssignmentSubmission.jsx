@@ -153,8 +153,12 @@ const AssignmentSubmission = ({ assignmentId, studentId }) => {
       setDownloading(file.id);
       console.log("Complete file object:", file);
       
+      // Log more useful debugging information
+      toast.info('Starting download process...');
+      
       if (file.path) {
         try {
+          // Make sure the path is correctly formatted
           const fullPath = file.path.startsWith('assignment_files/') 
             ? file.path 
             : `assignment_files/${file.path}`;
@@ -169,15 +173,55 @@ const AssignmentSubmission = ({ assignmentId, studentId }) => {
           
           if (error) {
             console.error("Error generating signed URL:", error);
+            // Provide more specific error messages based on error type
+            if (error.message?.includes('Not Found')) {
+              toast.error('File not found in storage. It may have been deleted or moved.');
+            } else {
+              toast.error(`Error generating download link: ${error.message}`);
+            }
             throw error;
           }
           
           if (data?.signedUrl) {
             console.log("Successfully generated signed URL:", data.signedUrl);
-            window.open(data.signedUrl, '_blank');
-            toast.success('Download started in new tab!');
-            setTimeout(() => setDownloading(null), 2000);
-            return;
+            // Try to fetch the file first to verify it exists
+            try {
+              const response = await fetch(data.signedUrl, { method: 'HEAD' });
+              if (!response.ok) {
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+              }
+            } catch (fetchError) {
+              console.error("File accessibility check failed:", fetchError);
+              toast.warning('File might not be accessible, trying anyway...');
+            }
+            
+            // Try a different approach - directly download with fetch instead of window.open
+            try {
+              const response = await fetch(data.signedUrl);
+              if (!response.ok) throw new Error(`Server returned ${response.status}`);
+              
+              const blob = await response.blob();
+              const downloadUrl = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = downloadUrl;
+              a.download = file.filename || 'download';
+              document.body.appendChild(a);
+              a.click();
+              URL.revokeObjectURL(downloadUrl);
+              document.body.removeChild(a);
+              
+              toast.success('Download started!');
+              setTimeout(() => setDownloading(null), 2000);
+              return;
+            } catch (fetchError) {
+              console.error("Direct download failed:", fetchError);
+              
+              // Fallback to window.open as before
+              window.open(data.signedUrl, '_blank');
+              toast.success('Download started in new tab!');
+              setTimeout(() => setDownloading(null), 2000);
+              return;
+            }
           } else {
             throw new Error("No signed URL returned");
           }
@@ -186,20 +230,36 @@ const AssignmentSubmission = ({ assignmentId, studentId }) => {
           
           // Try the URL stored in the database as a fallback
           if (file.url && file.url.startsWith('http')) {
-            console.log("Trying stored URL as fallback...");
-            window.open(file.url, '_blank');
-            toast.success('Trying alternative download method...');
-            return;
+            console.log("Trying stored URL as fallback:", file.url);
+            
+            try {
+              // Check if URL is accessible
+              const response = await fetch(file.url, { method: 'HEAD' });
+              if (!response.ok) {
+                throw new Error(`URL check failed: ${response.status}`);
+              }
+              
+              window.open(file.url, '_blank');
+              toast.success('Trying alternative download method...');
+              return;
+            } catch (urlError) {
+              console.error("URL accessibility check failed:", urlError);
+              toast.warning("URL check failed, trying direct access anyway...");
+              window.open(file.url, '_blank');
+              return;
+            }
           }
           
           throw error;
         }
       } else if (file.url && file.url.startsWith('http')) {
         // If no path but URL is available
+        console.log("Using direct URL:", file.url);
         window.open(file.url, '_blank');
         toast.success('Opening download link...');
       } else {
         toast.error('No download link available for this file');
+        console.error("No path or URL available for download");
       }
     } catch (error) {
       console.error("Error downloading file:", error);

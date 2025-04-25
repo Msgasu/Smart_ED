@@ -289,7 +289,17 @@ export const getStudentSubmissionFiles = async (assignmentId, studentId) => {
       
     if (error) throw error;
     
-    return { data, error: null };
+    // Process file data to include full paths
+    const processedFiles = data.map(file => {
+      return {
+        ...file,
+        path: file.path.startsWith('assignment_files/') 
+          ? file.path 
+          : `assignment_files/${file.path}`
+      };
+    });
+    
+    return { data: processedFiles, error: null };
   } catch (error) {
     console.error('Error fetching student submission files:', error);
     return { data: null, error };
