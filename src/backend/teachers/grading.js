@@ -179,8 +179,6 @@ export const gradeSubmission = async (studentId, assignmentId, gradeData) => {
         .update({
           score: gradeData.score,
           status: 'graded',
-          // Remove graded_at until you add it to the schema
-          // graded_at: new Date().toISOString() 
         })
         .eq('id', existingSubmission.id)
         .select()
@@ -197,8 +195,6 @@ export const gradeSubmission = async (studentId, assignmentId, gradeData) => {
           student_id: studentId,
           score: gradeData.score,
           status: 'graded',
-          // Remove graded_at until you add it to the schema
-          // graded_at: new Date().toISOString()
         }])
         .select()
         .single();
