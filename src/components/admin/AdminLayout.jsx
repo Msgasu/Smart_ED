@@ -2,6 +2,7 @@ import React from 'react';
 import Sidebar from './Sidebar';
 import './styles/AdminLayout.css';
 import NotificationsIcon from '../common/NotificationsIcon';
+import FontSizeToggle from '../FontSizeToggle';
 
 const AdminLayout = ({ children }) => {
   return (
@@ -14,6 +15,7 @@ const AdminLayout = ({ children }) => {
           </div>
           <div className="header-actions">
             <NotificationsIcon />
+            <FontSizeToggle />
             {/* Other header actions can be added here */}
           </div>
         </header>

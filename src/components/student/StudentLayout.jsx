@@ -15,6 +15,7 @@ import {
 } from 'react-icons/fa';
 import './styles/StudentLayout.css';
 import NotificationsIcon from '../common/NotificationsIcon';
+import FontSizeToggle from '../FontSizeToggle';
 
 const StudentLayout = ({ children }) => {
   const location = useLocation();
@@ -126,6 +127,7 @@ const StudentLayout = ({ children }) => {
           </div>
           <div className="header-actions">
             <NotificationsIcon />
+            <FontSizeToggle />
             <div className="avatar">
               <span>{userName.split(' ').map(n => n[0]).join('')}</span>
             </div>

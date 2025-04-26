@@ -15,6 +15,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import './styles/TeacherLayout.css';
 import NotificationsIcon from '../common/NotificationsIcon';
+import FontSizeToggle from '../FontSizeToggle';
 
 const TeacherLayout = ({ children }) => {
   const location = useLocation();
@@ -183,6 +184,7 @@ const TeacherLayout = ({ children }) => {
           </div>
           <div className="header-actions">
             <NotificationsIcon />
+            <FontSizeToggle />
             <div className="avatar">
               <span>{userName.split(' ').map(n => n[0]).join('')}</span>
             </div>
