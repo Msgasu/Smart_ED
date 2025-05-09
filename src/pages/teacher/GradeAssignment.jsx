@@ -313,7 +313,11 @@ const GradeAssignment = () => {
   if (loading) {
     return (
       <TeacherLayout>
-        <div className="loading-spinner">Loading assignment details...</div>
+        <div className="grading-page">
+          <div className="loading-spinner">
+            <p>Loading assignment details</p>
+          </div>
+        </div>
       </TeacherLayout>
     );
   }
@@ -551,7 +555,7 @@ const GradeAssignment = () => {
               
               <div className="modal-body">
                 {loadingFiles ? (
-                  <div className="loading-files">Loading submission files...</div>
+                  <div className="loading-files">Loading submission files</div>
                 ) : submissionFiles.length === 0 ? (
                   <div className="no-files">
                     <p>No files have been uploaded for this submission.</p>
@@ -585,13 +589,14 @@ const GradeAssignment = () => {
                           </div>
                           <button 
                             onClick={(e) => handleFileDownload(file, e)}
-                            className="download-file-btn"
+                            className={`download-file-btn ${downloading === file.id ? 'downloading' : ''}`}
                             disabled={downloading === file.id}
                           >
-                            {downloading === file.id ? 
-                              <div className="spinner-icon"></div> : 
-                              <><FaDownload /> Download</>
-                            }
+                            {downloading === file.id ? (
+                              <>Downloading</>
+                            ) : (
+                              <>Download</>
+                            )}
                           </button>
                         </div>
                       ))}
