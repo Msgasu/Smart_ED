@@ -12,7 +12,8 @@ const Reports = ({
   onSubjectsChange, 
   studentId,
   termRef,
-  academicYearRef
+  academicYearRef,
+  studentAge // Add studentAge prop
 }) => {
   const [subjects, setSubjects] = useState(initialSubjects || []);
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,7 +24,7 @@ const Reports = ({
   const [studentData, setStudentData] = useState({
     name: '',
     dateOfBirth: '',
-    age: '',
+    age: studentAge || '', // Initialize with studentAge prop if available
     class_year: ''
   });
   const [reportData, setReportData] = useState(null);
@@ -33,8 +34,26 @@ const Reports = ({
 
   // Update subjects when initialSubjects changes
   useEffect(() => {
-    if (initialSubjects) {
-      setSubjects(initialSubjects);
+    if (initialSubjects && initialSubjects.length > 0) {
+      console.log('Reports component received subjects:', initialSubjects);
+      
+      // Convert any non-string values to strings for display
+      const formattedSubjects = initialSubjects.map(subject => {
+        console.log(`Processing subject ${subject.name}: classScore=${subject.classScore} (${typeof subject.classScore})`);
+        
+        return {
+          ...subject,
+          classScore: subject.classScore !== undefined && subject.classScore !== null ? 
+            subject.classScore.toString() : '',
+          examScore: subject.examScore !== undefined && subject.examScore !== null ? 
+            subject.examScore.toString() : '',
+          totalScore: subject.totalScore !== undefined && subject.totalScore !== null ? 
+            subject.totalScore.toString() : ''
+        };
+      });
+      
+      console.log('Formatted subjects for display:', formattedSubjects);
+      setSubjects(formattedSubjects);
     }
   }, [initialSubjects]);
 
@@ -116,21 +135,36 @@ const Reports = ({
 
   // Helper function to calculate grade
   const calculateGrade = (total) => {
-    if (total >= 80) return 'A';
-    if (total >= 70) return 'B';
-    if (total >= 60) return 'C';
-    if (total >= 50) return 'D';
-    if (total >= 45) return 'E';
+    if (!total || isNaN(total)) return 'F9';
+    
+    const score = parseFloat(total);
+    
+    if (score >= 95) return 'A1';
+    if (score >= 90) return 'A2';
+    if (score >= 85) return 'B2';
+    if (score >= 80) return 'B3';
+    if (score >= 75) return 'B4';
+    if (score >= 70) return 'C4';
+    if (score >= 65) return 'C5';
+    if (score >= 60) return 'C6';
+    if (score >= 55) return 'D7';
+    if (score >= 50) return 'D8';
+    if (score >= 45) return 'E8';
+    if (score >= 40) return 'E9';
     return 'F9';
   };
 
   // Helper function to calculate remark
   const calculateRemark = (total) => {
-    if (total >= 80) return 'Excellent';
-    if (total >= 70) return 'Very Good';
-    if (total >= 60) return 'Good';
-    if (total >= 50) return 'Fair';
-    if (total >= 45) return 'Pass';
+    if (!total || isNaN(total)) return 'Fail';
+    
+    const score = parseFloat(total);
+    
+    if (score >= 90) return 'Excellent';
+    if (score >= 75) return 'Very Good';
+    if (score >= 65) return 'Good';
+    if (score >= 55) return 'Fair';
+    if (score >= 45) return 'Pass';
     return 'Fail';
   };
 
@@ -988,6 +1022,8 @@ const Reports = ({
 
   // Function to handle class score change
   const handleClassScoreChange = useCallback((id, value) => {
+    console.log(`Class score changed for subject ID ${id}: ${value}`);
+    
     const updatedSubjects = subjects.map(subject => {
       if (subject.id === id) {
         const classScore = value === '' ? '0' : value;
@@ -998,30 +1034,10 @@ const Reports = ({
         const examScoreNum = parseInt(examScore, 10) || 0;
         const totalScore = (classScoreNum + examScoreNum).toString();
         
-        // Calculate grade
+        // Calculate grade and remark using the new scale
         const total = classScoreNum + examScoreNum;
-        let grade = '';
-        let remark = '';
-        
-        if (total >= 80) {
-          grade = 'A';
-          remark = 'Excellent';
-        } else if (total >= 70) {
-          grade = 'B';
-          remark = 'Very Good';
-        } else if (total >= 60) {
-          grade = 'C';
-          remark = 'Good';
-        } else if (total >= 50) {
-          grade = 'D';
-          remark = 'Fair';
-        } else if (total >= 45) {
-          grade = 'E';
-          remark = 'Pass';
-        } else {
-          grade = 'F9';
-          remark = 'Fail';
-        }
+        const grade = calculateGrade(total);
+        const remark = calculateRemark(total);
         
         return { 
           ...subject, 
@@ -1055,30 +1071,10 @@ const Reports = ({
         const examScoreNum = parseInt(examScore, 10) || 0;
         const totalScore = (classScoreNum + examScoreNum).toString();
         
-        // Calculate grade
+        // Calculate grade and remark using the new scale
         const total = classScoreNum + examScoreNum;
-        let grade = '';
-        let remark = '';
-        
-        if (total >= 80) {
-          grade = 'A';
-          remark = 'Excellent';
-        } else if (total >= 70) {
-          grade = 'B';
-          remark = 'Very Good';
-        } else if (total >= 60) {
-          grade = 'C';
-          remark = 'Good';
-        } else if (total >= 50) {
-          grade = 'D';
-          remark = 'Fair';
-        } else if (total >= 45) {
-          grade = 'E';
-          remark = 'Pass';
-        } else {
-          grade = 'F9';
-          remark = 'Fail';
-        }
+        const grade = calculateGrade(total);
+        const remark = calculateRemark(total);
         
         return { 
           ...subject, 
@@ -1099,6 +1095,22 @@ const Reports = ({
     // Recalculate totals
     calculateTotals();
   }, [subjects, onSubjectsChange, calculateTotals]);
+
+  // Update studentData when studentAge prop changes
+  useEffect(() => {
+    if (studentAge) {
+      setStudentData(prevData => ({
+        ...prevData,
+        age: studentAge
+      }));
+      
+      // Also set it directly on the field if it exists
+      const ageField = document.getElementById('studentAge');
+      if (ageField) {
+        ageField.value = studentAge;
+      }
+    }
+  }, [studentAge]);
 
   return (
     <div className="report-main-container">
@@ -1159,7 +1171,11 @@ const Reports = ({
                 className="form-control" 
                 id="studentAge" 
                 value={studentData.age}
-                readOnly
+                onChange={(e) => {
+                  // This makes it a controlled component but we'll keep it read-only
+                  // by not actually changing the value when user types
+                }}
+                readOnly={true}
                 placeholder="Auto-calculated"
               />
           </div>

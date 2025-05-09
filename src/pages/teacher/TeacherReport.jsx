@@ -19,37 +19,6 @@ import {
 import './styles/TeacherReport.css';
 import { supabase } from '../../lib/supabase';
 
-// Utility function to get student courses from the database
-async function getStudentCourses(studentId) {
-  try {
-    if (!studentId) {
-      throw new Error('Student ID is required');
-    }
-    
-    // Get student's assigned courses with course details
-    const { data, error } = await supabase
-      .from('student_courses')
-      .select(`
-        course_id,
-        courses:course_id (
-          id,
-          name,
-          code
-        ),
-        enrollment_date,
-        status
-      `)
-      .eq('student_id', studentId);
-      
-    if (error) throw error;
-    
-    return { data, error: null };
-  } catch (error) {
-    console.error('Error fetching student courses:', error);
-    return { data: null, error };
-  }
-}
-
 const TeacherReport = () => {
   const { studentId } = useParams();
   const [student, setStudent] = useState(null);
@@ -130,6 +99,77 @@ const TeacherReport = () => {
     };
   }, [studentId, termSelectRef.current?.value, academicYearRef.current?.value, reportData?.id]);
 
+  // Calculate student age from date of birth
+  const calculateAge = (dateOfBirth) => {
+    if (!dateOfBirth) return '';
+    
+    const dob = new Date(dateOfBirth);
+    const today = new Date();
+    
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    
+    // If birthday hasn't occurred yet this year, subtract one year
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    
+    return age;
+  };
+
+  // Helper function to calculate class score (60% of total)
+  const calculateClassScore = async (studentId, courseId) => {
+    try {
+      // Get all assignments for this course
+      const { data: assignments, error: assignmentError } = await supabase
+        .from('assignments')
+        .select('*')
+        .eq('course_id', courseId);
+      
+      if (assignmentError) throw assignmentError;
+      
+      if (!assignments || assignments.length === 0) return 0;
+      
+      // Get student submissions for these assignments
+      const { data: submissions, error: submissionError } = await supabase
+        .from('student_assignments')
+        .select('*')
+        .eq('student_id', studentId)
+        .in('assignment_id', assignments.map(a => a.id));
+      
+      if (submissionError) throw submissionError;
+      
+      if (!submissions || submissions.length === 0) return 0;
+      
+      // Calculate total points earned and total possible points
+      const gradedSubmissions = submissions.filter(s => s.status === 'graded' && s.score !== null);
+      
+      if (gradedSubmissions.length === 0) return 0;
+      
+      let totalScore = 0;
+      let maxPossibleScore = 0;
+      
+      for (const submission of gradedSubmissions) {
+        const assignment = assignments.find(a => a.id === submission.assignment_id);
+        if (assignment) {
+          totalScore += submission.score;
+          maxPossibleScore += assignment.max_score;
+        }
+      }
+      
+      // Calculate percentage and convert to 60% scale
+      if (maxPossibleScore > 0) {
+        const percentageScore = (totalScore / maxPossibleScore) * 100;
+        return parseFloat((percentageScore * 0.6).toFixed(2)); // 60% of total score
+      }
+      
+      return 0;
+    } catch (error) {
+      console.error('Error calculating class score:', error);
+      return 0;
+    }
+  };
+
   useEffect(() => {
     const fetchStudentData = async () => {
       try {
@@ -144,6 +184,27 @@ const TeacherReport = () => {
         if (analyticsError) throw analyticsError;
         
         setStudent(studentData);
+        
+        // Calculate student age from date of birth and set in state
+        let age = '';
+        if (studentData.date_of_birth) {
+          age = calculateAge(studentData.date_of_birth);
+          console.log('Student age calculated:', age);
+        }
+        
+        // Update student data state with calculated age
+        setStudentData({
+          name: `${studentData.first_name} ${studentData.last_name}`,
+          dateOfBirth: studentData.date_of_birth,
+          age: age
+        });
+        
+        // Set the age field directly for immediate display
+        const ageInput = document.getElementById('studentAge');
+        if (ageInput) {
+          ageInput.value = age;
+          console.log('Setting age field directly to:', age);
+        }
         
         // If we have assignments, we can get the course ID and fetch grade information
         if (analyticsData && analyticsData.assignments && analyticsData.assignments.length > 0) {
@@ -180,6 +241,14 @@ const TeacherReport = () => {
       // Populate student name field
       studentNameInputRef.current.value = `${student.first_name} ${student.last_name}`;
       
+      // Populate student age field if available
+      if (studentData.age) {
+        const ageInput = document.getElementById('studentAge');
+        if (ageInput) {
+          ageInput.value = studentData.age;
+        }
+      }
+      
       // If we have grade information, populate the average field
       if (studentGrade && averageInputRef.current) {
         averageInputRef.current.value = `${studentGrade.gradePercentage}%`;
@@ -213,24 +282,72 @@ const TeacherReport = () => {
       // Focus on the first input after populating
       studentNameInputRef.current.focus();
     }
-  }, [loading, student, studentGrade]);
+  }, [loading, student, studentGrade, studentData]);
+
+  // Update subjects when they change to ensure proper formatting
+  useEffect(() => {
+    if (subjects && subjects.length > 0) {
+      // Check if any subjects have non-string score values that need conversion
+      const hasNonStringValues = subjects.some(subject => 
+        (subject.classScore !== undefined && subject.classScore !== null && typeof subject.classScore !== 'string') ||
+        (subject.examScore !== undefined && subject.examScore !== null && typeof subject.examScore !== 'string') ||
+        (subject.totalScore !== undefined && subject.totalScore !== null && typeof subject.totalScore !== 'string')
+      );
+      
+      // Only update if there are actually non-string values to fix
+      if (hasNonStringValues) {
+        console.log('Converting non-string score values to strings');
+        
+        // Format all numeric values as strings
+        const formattedSubjects = subjects.map(subject => ({
+          ...subject,
+          classScore: subject.classScore !== undefined && subject.classScore !== null ? 
+            subject.classScore.toString() : '',
+          examScore: subject.examScore !== undefined && subject.examScore !== null ? 
+            subject.examScore.toString() : '',
+          totalScore: subject.totalScore !== undefined && subject.totalScore !== null ? 
+            subject.totalScore.toString() : ''
+        }));
+        
+        setSubjects(formattedSubjects);
+      }
+    }
+  }, []);  // Only run once on mount
 
   const handlePrint = () => {
     window.print();
   };
 
+  // Handle term selection change
+  const handleTermChange = () => {
+    loadSavedReport();
+  };
+
+  // Handle academic year change
+  const handleAcademicYearChange = () => {
+    loadSavedReport();
+  };
+
   // Calculate overall grade based on total score
   const calculateOverallGrade = (score) => {
-    if (!score) return 'F';
+    if (!score) return 'F9';
     
     const totalScore = parseFloat(score);
-    if (isNaN(totalScore)) return 'F';
+    if (isNaN(totalScore)) return 'F9';
 
-    if (totalScore >= 90) return 'A';
-    if (totalScore >= 80) return 'B';
-    if (totalScore >= 70) return 'C';
-    if (totalScore >= 60) return 'D';
-    return 'F';
+    if (totalScore >= 95) return 'A1';
+    if (totalScore >= 90) return 'A2';
+    if (totalScore >= 85) return 'B2';
+    if (totalScore >= 80) return 'B3';
+    if (totalScore >= 75) return 'B4';
+    if (totalScore >= 70) return 'C4';
+    if (totalScore >= 65) return 'C5';
+    if (totalScore >= 60) return 'C6';
+    if (totalScore >= 55) return 'D7';
+    if (totalScore >= 50) return 'D8';
+    if (totalScore >= 45) return 'E8';
+    if (totalScore >= 40) return 'E9';
+    return 'F9';
   };
 
   // Handle saving report details
@@ -310,7 +427,6 @@ const TeacherReport = () => {
         .single();
 
       if (reportError) throw reportError;
-
       setReportData(newReport);
       reportId = newReport.id;
     }
@@ -319,6 +435,10 @@ const TeacherReport = () => {
     const classScore = parseFloat(row.querySelector('input[placeholder="Score"]')?.value) || 0;
     const examScore = parseFloat(row.querySelector('input[placeholder="Score"]:nth-child(2)')?.value) || 0;
     const totalScore = classScore + examScore;
+    
+    // Calculate grade using the new format
+    const grade = calculateOverallGrade(totalScore);
+    console.log(`Saving grade: classScore=${classScore}, examScore=${examScore}, totalScore=${totalScore}, grade=${grade}`);
 
     const gradeData = {
       report_id: reportId, // Use the updated report ID
@@ -327,7 +447,7 @@ const TeacherReport = () => {
       exam_score: examScore,
       total_score: totalScore,
       position: parseInt(row.querySelector('input[placeholder="Position"]')?.value) || 0,
-      grade: row.querySelector('input[placeholder="Grade"]')?.value,
+      grade: grade, // Use the new grade format
       remark: row.querySelector('input[placeholder="Remark"]')?.value,
       teacher_signature: row.querySelector('input[placeholder="Sign"]')?.value,
       created_at: new Date().toISOString(),
@@ -393,170 +513,85 @@ const TeacherReport = () => {
     }
   };
 
-  const calculateClassScoreFromAssignments = async (studentId, courseId) => {
-    try {
-      console.log(`Calculating class score for student ${studentId} in course ${courseId}`);
-      
-      // Get all assignments for this course
-      const { data: assignments, error: assignmentsError } = await supabase
-        .from('assignments')
-        .select('*')
-        .eq('course_id', courseId);
-      
-      if (assignmentsError) {
-        console.error('Error fetching assignments:', assignmentsError);
-        throw assignmentsError;
-      }
-      
-      if (!assignments || assignments.length === 0) {
-        console.log('No assignments found for this course');
-        return null;
-      }
-      
-      console.log(`Found ${assignments.length} assignments for course ${courseId}`);
-      
-      // Get student submissions for these assignments
-      const { data: submissions, error: submissionsError } = await supabase
-        .from('student_assignments')
-        .select('*')
-        .eq('student_id', studentId)
-        .in('assignment_id', assignments.map(a => a.id));
-      
-      if (submissionsError) {
-        console.error('Error fetching submissions:', submissionsError);
-        throw submissionsError;
-      }
-      
-      if (!submissions || submissions.length === 0) {
-        console.log('No submissions found for this student');
-        return 0; // Default to 0 if no submissions
-      }
-      
-      console.log(`Found ${submissions.length} submissions for student ${studentId}`);
-      
-      // Filter for graded submissions
-      const gradedSubmissions = submissions.filter(s => s.status === 'graded' && s.score !== null);
-      
-      if (gradedSubmissions.length === 0) {
-        console.log('No graded submissions found');
-        return 0; // Default to 0 if no graded submissions
-      }
-      
-      // Calculate total points earned and total possible points
-      let totalScore = 0;
-      let maxPossibleScore = 0;
-      
-      for (const submission of gradedSubmissions) {
-        const assignment = assignments.find(a => a.id === submission.assignment_id);
-        if (assignment) {
-          totalScore += submission.score;
-          maxPossibleScore += assignment.max_score;
-        }
-      }
-      
-      // Calculate percentage and convert to 60% scale (class score is 60% of total)
-      if (maxPossibleScore > 0) {
-        const percentageScore = (totalScore / maxPossibleScore) * 100;
-        const classScore = (percentageScore * 0.6).toFixed(2); // 60% of total score
-        console.log(`Calculated class score: ${classScore} (based on ${gradedSubmissions.length} graded assignments)`);
-        return classScore;
-      } else {
-        console.log('Max possible score is 0, defaulting to 0');
-        return 0;
-      }
-    } catch (error) {
-      console.error('Error calculating class score:', error);
-      return null;
-    }
-  };
-
   const fetchStudentCourses = async (studentId) => {
     try {
-      console.log(`Fetching courses for student ${studentId}`);
-      
-      // Use our utility function to get student's assigned courses
-      const { data: assignedCourses, error } = await getStudentCourses(studentId);
-      
-      if (error) {
-        console.error('Error fetching student courses:', error);
-        throw error;
-      }
-      
-      console.log(`Found ${assignedCourses?.length || 0} enrolled courses:`, assignedCourses);
+      // First get student's assigned courses
+      const { data: assignedCourses, error: coursesError } = await supabase
+        .from('student_courses')
+        .select(`
+          course_id,
+          courses (
+            id,
+            name,
+            code
+          )
+        `)
+        .eq('student_id', studentId);
 
-      if (!assignedCourses || assignedCourses.length === 0) {
-        console.warn('No enrolled courses found for student:', studentId);
-        return [];
-      }
+      if (coursesError) throw coursesError;
 
-      // Get current term and academic year
-      const term = termSelectRef.current?.value || 'Term 1';
-      const academicYear = academicYearRef.current?.value || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
+      // Then get any existing grades for these courses
+      const { data: grades, error: gradesError } = await supabase
+        .from('student_grades')
+        .select('*')
+        .in('subject_id', assignedCourses.map(course => course.course_id));
 
-      // Get the report ID for the current term and academic year
-      const { data: report, error: reportError } = await supabase
-        .from('student_reports')
-        .select('id')
-        .eq('student_id', studentId)
-        .eq('term', term)
-        .eq('academic_year', academicYear)
-        .single();
-
-      if (reportError && reportError.code !== 'PGRST116') {
-        console.error('Error fetching student report:', reportError);
-        throw reportError;
-      }
-
-      let reportId = report?.id;
-      let grades = [];
-
-      // If we found a report ID, fetch all grades for this report
-      if (reportId) {
-        const { data: reportGrades, error: gradesError } = await supabase
-          .from('student_grades')
-          .select('*')
-          .eq('report_id', reportId);
-
-        if (gradesError) {
-          console.error('Error fetching grades:', gradesError);
-          throw gradesError;
-        }
-
-        grades = reportGrades || [];
-        console.log(`Found ${grades.length} existing grades for report ${reportId}`);
-      } else {
-        console.log('No report found for current term and academic year, using default values');
-      }
+      if (gradesError) throw gradesError;
 
       // Map the courses with their grades and calculated class scores
       const coursesWithGrades = [];
       
       for (const course of assignedCourses) {
-        // Find any existing grade for this course
-        const existingGrade = grades.find(grade => grade.subject_id === course.course_id);
+        const existingGrade = grades?.find(grade => grade.subject_id === course.course_id);
         
-        // Calculate class score from assignments if needed
+        // Calculate class score directly here
         let classScore = '';
         
-        if (!existingGrade || existingGrade.class_score === 0) {
-          try {
-            const calculatedScore = await calculateClassScoreFromAssignments(studentId, course.course_id);
-            classScore = calculatedScore || '';
-            console.log(`Calculated class score for ${course.courses.name}: ${classScore}`);
-          } catch (error) {
-            console.error(`Error calculating class score for course ${course.course_id}:`, error);
-            classScore = existingGrade?.class_score || '';
+        // Get all assignments for this course
+        const { data: assignments } = await supabase
+          .from('assignments')
+          .select('*')
+          .eq('course_id', course.course_id);
+        
+        if (assignments && assignments.length > 0) {
+          // Get student submissions for these assignments
+          const { data: submissions } = await supabase
+            .from('student_assignments')
+            .select('*')
+            .eq('student_id', studentId)
+            .in('assignment_id', assignments.map(a => a.id));
+          
+          if (submissions && submissions.length > 0) {
+            // Calculate total points earned and total possible points
+            const gradedSubmissions = submissions.filter(s => s.status === 'graded' && s.score !== null);
+            
+            if (gradedSubmissions.length > 0) {
+              let totalScore = 0;
+              let maxPossibleScore = 0;
+              
+              for (const submission of gradedSubmissions) {
+                const assignment = assignments.find(a => a.id === submission.assignment_id);
+                if (assignment) {
+                  totalScore += submission.score;
+                  maxPossibleScore += assignment.max_score;
+                }
+              }
+              
+              // Calculate percentage and convert to 60% scale
+              if (maxPossibleScore > 0) {
+                const percentageScore = (totalScore / maxPossibleScore) * 100;
+                classScore = (percentageScore * 0.6).toFixed(2); // 60% of total score
+              }
+            }
           }
-        } else {
-          classScore = existingGrade?.class_score || '';
         }
         
         coursesWithGrades.push({
-          id: existingGrade?.id || `temp-${Date.now()}-${Math.random()}`,
+          id: Date.now() + Math.random(), // Temporary unique ID for the UI
           courseId: course.course_id,
           name: course.courses.name,
           code: course.courses.code,
-          classScore: existingGrade?.class_score || classScore || '',
+          classScore: existingGrade?.class_score || classScore || '', // Use calculated score if no existing grade
           examScore: existingGrade?.exam_score || '',
           totalScore: existingGrade?.total_score || '',
           position: existingGrade?.position || '',
@@ -566,23 +601,18 @@ const TeacherReport = () => {
         });
       }
       
-      console.log('Processed courses with grades:', coursesWithGrades);
       return coursesWithGrades;
     } catch (error) {
-      console.error('Error in fetchStudentCourses:', error);
+      console.error('Error fetching student courses:', error);
       return [];
     }
   };
 
   const loadSavedReport = async () => {
-    if (!studentId || !termSelectRef.current?.value || !academicYearRef.current?.value) {
-      console.log('Missing required data for loading report');
-      return;
-    }
+    if (!studentId || !termSelectRef.current?.value || !academicYearRef.current?.value) return;
 
     try {
-      setLoading(true);
-      console.log(`Loading report for student ${studentId}, term ${termSelectRef.current.value}, year ${academicYearRef.current.value}`);
+      console.log("Loading report for student:", studentId);
       
       // First, get any existing saved report
       const { data: existingReport, error: reportError } = await supabase
@@ -593,19 +623,26 @@ const TeacherReport = () => {
         .eq('academic_year', academicYearRef.current.value)
         .single();
 
-      if (reportError && reportError.code !== 'PGRST116') {
-        console.error('Error fetching existing report:', reportError);
-        throw reportError;
-      }
+      if (reportError && reportError.code !== 'PGRST116') throw reportError;
 
-      // Get student's assigned courses with grades
-      const assignedCourses = await fetchStudentCourses(studentId);
+      // Get student's assigned courses
+      const { data: assignedCourses, error: coursesError } = await supabase
+        .from('student_courses')
+        .select(`
+          course_id,
+          courses (
+            id,
+            name,
+            code
+          )
+        `)
+        .eq('student_id', studentId);
+
+      if (coursesError) throw coursesError;
       
-      // Set the subjects with the fetched data
-      setSubjects(assignedCourses);
-
+      const coursesWithGrades = [];
+      
       if (existingReport) {
-        console.log('Found existing report:', existingReport);
         setReportData(existingReport);
         
         // Populate report fields
@@ -617,44 +654,214 @@ const TeacherReport = () => {
         document.getElementById('principalSignature').value = existingReport.principal_signature || '';
         document.getElementById('attendance').value = existingReport.attendance || '';
         
-        // Update the average field if available
+        // Get saved grades for this report
+        const { data: grades, error: gradesError } = await supabase
+          .from('student_grades')
+          .select('*')
+          .eq('report_id', existingReport.id);
+          
+        if (gradesError) throw gradesError;
+        
+        // Process each assigned course
+        for (const course of assignedCourses) {
+          const existingGrade = grades?.find(grade => grade.subject_id === course.course_id);
+          
+          coursesWithGrades.push({
+            id: Date.now() + Math.random(), // Temporary unique ID for the UI
+            courseId: course.course_id,
+            name: course.courses.name,
+            code: course.courses.code,
+            classScore: existingGrade?.class_score || '',
+            examScore: existingGrade?.exam_score || '',
+            totalScore: existingGrade?.total_score || '',
+            position: existingGrade?.position || '',
+            grade: existingGrade?.grade || '',
+            remark: existingGrade?.remark || '',
+            teacherSignature: existingGrade?.teacher_signature || ''
+          });
+        }
+        
+        // Update the average score display
         if (averageInputRef.current && existingReport.total_score) {
-          averageInputRef.current.value = existingReport.total_score;
+          averageInputRef.current.value = `${existingReport.total_score}%`;
         }
       } else {
-        console.log('No existing report found, creating a new one');
-        // If no report exists, create placeholder data
-        const { data: studentInfo, error: studentError } = await supabase
-          .from('students')
-          .select('class_year')
-          .eq('profile_id', studentId)
-          .single();
+        // No existing report, calculate class scores for each course
+        console.log("No existing report found. Calculating scores for each course...");
         
-        if (!studentError && studentInfo) {
-          document.getElementById('studentClass').value = studentInfo.class_year || '';
+        for (const course of assignedCourses) {
+          try {
+            // Calculate the 60% score directly from assignments
+            console.log(`Calculating score for course: ${course.courses.name} (${course.course_id})`);
+            const result = await calculateClassScoreFromAssignments(studentId, course.course_id);
+            const score = result.data;
+            
+            console.log(`Course ${course.courses.name} (${course.course_id}): Calculated 60% score = ${score}`);
+            
+            // Always convert to string (even if 0)
+            const scoreAsString = score.toString();
+            
+            // Create the subject grade object with the calculated score
+            const subjectGrade = {
+              id: Date.now() + Math.random(),
+              courseId: course.course_id,
+              name: course.courses.name,
+              code: course.courses.code,
+              classScore: scoreAsString,
+              examScore: '',
+              totalScore: scoreAsString, // Default total to class score if no exam score yet
+              position: '',
+              grade: calculateOverallGrade(score),
+              remark: '',
+              teacherSignature: ''
+            };
+            
+            console.log(`Adding subject with 60% score: ${JSON.stringify(subjectGrade)}`);
+            coursesWithGrades.push(subjectGrade);
+          } catch (error) {
+            console.error(`Error calculating 60% score for course ${course.course_id}:`, error);
+            coursesWithGrades.push({
+              id: Date.now() + Math.random(),
+              courseId: course.course_id,
+              name: course.courses.name,
+              code: course.courses.code,
+              classScore: '',
+              examScore: '',
+              totalScore: '',
+              position: '',
+              grade: '',
+              remark: '',
+              teacherSignature: ''
+            });
+          }
         }
       }
-
+      
+      console.log('Setting subjects with calculated grades:', coursesWithGrades);
+      
+      // Log individual subjects to see their values
+      coursesWithGrades.forEach((subject, index) => {
+        console.log(`Subject ${index}: ${subject.name}, Class Score: ${subject.classScore}`);
+      });
+      
+      setSubjects(coursesWithGrades);
+      
+      // Set a timeout to check if the subjects are properly set in state
+      setTimeout(() => {
+        console.log('Current subjects in state:', subjects);
+      }, 1000);
     } catch (error) {
       console.error('Error loading saved report:', error);
       toast.error('Failed to load saved report');
-    } finally {
-      setLoading(false);
     }
   };
 
-  // Add effect to load saved report when term or academic year changes
+  // Call loadSavedReport when term or academic year changes
   useEffect(() => {
     if (termSelectRef.current?.value && academicYearRef.current?.value) {
       loadSavedReport();
     }
   }, [termSelectRef.current?.value, academicYearRef.current?.value]);
 
+  // Helper function to calculate class score from assignments
+  const calculateClassScoreFromAssignments = async (studentId, courseId) => {
+    try {
+      console.log(`Calculating class score for student ${studentId}, course ${courseId}`);
+      
+      // Get all assignments for this course
+      const { data: assignments } = await supabase
+        .from('assignments')
+        .select('*')
+        .eq('course_id', courseId);
+      
+      if (!assignments || assignments.length === 0) {
+        console.log(`No assignments found for course ${courseId}`);
+        return { data: 0 };
+      }
+      
+      console.log(`Found ${assignments.length} assignments for course ${courseId}`);
+      
+      // Get student submissions for these assignments
+      const { data: submissions } = await supabase
+        .from('student_assignments')
+        .select('*')
+        .eq('student_id', studentId)
+        .in('assignment_id', assignments.map(a => a.id));
+      
+      if (!submissions || submissions.length === 0) {
+        console.log(`No submissions found for student ${studentId} in course ${courseId}`);
+        return { data: 0 };
+      }
+      
+      console.log(`Found ${submissions.length} submissions for student ${studentId} in course ${courseId}`);
+      
+      // Calculate total points earned and total possible points
+      const gradedSubmissions = submissions.filter(s => s.status === 'graded' && s.score !== null);
+      
+      if (gradedSubmissions.length === 0) {
+        console.log(`No graded submissions found for student ${studentId} in course ${courseId}`);
+        return { data: 0 };
+      }
+      
+      console.log(`Found ${gradedSubmissions.length} graded submissions`);
+      
+      let totalScore = 0;
+      let maxPossibleScore = 0;
+      
+      for (const submission of gradedSubmissions) {
+        const assignment = assignments.find(a => a.id === submission.assignment_id);
+        if (assignment) {
+          totalScore += submission.score;
+          maxPossibleScore += assignment.max_score;
+        }
+      }
+      
+      console.log(`Total score: ${totalScore}/${maxPossibleScore}`);
+      
+      // Calculate percentage and convert to 60% scale
+      if (maxPossibleScore > 0) {
+        const percentageScore = (totalScore / maxPossibleScore) * 100;
+        const score60Percent = (percentageScore * 0.6);
+        
+        // Round to 2 decimal places, and return as a number
+        const roundedScore = Math.round(score60Percent * 100) / 100;
+        
+        console.log(`Student ${studentId}, Course ${courseId}: Raw 60% score = ${score60Percent}, Rounded = ${roundedScore}`);
+        
+        return { data: roundedScore };
+      }
+      
+      console.log(`MaxPossibleScore is 0, returning 0`);
+      return { data: 0 };
+    } catch (error) {
+      console.error('Error calculating class score:', error);
+      return { data: 0 };
+    }
+  };
+
   const handleSaveReport = async () => {
     try {
       setSaving(true);
       console.log('Starting save process...');
 
+      // First, ensure we have a valid report (either existing or new)
+      let reportId;
+      
+      // Check if there's an existing report
+      const { data: existingReport, error: fetchError } = await supabase
+        .from('student_reports')
+        .select('id')
+        .eq('student_id', studentId)
+        .eq('term', termSelectRef.current.value)
+        .eq('academic_year', academicYearRef.current.value)
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error('Error fetching existing report:', fetchError);
+        throw fetchError;
+      }
+      
+      // Prepare report details
       const reportDetails = {
         student_id: studentId,
         term: termSelectRef.current.value,
@@ -665,42 +872,27 @@ const TeacherReport = () => {
         class_year: document.getElementById('studentClass')?.value || '',
         conduct: document.getElementById('conduct')?.value || '',
         next_class: document.getElementById('nextClass')?.value || '',
-        reopening_date: document.getElementById('reopeningDate')?.value || '',
+        reopening_date: document.getElementById('reopeningDate')?.value || null,
         principal_signature: document.getElementById('principalSignature')?.value || '',
         attendance: document.getElementById('attendance')?.value || ''
       };
 
       console.log('Report details:', reportDetails);
 
-      // First, try to get existing report
-      const { data: existingReport, error: fetchError } = await supabase
-        .from('student_reports')
-        .select('*')
-        .eq('student_id', studentId)
-        .eq('term', termSelectRef.current.value)
-        .eq('academic_year', academicYearRef.current.value)
-        .single();
-
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        console.error('Error fetching existing report:', fetchError);
-        throw fetchError;
-      }
-
-      let savedReport;
       if (existingReport) {
         // Update existing report
-        const { data: updatedReport, error: updateError } = await supabase
+        reportId = existingReport.id;
+        console.log('Updating existing report ID:', reportId);
+        
+        const { error: updateError } = await supabase
           .from('student_reports')
           .update(reportDetails)
-          .eq('id', existingReport.id)
-          .select()
-          .single();
+          .eq('id', reportId);
 
         if (updateError) {
           console.error('Error updating report:', updateError);
           throw updateError;
         }
-        savedReport = updatedReport;
       } else {
         // Insert new report
         const { data: newReport, error: insertError } = await supabase
@@ -713,33 +905,30 @@ const TeacherReport = () => {
           console.error('Error inserting report:', insertError);
           throw insertError;
         }
-        savedReport = newReport;
+        
+        if (!newReport?.id) {
+          throw new Error('Failed to get report ID from new report');
+        }
+        
+        reportId = newReport.id;
+        console.log('Created new report with ID:', reportId);
       }
 
-      console.log('Saved report:', savedReport);
-
-      if (!savedReport?.id) {
-        console.error('No report ID received:', savedReport);
-        throw new Error('Failed to get report ID');
-      }
-
-      console.log('Got report ID:', savedReport.id);
-
-      // Now save the grades for each subject
+      // Now save the grades for each subject using the confirmed report ID
       const grades = subjects.map(subject => {
         const classScore = parseFloat(subject.classScore) || 0;
         const examScore = parseFloat(subject.examScore) || 0;
         const totalScore = classScore + examScore;
-        const grade = calculateOverallGrade(totalScore); // This ensures we get a valid 2-character grade
+        const grade = calculateOverallGrade(totalScore);
 
         return {
-          report_id: savedReport.id,
+          report_id: reportId, // Use the validated report ID
           subject_id: subject.courseId,
           class_score: classScore,
           exam_score: examScore,
           total_score: totalScore,
           position: parseInt(subject.position) || null,
-          grade: grade, // This will be A, B, C, D, or F
+          grade: grade,
           remark: subject.remark || '',
           teacher_signature: subject.teacherSignature || ''
         };
@@ -751,7 +940,7 @@ const TeacherReport = () => {
       const { error: deleteError } = await supabase
         .from('student_grades')
         .delete()
-        .eq('report_id', savedReport.id);
+        .eq('report_id', reportId);
 
       if (deleteError) {
         console.error('Error deleting existing grades:', deleteError);
@@ -781,7 +970,7 @@ const TeacherReport = () => {
           total_score: averageScore.toFixed(2),
           overall_grade: calculateOverallGrade(averageScore)
         })
-        .eq('id', savedReport.id);
+        .eq('id', reportId);
 
       if (updateError) {
         console.error('Error updating report total:', updateError);
@@ -790,14 +979,30 @@ const TeacherReport = () => {
 
       console.log('Successfully saved grades and updated report total');
 
-      // Update the reportData state with the current report
-      setReportData({
-        ...savedReport,
-        total_score: averageScore.toFixed(2),
-        overall_grade: calculateOverallGrade(averageScore)
-      });
+      // Fetch the complete updated report
+      const { data: updatedReport, error: getReportError } = await supabase
+        .from('student_reports')
+        .select('*')
+        .eq('id', reportId)
+        .single();
+        
+      if (getReportError) {
+        console.error('Error fetching updated report:', getReportError);
+      } else {
+        // Update the reportData state with the current report
+        setReportData(updatedReport);
+        // Reload the report to get the latest data
+        await loadSavedReport();
+      }
+      
       setSaved(true);
       toast.success('Report saved successfully');
+      
+      // Reset saved state after 3 seconds
+      setTimeout(() => {
+        setSaved(false);
+      }, 3000);
+      
     } catch (error) {
       console.error('Error saving report:', error);
       toast.error('Failed to save report');
@@ -813,6 +1018,57 @@ const TeacherReport = () => {
       sum + (parseFloat(subject.totalScore) || 0), 0);
     return (totalScores / subjects.length).toFixed(2);
   };
+
+  // For direct input and rendering of class scores
+  useEffect(() => {
+    // This runs after subjects have been set in state
+    if (subjects && subjects.length > 0) {
+      console.log('Subjects are now in state, checking for rendering issues');
+      
+      // Check if there are any subjects with numeric class scores that need to be converted to strings
+      const hasNumericScores = subjects.some(
+        subject => subject.classScore !== undefined && 
+                  subject.classScore !== null && 
+                  typeof subject.classScore !== 'string'
+      );
+      
+      if (hasNumericScores) {
+        console.log('Found numeric scores, converting to strings for display');
+        
+        // Convert numeric scores to strings for proper display
+        const updatedSubjects = subjects.map(subject => ({
+          ...subject,
+          classScore: subject.classScore !== undefined && subject.classScore !== null ? 
+            subject.classScore.toString() : '',
+          examScore: subject.examScore !== undefined && subject.examScore !== null ? 
+            subject.examScore.toString() : '',
+          totalScore: subject.totalScore !== undefined && subject.totalScore !== null ? 
+            subject.totalScore.toString() : ''
+        }));
+        
+        // Update subjects with string values
+        setSubjects(updatedSubjects);
+      }
+      
+      // Look for subjects with missing values in the DOM and force update them
+      setTimeout(() => {
+        const rows = document.querySelectorAll('tr[data-subject-id]');
+        rows.forEach(row => {
+          const subjectId = row.dataset.subjectId;
+          const subject = subjects.find(s => s.courseId === subjectId);
+          
+          if (subject) {
+            // Get the class score input field
+            const classScoreInput = row.querySelector('input[placeholder="Score"]');
+            if (classScoreInput && classScoreInput.value === '' && subject.classScore) {
+              console.log(`Forcing update for subject ${subject.name}: setting class score to ${subject.classScore}`);
+              classScoreInput.value = subject.classScore;
+            }
+          }
+        });
+      }, 500);
+    }
+  }, [subjects]);
 
   if (loading) {
     return (
@@ -838,7 +1094,12 @@ const TeacherReport = () => {
             <div className="report-meta-controls">
               <div className="form-group">
                 <label htmlFor="termSelect">Term:</label>
-                <select id="termSelect" ref={termSelectRef} className="form-control">
+                <select 
+                  id="termSelect" 
+                  ref={termSelectRef} 
+                  className="form-control"
+                  onChange={() => loadSavedReport()}
+                >
                   <option value="Term 1">Term 1</option>
                   <option value="Term 2">Term 2</option>
                   <option value="Term 3">Term 3</option>
@@ -852,6 +1113,7 @@ const TeacherReport = () => {
                   ref={academicYearRef} 
                   className="form-control" 
                   placeholder="e.g. 2023-2024" 
+                  onChange={() => loadSavedReport()}
                 />
               </div>
             </div>
@@ -877,6 +1139,7 @@ const TeacherReport = () => {
             averageRef={averageInputRef}
             subjects={subjects}
             onSubjectsChange={setSubjects}
+            studentAge={studentData.age}
           />
         </div>
       </div>
