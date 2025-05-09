@@ -730,26 +730,38 @@ export const generateStudentReport = async (reportData) => {
 };
 
 /**
- * Calculate class score from assignments for student report
+ * Calculate a student's class score for a course based on assignment submissions
  * @param {string} studentId - The student ID
- * @param {string} courseId - The course ID 
- * @param {string} term - The term (e.g., 'Term 1')
- * @param {string} academicYear - The academic year (e.g., '2023-2024')
- * @returns {Promise<number>} - The calculated class score (60% of total)
+ * @param {string} courseId - The course ID
+ * @param {string} term - Optional term filter
+ * @param {string} academicYear - Optional academic year filter
+ * @returns {Promise<number|null>} - The calculated class score or null if error
  */
-export const calculateClassScoreFromAssignments = async (studentId, courseId, term, academicYear) => {
+export const calculateClassScoreFromAssignments = async (studentId, courseId, term = null, academicYear = null) => {
   try {
+    if (!studentId || !courseId) {
+      throw new Error('Student ID and Course ID are required');
+    }
+    
+    console.log(`Calculating class score for student ${studentId} in course ${courseId}`);
+    
     // Get all assignments for this course
     const { data: assignments, error: assignmentsError } = await supabase
       .from('assignments')
       .select('*')
       .eq('course_id', courseId);
-      
-    if (assignmentsError) throw assignmentsError;
+    
+    if (assignmentsError) {
+      console.error('Error fetching assignments:', assignmentsError);
+      throw assignmentsError;
+    }
     
     if (!assignments || assignments.length === 0) {
-      return 0; // No assignments, so class score is 0
+      console.log('No assignments found for this course');
+      return null;
     }
+    
+    console.log(`Found ${assignments.length} assignments for course ${courseId}`);
     
     // Get student submissions for these assignments
     const { data: submissions, error: submissionsError } = await supabase
@@ -757,17 +769,23 @@ export const calculateClassScoreFromAssignments = async (studentId, courseId, te
       .select('*')
       .eq('student_id', studentId)
       .in('assignment_id', assignments.map(a => a.id));
-      
-    if (submissionsError) throw submissionsError;
     
-    // Calculate total points earned and total possible points
-    const gradedSubmissions = submissions.filter(s => s.status === 'graded' && s.score !== null);
-    
-    if (gradedSubmissions.length === 0) {
-      return 0; // No graded submissions, so class score is 0
+    if (submissionsError) {
+      console.error('Error fetching submissions:', submissionsError);
+      throw submissionsError;
     }
     
-    // Calculate total score and max possible score
+    // Calculate the score based on submissions
+    const gradedSubmissions = submissions?.filter(s => s.status === 'graded' && s.score !== null) || [];
+    
+    if (gradedSubmissions.length === 0) {
+      console.log('No graded submissions found');
+      return 0; // Default to 0 if no graded submissions
+    }
+    
+    console.log(`Found ${gradedSubmissions.length} graded submissions`);
+    
+    // Calculate total points earned and total possible points
     let totalScore = 0;
     let maxPossibleScore = 0;
     
@@ -779,13 +797,18 @@ export const calculateClassScoreFromAssignments = async (studentId, courseId, te
       }
     }
     
-    // Calculate percentage and convert to 60% scale
-    const percentageScore = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 100 : 0;
-    const classScore = (percentageScore * 0.6); // 60% of total score
-    
-    return parseFloat(classScore.toFixed(2)); // Return with 2 decimal places
+    // Calculate percentage and convert to 60% scale (class score is typically 60% of total grade)
+    if (maxPossibleScore > 0) {
+      const percentageScore = (totalScore / maxPossibleScore) * 100;
+      const classScore = (percentageScore * 0.6).toFixed(2); // 60% of total score
+      console.log(`Calculated class score: ${classScore} (based on ${gradedSubmissions.length} graded assignments)`);
+      return parseFloat(classScore);
+    } else {
+      console.log('Max possible score is 0, defaulting to 0');
+      return 0;
+    }
   } catch (error) {
-    console.error('Error calculating class score from assignments:', error);
-    return 0; // Return 0 if there's an error
+    console.error('Error calculating class score:', error);
+    return null;
   }
 };

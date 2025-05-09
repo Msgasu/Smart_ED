@@ -255,6 +255,114 @@ CREATE TABLE student_grades (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Enable RLS on student_reports and student_grades
+ALTER TABLE student_reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE student_grades ENABLE ROW LEVEL SECURITY;
+
+-- Allow students to view only their own reports
+-- This improved policy accommodates different ways of referencing student_id
+CREATE OR REPLACE POLICY "Students can view their own reports"
+ON student_reports
+FOR SELECT
+TO authenticated
+USING (
+  student_id = auth.uid() OR 
+  EXISTS (
+    SELECT 1 FROM students 
+    SELECT 1 FROM students
+    WHERE profile_id = auth.uid() AND profile_id = student_id
+  )
+);
+
+-- Allow students to view only their own grades
+CREATE POLICY "Students can view their own grades"
+ON student_grades
+FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM student_reports sr
+    WHERE sr.id = report_id
+    AND sr.student_id = auth.uid()
+  )
+);
+
+-- Allow teachers to view reports for students in their courses
+CREATE POLICY "Teachers can view reports for their courses' students"
+ON student_reports
+FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM faculty_courses fc
+    JOIN student_courses sc ON fc.course_id = sc.course_id
+    WHERE fc.faculty_id = auth.uid()
+    AND sc.student_id = student_id
+  ) 
+  OR
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE id = auth.uid()
+    AND role = 'admin'
+  )
+);
+
+-- Allow teachers to view and update grades for courses they teach
+CREATE POLICY "Teachers can view grades for courses they teach"
+ON student_grades
+FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM faculty_courses fc
+    WHERE fc.faculty_id = auth.uid()
+    AND fc.course_id = subject_id
+  )
+  OR
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE id = auth.uid()
+    AND role = 'admin'
+  )
+);
+
+CREATE POLICY "Teachers can update grades for courses they teach"
+ON student_grades
+FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM faculty_courses fc
+    WHERE fc.faculty_id = auth.uid()
+    AND fc.course_id = subject_id
+  )
+  OR
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE id = auth.uid()
+    AND role = 'admin'
+  )
+);
+
+-- Allow teachers to insert grades for courses they teach
+CREATE POLICY "Teachers can insert grades for courses they teach"
+ON student_grades
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM faculty_courses fc
+    WHERE fc.faculty_id = auth.uid()
+    AND fc.course_id = subject_id
+  )
+  OR
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE id = auth.uid()
+    AND role = 'admin'
+  )
+);
+
 -- Insert sample courses
 INSERT INTO courses (code, name, description, created_at, updated_at) VALUES
 ('BIO101', 'Biology', 'Study of living organisms', NOW(), NOW()),

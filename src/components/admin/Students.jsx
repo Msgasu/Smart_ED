@@ -94,12 +94,131 @@ const Students = () => {
 
       if (error) throw error;
 
+      // If we're assigning courses to a student, set up default report entries
+      if (selectedUser.role === 'student') {
+        await createDefaultReportEntries(selectedUser.id, selectedCourses);
+      }
+
       toast.success(`Courses assigned successfully to ${selectedUser.first_name}`);
       setShowAssignModal(false);
       fetchUsers(); // Refresh the data
     } catch (error) {
       console.error('Error:', error);
       toast.error('Error assigning courses: ' + error.message);
+    }
+  };
+
+  // Create default report entries for assigned courses
+  const createDefaultReportEntries = async (studentId, courseIds) => {
+    try {
+      console.log(`Creating default report entries for student ${studentId} and courses:`, courseIds);
+      
+      // Get student profile information to access profile_id (needed for student_reports)
+      const { data: studentProfile, error: profileError } = await supabase
+        .from('students')
+        .select('profile_id, class_year')
+        .eq('profile_id', studentId)
+        .single();
+        
+      if (profileError) throw profileError;
+      if (!studentProfile) throw new Error('Student profile not found');
+      
+      // Get current academic year and term
+      const currentDate = new Date();
+      const academicYear = `${currentDate.getFullYear()}-${currentDate.getFullYear() + 1}`;
+      
+      // Default terms
+      const terms = ['Term 1', 'Term 2', 'Term 3'];
+      
+      // Fetch course details for all courses at once
+      const { data: courseDetails, error: coursesError } = await supabase
+        .from('courses')
+        .select('id, name, code')
+        .in('id', courseIds);
+        
+      if (coursesError) throw coursesError;
+      
+      // For each term, ensure a report entry exists
+      for (const term of terms) {
+        // Check if a report already exists for this student, term, and academic year
+        const { data: existingReport, error: reportCheckError } = await supabase
+          .from('student_reports')
+          .select('id')
+          .eq('student_id', studentProfile.profile_id)
+          .eq('term', term)
+          .eq('academic_year', academicYear);
+          
+        if (reportCheckError) throw reportCheckError;
+        
+        let reportId;
+        
+        // If no report exists, create one
+        if (!existingReport || existingReport.length === 0) {
+          const { data: newReport, error: createReportError } = await supabase
+            .from('student_reports')
+            .insert({
+              student_id: studentProfile.profile_id,
+              term: term,
+              academic_year: academicYear,
+              class_year: studentProfile.class_year,
+              total_score: 0,
+              overall_grade: 'F'
+            })
+            .select('id')
+            .single();
+            
+          if (createReportError) throw createReportError;
+          reportId = newReport.id;
+        } else {
+          reportId = existingReport[0].id;
+        }
+        
+        // Prepare grade entries for all courses in a single batch
+        const gradeEntries = [];
+        
+        // For each course, ensure a grade entry exists
+        for (const courseId of courseIds) {
+          // Check if a grade already exists for this report and course
+          const { data: existingGrade, error: gradeCheckError } = await supabase
+            .from('student_grades')
+            .select('id')
+            .eq('report_id', reportId)
+            .eq('subject_id', courseId);
+            
+          if (gradeCheckError) throw gradeCheckError;
+          
+          // If no grade exists, add to the batch
+          if (!existingGrade || existingGrade.length === 0) {
+            const courseDetail = courseDetails.find(c => c.id === courseId);
+            
+            gradeEntries.push({
+              report_id: reportId,
+              subject_id: courseId,
+              class_score: 0,
+              exam_score: 0,
+              total_score: 0,
+              grade: 'F',
+              remark: 'Not yet assessed',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+          }
+        }
+        
+        // Insert all grade entries in a single operation if there are any to add
+        if (gradeEntries.length > 0) {
+          const { error: createGradesError } = await supabase
+            .from('student_grades')
+            .insert(gradeEntries);
+            
+          if (createGradesError) throw createGradesError;
+        }
+      }
+      
+      console.log('Successfully created default report entries for all terms');
+    } catch (error) {
+      console.error('Error creating default report entries:', error);
+      throw error;
     }
   };
 
