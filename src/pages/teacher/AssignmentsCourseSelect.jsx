@@ -63,8 +63,7 @@ const AssignmentsCourseSelect = () => {
 
       {loading ? (
         <div className="loading-spinner">
-          <FaClipboardList className="spinner-icon" />
-          <p>Loading courses...</p>
+          <p>Loading courses</p>
         </div>
       ) : (
         <div className="course-grid">
