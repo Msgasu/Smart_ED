@@ -55,7 +55,7 @@ export const updateTeacherProfile = async (userId, profileData) => {
 };
 
 /**
- * Get dashboard statistics for a teacher
+ * Get dashboard statistics for  teacher
  * @param {string} userId - The user ID
  * @returns {Promise<Object>} - The dashboard statistics
  */
