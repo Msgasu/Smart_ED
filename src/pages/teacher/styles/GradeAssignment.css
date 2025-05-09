@@ -603,8 +603,20 @@
 .loading-files {
   display: flex;
   justify-content: center;
+  align-items: center;
   padding: 2rem;
-  color: #718096;
+  color: #3182ce;
+  font-weight: 500;
+  font-size: 1.1rem;
+}
+
+.loading-files::after {
+  content: "";
+  display: inline-block;
+  animation: dots 1.5s steps(1, end) infinite;
+  margin-left: 4px;
+  font-weight: bold;
+  opacity: 0.9;
 }
 
 .no-files {
@@ -706,14 +718,35 @@
   background-color: #4299e1;
   color: white;
   border: none;
-  border-radius: 4px;
-  font-size: 0.85rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
   text-decoration: none;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .download-file-btn:hover {
   background-color: #3182ce;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Download button states */
+.download-file-btn.downloading {
+  background-color: #718096;
+  cursor: not-allowed;
+}
+
+/* Animation for the download button when downloading */
+.download-file-btn.downloading::after {
+  content: "";
+  display: inline-block;
+  animation: dots 1.5s steps(1, end) infinite;
+  margin-left: 4px;
+  font-weight: bold;
+  opacity: 0.9;
 }
 
 /* Responsive adjustments */
@@ -774,23 +807,15 @@
   line-height: 1.5;
 }
 
-/* Download button states */
-.download-file-btn.downloading {
-  background-color: #e2e8f0;
-  cursor: not-allowed;
-}
-
-/* Spinner animation for download */
-.spinner-icon {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255,255,255,.3);
-  border-radius: 50%;
-  border-top-color: #fff;
-  animation: spin 1s ease-in-out infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
+/* Add the dots animation keyframe */
+@keyframes dots {
+  0%, 33% {
+    content: ".";
+  }
+  33%, 66% {
+    content: "..";
+  }
+  66%, 100% {
+    content: "...";
+  }
 }
