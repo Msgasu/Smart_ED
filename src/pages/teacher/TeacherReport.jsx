@@ -335,18 +335,14 @@ const TeacherReport = () => {
     const totalScore = parseFloat(score);
     if (isNaN(totalScore)) return 'F9';
 
-    if (totalScore >= 95) return 'A1';
-    if (totalScore >= 90) return 'A2';
-    if (totalScore >= 85) return 'B2';
-    if (totalScore >= 80) return 'B3';
-    if (totalScore >= 75) return 'B4';
-    if (totalScore >= 70) return 'C4';
-    if (totalScore >= 65) return 'C5';
-    if (totalScore >= 60) return 'C6';
-    if (totalScore >= 55) return 'D7';
-    if (totalScore >= 50) return 'D8';
-    if (totalScore >= 45) return 'E8';
-    if (totalScore >= 40) return 'E9';
+    if (totalScore >= 90) return 'A';
+    if (totalScore >= 80) return 'B2';
+    if (totalScore >= 70) return 'B3';
+    if (totalScore >= 65) return 'C4';
+    if (totalScore >= 60) return 'C5';
+    if (totalScore >= 55) return 'C6';
+    if (totalScore >= 50) return 'D7';
+    if (totalScore >= 40) return 'E8';
     return 'F9';
   };
 
@@ -839,6 +835,33 @@ const TeacherReport = () => {
     }
   };
 
+  // Helper functions for calculations
+  const calculateTotalScore = () => {
+    if (!subjects.length) return 0;
+    
+    // Filter out subjects with no scores
+    const subjectsWithScores = subjects.filter(subject => 
+      subject.totalScore && !isNaN(parseFloat(subject.totalScore))
+    );
+    
+    if (!subjectsWithScores.length) return 0;
+    
+    const totalScores = subjectsWithScores.reduce((sum, subject) => 
+      sum + (parseFloat(subject.totalScore) || 0), 0);
+    const average = (totalScores / subjectsWithScores.length).toFixed(2);
+    
+    console.log('Calculated average in calculateTotalScore:', average);
+    console.log('Subjects with scores:', subjectsWithScores.map(s => ({ 
+      name: s.name, 
+      totalScore: s.totalScore,
+      classScore: s.classScore,
+      examScore: s.examScore 
+    })));
+    console.log('Total number of subjects with scores:', subjectsWithScores.length);
+    
+    return average;
+  };
+
   const handleSaveReport = async () => {
     try {
       setSaving(true);
@@ -860,14 +883,18 @@ const TeacherReport = () => {
         console.error('Error fetching existing report:', fetchError);
         throw fetchError;
       }
+
+      // Calculate the average score once and use it consistently
+      const calculatedAverage = calculateTotalScore();
+      console.log('Average score being used for report:', calculatedAverage);
       
       // Prepare report details
       const reportDetails = {
         student_id: studentId,
         term: termSelectRef.current.value,
         academic_year: academicYearRef.current.value,
-        total_score: calculateTotalScore(),
-        overall_grade: calculateOverallGrade(calculateTotalScore()),
+        total_score: parseFloat(calculatedAverage), // Ensure it's stored as a number
+        overall_grade: calculateOverallGrade(calculatedAverage),
         teacher_remarks: document.getElementById('teacherRemarks')?.value || '',
         class_year: document.getElementById('studentClass')?.value || '',
         conduct: document.getElementById('conduct')?.value || '',
@@ -877,7 +904,7 @@ const TeacherReport = () => {
         attendance: document.getElementById('attendance')?.value || ''
       };
 
-      console.log('Report details:', reportDetails);
+      console.log('Report details being saved:', reportDetails);
 
       if (existingReport) {
         // Update existing report
@@ -922,7 +949,7 @@ const TeacherReport = () => {
         const grade = calculateOverallGrade(totalScore);
 
         return {
-          report_id: reportId, // Use the validated report ID
+          report_id: reportId,
           subject_id: subject.courseId,
           class_score: classScore,
           exam_score: examScore,
@@ -934,7 +961,7 @@ const TeacherReport = () => {
         };
       });
 
-      console.log('Grades to save:', grades);
+      console.log('Grades being saved:', grades);
 
       // First, delete any existing grades for this report
       const { error: deleteError } = await supabase
@@ -957,29 +984,7 @@ const TeacherReport = () => {
         throw insertError;
       }
 
-      // Calculate and update the overall report total score
-      const totalScores = grades.map(g => g.total_score).filter(score => !isNaN(score));
-      const averageScore = totalScores.length > 0 
-        ? totalScores.reduce((sum, score) => sum + score, 0) / totalScores.length 
-        : 0;
-
-      // Update the report with the calculated average
-      const { error: updateError } = await supabase
-        .from('student_reports')
-        .update({
-          total_score: averageScore.toFixed(2),
-          overall_grade: calculateOverallGrade(averageScore)
-        })
-        .eq('id', reportId);
-
-      if (updateError) {
-        console.error('Error updating report total:', updateError);
-        throw updateError;
-      }
-
-      console.log('Successfully saved grades and updated report total');
-
-      // Fetch the complete updated report
+      // Fetch the complete updated report to verify the saved values
       const { data: updatedReport, error: getReportError } = await supabase
         .from('student_reports')
         .select('*')
@@ -989,6 +994,7 @@ const TeacherReport = () => {
       if (getReportError) {
         console.error('Error fetching updated report:', getReportError);
       } else {
+        console.log('Final saved report data:', updatedReport);
         // Update the reportData state with the current report
         setReportData(updatedReport);
         // Reload the report to get the latest data
@@ -1009,14 +1015,6 @@ const TeacherReport = () => {
     } finally {
       setSaving(false);
     }
-  };
-
-  // Helper functions for calculations
-  const calculateTotalScore = () => {
-    if (!subjects.length) return 0;
-    const totalScores = subjects.reduce((sum, subject) => 
-      sum + (parseFloat(subject.totalScore) || 0), 0);
-    return (totalScores / subjects.length).toFixed(2);
   };
 
   // For direct input and rendering of class scores
