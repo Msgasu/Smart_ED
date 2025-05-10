@@ -157,22 +157,27 @@
   color: #1e7c2b;
 }
 
-.grade-B {
+.grade-B2, .grade-B3 {
   background-color: #e3f1f9;
   color: #1e567c;
 }
 
-.grade-C {
+.grade-C4, .grade-C5, .grade-C6 {
   background-color: #f9f3e3;
   color: #7c6a1e;
 }
 
-.grade-D {
+.grade-D7 {
   background-color: #f9e9e3;
   color: #7c4d1e;
 }
 
-.grade-F {
+.grade-E8 {
+  background-color: #f9e3e3;
+  color: #7c1e1e;
+}
+
+.grade-F9 {
   background-color: #f9e3e3;
   color: #7c1e1e;
 }
@@ -185,7 +190,7 @@
 .view-button,
 .print-button,
 .export-button {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 36px;
@@ -194,110 +199,42 @@
   border: none;
   cursor: pointer;
   transition: background-color 0.3s, color 0.3s;
-  background-color: transparent;
-  color: #4a6cf7;
+  color: #475569;
+  background-color: #f1f5f9;
 }
 
 .view-button {
-  color: #4a6cf7;
+  color: #3b82f6;
+  background-color: #dbeafe;
 }
 
 .print-button {
-  color: #5c6bc0;
+  color: #10b981;
+  background-color: #dcfce7;
 }
 
 .export-button {
-  color: #43a047;
+  color: #f59e0b;
+  background-color: #fef3c7;
 }
 
 .view-button:hover,
 .print-button:hover,
 .export-button:hover {
-  background-color: #f0f0f0;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Dark mode styles */
-@media (prefers-color-scheme: dark) {
-  .reports-list-container {
-    background-color: #1a1a1a;
-  }
-  
-  .reports-header h1 {
-    color: #e0e0e0;
-  }
-  
-  .academic-year-filter label,
-  .term-filter label {
-    color: #ddd;
-  }
-  
-  .form-control {
-    background-color: #333;
-    border-color: #444;
-    color: #e0e0e0;
-  }
-  
-  .search-box input {
-    background-color: #333;
-    border-color: #444;
-    color: #e0e0e0;
-  }
-  
-  .no-reports,
-  .reports-table-container {
-    background-color: #2a2a2a;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
-  
-  .reports-table th {
-    background-color: #333;
-    color: #e0e0e0;
-  }
-  
-  .reports-table td {
-    color: #e0e0e0;
-    border-bottom-color: #444;
-  }
-  
-  .reports-table tr:hover td {
-    background-color: #333;
-  }
-  
-  .student-id,
-  .academic-year {
-    color: #bbb;
-  }
-  
-  .grade-A {
-    background-color: rgba(30, 124, 43, 0.3);
-    color: #a0d8a8;
-  }
-  
-  .grade-B {
-    background-color: rgba(30, 86, 124, 0.3);
-    color: #a0c4d8;
-  }
-  
-  .grade-C {
-    background-color: rgba(124, 106, 30, 0.3);
-    color: #d8d0a0;
-  }
-  
-  .grade-D {
-    background-color: rgba(124, 77, 30, 0.3);
-    color: #d8bba0;
-  }
-  
-  .grade-F {
-    background-color: rgba(124, 30, 30, 0.3);
-    color: #d8a0a0;
-  }
-  
-  .view-button:hover,
-  .print-button:hover,
-  .export-button:hover {
-    background-color: #444;
-  }
+.view-button:hover {
+  background-color: #bfdbfe;
+}
+
+.print-button:hover {
+  background-color: #bbf7d0;
+}
+
+.export-button:hover {
+  background-color: #fde68a;
 }
 
 /* Responsive styles */
