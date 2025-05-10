@@ -3,7 +3,6 @@ import { useParams, Link } from 'react-router-dom';
 import { FaArrowLeft, FaPrint, FaDownload } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import TeacherLayout from '../../components/teacher/TeacherLayout.jsx';
-import Reports from '../../components/admin/Reports';
 import { getStudentReport } from '../../backend/teachers';
 import './styles/ReportView.css';
 
@@ -26,6 +25,10 @@ const ReportView = () => {
           return;
         }
         
+        console.log('Report data received:', data);
+        console.log('Student data:', data.student);
+        console.log('Grades:', data.grades);
+        
         setReport(data);
       } catch (error) {
         console.error('Error fetching report:', error);
@@ -41,7 +44,125 @@ const ReportView = () => {
   }, [reportId]);
 
   const handlePrint = () => {
-    window.print();
+    // Create a new window for printing just the report content
+    const printWindow = window.open('', '_blank');
+    const reportContent = document.getElementById('printable-report').innerHTML;
+    
+    // Add necessary styles for printing
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Student Report</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 20px;
+            }
+            .school-info h2 {
+              font-size: 1.5rem;
+              margin: 0 0 5px 0;
+              color: #003366;
+            }
+            .report-header-section {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 30px;
+              padding-bottom: 20px;
+              border-bottom: 1px solid #eee;
+            }
+            .student-info p {
+              margin: 5px 0;
+            }
+            .grades-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 20px;
+            }
+            .grades-table th, .grades-table td {
+              padding: 10px;
+              text-align: left;
+              border-bottom: 1px solid #eee;
+            }
+            .grades-table th {
+              background-color: #f5f8fa;
+              font-weight: bold;
+            }
+            .overall-row {
+              background-color: #f5f8fa;
+              font-weight: bold;
+            }
+            .grade-badge {
+              display: inline-block;
+              padding: 4px 8px;
+              border-radius: 12px;
+              font-weight: 600;
+              text-align: center;
+              min-width: 30px;
+            }
+            .grade-A {
+              background-color: #e3f9e5;
+              color: #1e7c2b;
+            }
+            .grade-B2, .grade-B3 {
+              background-color: #e3f1f9;
+              color: #1e567c;
+            }
+            .grade-C4, .grade-C5, .grade-C6 {
+              background-color: #f9f3e3;
+              color: #7c6a1e;
+            }
+            .grade-D7 {
+              background-color: #f9e9e3;
+              color: #7c4d1e;
+            }
+            .grade-E8 {
+              background-color: #f9e3e3;
+              color: #7c1e1e;
+            }
+            .grade-F9 {
+              background-color: #f9e3e3;
+              color: #7c1e1e;
+            }
+            .comment-box {
+              background-color: #f9f9f9;
+              padding: 15px;
+              border-radius: 4px;
+              min-height: 100px;
+              margin-bottom: 20px;
+            }
+            .signature-area {
+              display: flex;
+              justify-content: space-between;
+              margin-top: 30px;
+            }
+            .signature-line {
+              width: 45%;
+              border-top: 1px solid #333;
+              padding-top: 5px;
+              text-align: center;
+            }
+            .report-date {
+              margin-top: 20px;
+              text-align: right;
+              font-size: 0.9em;
+              color: #666;
+            }
+          </style>
+        </head>
+        <body>
+          ${reportContent}
+        </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.focus();
+    
+    // Print after a short delay to ensure content is loaded
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
   };
 
   const handleExportPDF = () => {
@@ -69,7 +190,7 @@ const ReportView = () => {
   if (loading) {
     return (
       <TeacherLayout>
-        <div className="report-view-container">
+        <div className="report-container">
           <div className="loading-spinner">
             <p>Loading report...</p>
           </div>
@@ -81,7 +202,7 @@ const ReportView = () => {
   if (!report) {
     return (
       <TeacherLayout>
-        <div className="report-view-container">
+        <div className="report-container">
           <div className="no-report">
             <h2>Report Not Found</h2>
             <p>The requested report could not be found.</p>
@@ -96,52 +217,49 @@ const ReportView = () => {
 
   return (
     <TeacherLayout>
-      <div className="report-view-container">
-        <div className="report-view-header">
-          <Link to="/teacher/reports" className="back-button">
-            <FaArrowLeft /> Back to Reports
-          </Link>
-          <div className="report-info">
-            <h1>Student Report</h1>
-            <div className="report-meta">
-              <span><strong>Student:</strong> {report.student?.profiles?.first_name} {report.student?.profiles?.last_name}</span>
-              <span><strong>Term:</strong> {report.term}</span>
-              <span><strong>Academic Year:</strong> {report.academic_year}</span>
-              <span><strong>Overall Grade:</strong> {report.overall_grade}</span>
-            </div>
-          </div>
+      <div className="report-container">
+        <div className="report-header">
+          <h1 className="report-title">Student Report</h1>
+          
           <div className="report-actions">
+            <Link to="/teacher/reports" className="back-button">
+              <FaArrowLeft className="back-icon" /> Back to Reports
+            </Link>
             <button onClick={handlePrint} className="print-button">
-              <FaPrint /> Print
+              <FaPrint className="print-icon" /> Print
             </button>
             <button onClick={handleExportPDF} className="export-button">
-              <FaDownload /> Export PDF
+              <FaDownload className="export-icon" /> Export PDF
             </button>
           </div>
         </div>
         
-        <div className="report-view-content" id="printable-report">
+        <div className="report-content" id="printable-report">
           <div className="report-header-section">
             <div className="school-info">
               <h2>Smart Educational Dashboard</h2>
               <p>Official Student Report</p>
+              <p><strong>Term:</strong> {report.term}</p>
+              <p><strong>Academic Year:</strong> {report.academic_year}</p>
             </div>
             <div className="student-info">
               <p><strong>Student ID:</strong> {report.student?.student_id}</p>
               <p><strong>Name:</strong> {report.student?.profiles?.first_name} {report.student?.profiles?.last_name}</p>
-              <p><strong>Term:</strong> {report.term}</p>
-              <p><strong>Academic Year:</strong> {report.academic_year}</p>
+              <p><strong>Class:</strong> {report.class_year || 'Not specified'}</p>
             </div>
           </div>
           
           <div className="grades-section">
-            <h3>Subject Grades</h3>
+            <h3>Subject Performance</h3>
             <table className="grades-table">
               <thead>
                 <tr>
                   <th>Subject</th>
-                  <th>Score</th>
+                  <th>Class Score (60%)</th>
+                  <th>Exam Score (40%)</th>
+                  <th>Total Score</th>
                   <th>Grade</th>
+                  <th>Remarks</th>
                 </tr>
               </thead>
               <tbody>
@@ -149,40 +267,68 @@ const ReportView = () => {
                   report.grades.map(grade => (
                     <tr key={grade.id}>
                       <td>{grade.subject?.name}</td>
-                      <td>{grade.score}%</td>
+                      <td>{grade.class_score || '-'}</td>
+                      <td>{grade.exam_score || '-'}</td>
+                      <td>{grade.total_score || '-'}%</td>
                       <td>
                         <span className={`grade-badge grade-${grade.grade}`}>
                           {grade.grade}
                         </span>
                       </td>
+                      <td>{grade.remark || '-'}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="3" className="no-grades">
+                    <td colSpan="6" className="no-grades">
                       No subject grades available
                     </td>
                   </tr>
                 )}
-                <tr className="overall-row">
-                  <td><strong>Overall</strong></td>
-                  <td><strong>{report.total_score}%</strong></td>
-                  <td>
-                    <span className={`grade-badge grade-${report.overall_grade}`}>
-                      {report.overall_grade}
-                    </span>
-                  </td>
-                </tr>
               </tbody>
             </table>
           </div>
           
-          <div className="report-comments">
-            <h3>Comments</h3>
-            <div className="comment-box">
-              <p className="placeholder-text">
-                {report.comments || "No teacher comments available for this report."}
-              </p>
+          <div className="additional-info">
+            <div className="info-row">
+              <div className="info-column">
+                <h3>Academic Summary</h3>
+                <div className="info-box">
+                  <p><strong>Overall Score:</strong> {report.total_score}%</p>
+                  <p><strong>Overall Grade:</strong> <span className={`grade-badge grade-${report.overall_grade}`}>{report.overall_grade}</span></p>
+                </div>
+              </div>
+              <div className="info-column">
+                <h3>Attendance</h3>
+                <div className="info-box">
+                  {report.attendance || 'No attendance information available'}
+                </div>
+              </div>
+            </div>
+            
+            <div className="info-row">
+              <div className="info-column">
+                <h3>Conduct</h3>
+                <div className="info-box">
+                  {report.conduct || 'No conduct information available'}
+                </div>
+              </div>
+              <div className="info-column">
+                <h3>Teacher's Remarks</h3>
+                <div className="comment-box">
+                  {report.teacher_remarks || 'No teacher remarks available'}
+                </div>
+              </div>
+            </div>
+            
+            <div className="info-row">
+              <div className="info-column">
+                <h3>Next Term Information</h3>
+                <div className="info-box">
+                  <p><strong>Next Class:</strong> {report.next_class || 'Not specified'}</p>
+                  <p><strong>Reopening Date:</strong> {report.reopening_date ? new Date(report.reopening_date).toLocaleDateString() : 'Not specified'}</p>
+                </div>
+              </div>
             </div>
           </div>
           
@@ -192,7 +338,7 @@ const ReportView = () => {
                 <span>Teacher's Signature</span>
               </div>
               <div className="signature-line">
-                <span>Principal's Signature</span>
+                <span>Principal's Signature: {report.principal_signature || ''}</span>
               </div>
             </div>
             <div className="report-date">
