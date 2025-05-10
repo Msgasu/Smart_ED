@@ -53,14 +53,24 @@ const ReportsList = () => {
     try {
       setLoading(true);
       
+      // First check if user is authenticated
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError) throw new Error('Authentication error: ' + authError.message);
+      if (!user) throw new Error('User not authenticated');
+
+      console.log('Fetching reports for year:', year, 'term:', term);
       const { data, error } = await getReportsByAcademicYear(year, term);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error from getReportsByAcademicYear:', error);
+        throw error;
+      }
       
+      console.log('Reports data received:', data);
       setReports(data || []);
     } catch (error) {
       console.error('Error fetching reports:', error);
-      toast.error('Failed to load reports');
+      toast.error(error.message || 'Failed to load reports');
     } finally {
       setLoading(false);
     }
@@ -103,9 +113,237 @@ const ReportsList = () => {
     fetchReports(academicYear, term === 'all' ? null : term);
   };
 
-  const handlePrintReport = (reportId) => {
-    // Open the report in a new tab for printing
-    window.open(`/report-print/${reportId}`, '_blank');
+  const handlePrintReport = async (reportId) => {
+    try {
+      // Get the report data first
+      const { data: report, error } = await getStudentReport(reportId);
+      
+      if (error) throw error;
+      if (!report) {
+        toast.error('Report not found');
+        return;
+      }
+      
+      // Create a new window for printing just the report content
+      const printWindow = window.open('', '_blank');
+      
+      // Create HTML content for printing
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Student Report - ${report.student?.profiles?.first_name} ${report.student?.profiles?.last_name}</title>
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                padding: 20px;
+              }
+              .school-info h2 {
+                font-size: 1.5rem;
+                margin: 0 0 5px 0;
+                color: #2c3e50;
+              }
+              .report-header-section {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 30px;
+                padding-bottom: 20px;
+                border-bottom: 1px solid #e5e7eb;
+              }
+              .student-info p {
+                margin: 5px 0;
+              }
+              .grades-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 20px;
+              }
+              .grades-table th, .grades-table td {
+                padding: 10px;
+                text-align: left;
+                border-bottom: 1px solid #e5e7eb;
+              }
+              .grades-table th {
+                background-color: #f8fafc;
+                font-weight: bold;
+              }
+              .grade-badge {
+                display: inline-block;
+                padding: 4px 8px;
+                border-radius: 12px;
+                font-weight: 600;
+                text-align: center;
+                min-width: 30px;
+              }
+              .grade-A {
+                background-color: #e3f9e5;
+                color: #1e7c2b;
+              }
+              .grade-B2, .grade-B3 {
+                background-color: #e3f1f9;
+                color: #1e567c;
+              }
+              .grade-C4, .grade-C5, .grade-C6 {
+                background-color: #f9f3e3;
+                color: #7c6a1e;
+              }
+              .grade-D7 {
+                background-color: #f9e9e3;
+                color: #7c4d1e;
+              }
+              .grade-E8 {
+                background-color: #f9e3e3;
+                color: #7c1e1e;
+              }
+              .grade-F9 {
+                background-color: #f9e3e3;
+                color: #7c1e1e;
+              }
+              .info-row {
+                display: flex;
+                margin-bottom: 20px;
+                gap: 20px;
+              }
+              .info-column {
+                flex: 1;
+              }
+              .info-column h3 {
+                font-size: 1.2rem;
+                margin: 0 0 10px 0;
+                color: #2c3e50;
+                border-bottom: 2px solid #3b82f6;
+                padding-bottom: 5px;
+              }
+              .info-box {
+                background-color: #f8fafc;
+                padding: 15px;
+                border-radius: 4px;
+              }
+              .signature-area {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 40px;
+              }
+              .signature-line {
+                width: 45%;
+                border-top: 1px solid #64748b;
+                padding-top: 5px;
+                text-align: center;
+              }
+              .report-date {
+                margin-top: 20px;
+                text-align: right;
+                font-size: 0.9em;
+                color: #64748b;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="report-content">
+              <div class="report-header-section">
+                <div class="school-info">
+                  <h2>Smart Educational Dashboard</h2>
+                  <p>Official Student Report</p>
+                  <p><strong>Term:</strong> ${report.term}</p>
+                  <p><strong>Academic Year:</strong> ${report.academic_year}</p>
+                </div>
+                <div class="student-info">
+                  <p><strong>Student ID:</strong> ${report.student?.student_id || ''}</p>
+                  <p><strong>Name:</strong> ${report.student?.profiles?.first_name || ''} ${report.student?.profiles?.last_name || ''}</p>
+                  <p><strong>Class:</strong> ${report.class_year || 'Not specified'}</p>
+                </div>
+              </div>
+              
+              <div class="grades-section">
+                <h3>Subject Performance</h3>
+                <table class="grades-table">
+                  <thead>
+                    <tr>
+                      <th>Subject</th>
+                      <th>Class Score (60%)</th>
+                      <th>Exam Score (40%)</th>
+                      <th>Total Score</th>
+                      <th>Grade</th>
+                      <th>Remarks</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${report.grades && report.grades.length > 0 ? 
+                      report.grades.map(grade => `
+                        <tr>
+                          <td>${grade.subject?.name || ''}</td>
+                          <td>${grade.class_score || '-'}</td>
+                          <td>${grade.exam_score || '-'}</td>
+                          <td>${grade.total_score || '-'}%</td>
+                          <td>${grade.grade || '-'}</td>
+                          <td>${grade.remark || '-'}</td>
+                        </tr>
+                      `).join('') : 
+                      `<tr><td colspan="6" style="text-align:center">No subject grades available</td></tr>`
+                    }
+                  </tbody>
+                </table>
+              </div>
+              
+              <div class="info-row">
+                <div class="info-column">
+                  <h3>Academic Summary</h3>
+                  <div class="info-box">
+                    <p><strong>Overall Score:</strong> ${report.total_score}%</p>
+                    <p><strong>Overall Grade:</strong> ${report.overall_grade}</p>
+                  </div>
+                </div>
+                <div class="info-column">
+                  <h3>Attendance</h3>
+                  <div class="info-box">
+                    ${report.attendance || 'No attendance information available'}
+                  </div>
+                </div>
+              </div>
+              
+              <div class="info-row">
+                <div class="info-column">
+                  <h3>Conduct</h3>
+                  <div class="info-box">
+                    ${report.conduct || 'No conduct information available'}
+                  </div>
+                </div>
+                <div class="info-column">
+                  <h3>Teacher's Remarks</h3>
+                  <div class="info-box">
+                    ${report.teacher_remarks || 'No teacher remarks available'}
+                  </div>
+                </div>
+              </div>
+              
+              <div class="signature-area">
+                <div class="signature-line">
+                  <span>Teacher's Signature</span>
+                </div>
+                <div class="signature-line">
+                  <span>Principal's Signature: ${report.principal_signature || ''}</span>
+                </div>
+              </div>
+              <div class="report-date">
+                <p>Report Generated: ${new Date(report.updated_at).toLocaleDateString()}</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `);
+      
+      printWindow.document.close();
+      printWindow.focus();
+      
+      // Print after a short delay to ensure content is loaded
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 500);
+      
+    } catch (error) {
+      console.error('Error printing report:', error);
+      toast.error('Failed to print report');
+    }
   };
 
   const handleExportPDF = async (reportId) => {
