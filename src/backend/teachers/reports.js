@@ -114,28 +114,52 @@ export const saveStudentReport = async (reportData, gradesData) => {
  */
 export const getStudentReport = async (reportId) => {
   try {
-    // Get the report
+    console.log('Starting getStudentReport for report ID:', reportId);
+    
+    // Step 1: Get the report
     const { data: report, error: reportError } = await supabase
       .from('student_reports')
-      .select(`
-        *,
-        student:student_id (
-          profile_id,
-          student_id,
-          profiles:profile_id (
-            first_name,
-            last_name,
-            email
-          )
-        )
-      `)
+      .select('*')
       .eq('id', reportId)
       .single();
 
-    if (reportError) throw reportError;
-    if (!report) return { data: null, error: null };
+    if (reportError) {
+      console.error('Error fetching report:', reportError);
+      throw reportError;
+    }
+    
+    if (!report) {
+      console.log('No report found with ID:', reportId);
+      return { data: null, error: null };
+    }
+    
+    console.log('Report fetched successfully');
 
-    // Get the grades for this report
+    // Step 2: Get the student information
+    const { data: student, error: studentError } = await supabase
+      .from('students')
+      .select('profile_id, student_id')
+      .eq('profile_id', report.student_id)
+      .single();
+      
+    if (studentError) {
+      console.error('Error fetching student:', studentError);
+      throw studentError;
+    }
+    
+    // Step 3: Get the profile information
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, email')
+      .eq('id', report.student_id)
+      .single();
+      
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+      throw profileError;
+    }
+    
+    // Step 4: Get the grades for this report
     const { data: grades, error: gradesError } = await supabase
       .from('student_grades')
       .select(`
@@ -147,14 +171,27 @@ export const getStudentReport = async (reportId) => {
       `)
       .eq('report_id', reportId);
 
-    if (gradesError) throw gradesError;
+    if (gradesError) {
+      console.error('Error fetching grades:', gradesError);
+      throw gradesError;
+    }
+    
+    console.log('Fetched', grades?.length || 0, 'grades for report');
 
-    // Combine report with grades
-    return {
-      data: {
-        ...report,
-        grades: grades || []
+    // Step 5: Combine all the data
+    const reportWithData = {
+      ...report,
+      student: {
+        profile_id: student.profile_id,
+        student_id: student.student_id,
+        profiles: profile
       },
+      grades: grades || []
+    };
+    
+    console.log('Returning complete report with student data and grades');
+    return {
+      data: reportWithData,
       error: null
     };
   } catch (error) {
@@ -171,20 +208,17 @@ export const getStudentReport = async (reportId) => {
  */
 export const getReportsByAcademicYear = async (academicYear, term = null) => {
   try {
+    console.log('Starting getReportsByAcademicYear with:', { academicYear, term });
+    
+    if (!academicYear) {
+      throw new Error('Academic year is required');
+    }
+
+    // Step 1: Fetch reports with basic student information
+    console.log('Executing query for reports...');
     let query = supabase
       .from('student_reports')
-      .select(`
-        *,
-        student:student_id (
-          profile_id,
-          student_id,
-          profiles:profile_id (
-            first_name,
-            last_name,
-            email
-          )
-        )
-      `)
+      .select('*')
       .eq('academic_year', academicYear);
 
     // Apply term filter if provided
@@ -194,16 +228,50 @@ export const getReportsByAcademicYear = async (academicYear, term = null) => {
 
     const { data: reports, error: reportsError } = await query;
 
-    if (reportsError) throw reportsError;
+    if (reportsError) {
+      console.error('Error fetching reports:', reportsError);
+      throw reportsError;
+    }
+
+    console.log('Reports fetched:', reports?.length || 0);
 
     // If no reports found, return empty array
     if (!reports || reports.length === 0) {
       return { data: [], error: null };
     }
 
-    // Get all report IDs
+    // Step 2: Fetch student information for each report
+    const studentIds = [...new Set(reports.map(report => report.student_id))];
+    
+    console.log('Fetching student information for:', studentIds.length, 'students');
+    const { data: students, error: studentsError } = await supabase
+      .from('students')
+      .select('profile_id, student_id')
+      .in('profile_id', studentIds);
+
+    if (studentsError) {
+      console.error('Error fetching students:', studentsError);
+      throw studentsError;
+    }
+
+    // Step 3: Fetch profiles for these students
+    const profileIds = students.map(student => student.profile_id);
+    
+    console.log('Fetching profiles for:', profileIds.length, 'students');
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, email')
+      .in('id', profileIds);
+
+    if (profilesError) {
+      console.error('Error fetching profiles:', profilesError);
+      throw profilesError;
+    }
+
+    // Step 4: Get all report IDs
     const reportIds = reports.map(report => report.id);
 
+    console.log('Fetching grades for reports:', reportIds.length);
     // Get all grades for these reports in a single query
     const { data: allGrades, error: gradesError } = await supabase
       .from('student_grades')
@@ -216,9 +284,14 @@ export const getReportsByAcademicYear = async (academicYear, term = null) => {
       `)
       .in('report_id', reportIds);
 
-    if (gradesError) throw gradesError;
+    if (gradesError) {
+      console.error('Error fetching grades:', gradesError);
+      throw gradesError;
+    }
 
-    // Group grades by report_id
+    console.log('Grades fetched:', allGrades?.length || 0);
+
+    // Step 5: Group grades by report_id
     const gradesByReportId = {};
     allGrades?.forEach(grade => {
       if (!gradesByReportId[grade.report_id]) {
@@ -227,15 +300,37 @@ export const getReportsByAcademicYear = async (academicYear, term = null) => {
       gradesByReportId[grade.report_id].push(grade);
     });
 
-    // Combine reports with their grades
-    const reportsWithGrades = reports.map(report => ({
-      ...report,
-      grades: gradesByReportId[report.id] || []
-    }));
+    // Step 6: Build a map of profiles by ID for quick lookup
+    const profilesById = {};
+    profiles.forEach(profile => {
+      profilesById[profile.id] = profile;
+    });
 
-    return { data: reportsWithGrades, error: null };
+    // Step 7: Build a map of students by profile_id for quick lookup
+    const studentsByProfileId = {};
+    students.forEach(student => {
+      studentsByProfileId[student.profile_id] = student;
+    });
+
+    // Step 8: Combine reports with student and profile information
+    const reportsWithData = reports.map(report => {
+      const student = {
+        id: report.student_id,
+        student_id: studentsByProfileId[report.student_id]?.student_id || 'Unknown',
+        profiles: profilesById[report.student_id] || { first_name: 'Unknown', last_name: 'Student' }
+      };
+
+      return {
+        ...report,
+        student,
+        grades: gradesByReportId[report.id] || []
+      };
+    });
+
+    console.log('Returning reports with student data and grades');
+    return { data: reportsWithData, error: null };
   } catch (error) {
-    console.error('Error fetching reports by academic year:', error);
+    console.error('Error in getReportsByAcademicYear:', error);
     return { data: null, error };
   }
 };
