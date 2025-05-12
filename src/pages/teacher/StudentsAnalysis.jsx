@@ -291,10 +291,10 @@ const StudentAnalysis = () => {
                     datasets: [{
                       label: 'Assignment Scores (%)',
                       data: courseAnalytics.assignments.map(a => a.percentage),
-                      borderColor: '#0ea5e9',
-                      backgroundColor: 'rgba(14, 165, 233, 0.2)',
+                      borderColor: '#5b9bd5',
+                      backgroundColor: 'rgba(91, 155, 213, 0.2)',
                       borderWidth: 2,
-                      pointBackgroundColor: '#0ea5e9',
+                      pointBackgroundColor: '#5b9bd5',
                       pointBorderColor: '#fff',
                       pointBorderWidth: 2,
                       pointRadius: 6,
@@ -315,8 +315,12 @@ const StudentAnalysis = () => {
                         display: false
                       },
                       tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        borderColor: '#ddd',
+                        borderWidth: 1,
                         padding: 12,
+                        titleColor: '#555',
+                        bodyColor: '#555',
                         titleFont: {
                           size: 14,
                           weight: 'bold'
@@ -341,7 +345,7 @@ const StudentAnalysis = () => {
                             size: 12,
                             weight: '500'
                           },
-                          color: '#64748b',
+                          color: '#777',
                           callback: function(value) {
                             return value + '%';
                           }
@@ -361,7 +365,7 @@ const StudentAnalysis = () => {
                             size: 11,
                             weight: '500'
                           },
-                          color: '#64748b',
+                          color: '#777',
                           maxRotation: 45,
                           minRotation: 45
                         }

@@ -32,7 +32,7 @@ const AuthCard = () => {
   };
 
   return (
-    <div className="login-card">
+    <div className="login-card signup-card">
       <div className="roles-side">
         <h3>I am a ...</h3>
         {roleError && <div className="error-message">{roleError}</div>}

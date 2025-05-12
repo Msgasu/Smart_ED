@@ -3,6 +3,7 @@ import PasswordField from './PasswordField';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import Swal from 'sweetalert2';
+import { FaUser, FaLock } from 'react-icons/fa';
 
 const SigninForm = () => {
   const [email, setEmail] = useState('');
@@ -97,30 +98,53 @@ const SigninForm = () => {
 
   return (
     <>
-      <h2 className="form-title">Login</h2>
+      <h2 className="form-title">Welcome Back</h2>
+      <p className="form-subtitle">Sign in to continue to your account</p>
+      
       {error && <div className="error-message">{error}</div>}
+      
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
           <label htmlFor="email" className="form-label">
             Email
           </label>
-          <input
-            type="email"
-            className="form-control"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+          <div className="input-with-icon">
+            <FaUser className="input-icon" />
+            <input
+              type="email"
+              className="form-control"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              required
+            />
+          </div>
         </div>
-        <PasswordField
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        
+        <div className="mb-3">
+          <label htmlFor="password" className="form-label">
+            Password
+          </label>
+          <div className="input-with-icon">
+            <FaLock className="input-icon" />
+            <PasswordField
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+            />
+          </div>
+        </div>
+        
+        <div className="forgot-password">
+          <Link to="/forgot-password">Forgot password?</Link>
+        </div>
+        
         <button type="submit" className="btn btn-login" disabled={loading}>
-          {loading ? 'Logging in...' : 'Login'}
+          {loading ? 'Signing in...' : 'Sign In'}
         </button>
       </form>
+      
       <p className="signup-text">
         Don't have an account? <Link to="/signup">Sign Up</Link>
       </p>

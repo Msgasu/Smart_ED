@@ -124,7 +124,7 @@ const TeacherLayout = ({ children }) => {
             </li>
             <li className={location.pathname === '/teacher/students' ? 'active' : ''}>
               <Link to="/teacher/students">
-                <FaUserGraduate /> <span>My Students</span>
+                <FaUserGraduate /> <span> Users </span>
               </Link>
             </li>
             <li className={location.pathname.includes('/teacher/assignments') || location.pathname.includes('/teacher/courses') && location.pathname.includes('/assignments') ? 'active' : ''}>

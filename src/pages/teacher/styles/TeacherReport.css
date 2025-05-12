@@ -15,7 +15,7 @@
 .report-title {
   font-size: 1.8rem;
   font-weight: 600;
-  color: #003366;
+  color: #2c6aa0;
   margin: 0;
 }
 
@@ -33,7 +33,7 @@
 
 .back-button {
   background-color: #eaeaea;
-  color: #333;
+  color: #555;
 }
 
 .back-button:hover {
@@ -41,13 +41,13 @@
 }
 
 .print-button, .save-button {
-  background-color: #4a6cf7;
+  background-color: #5b9bd5;
   color: white;
   margin-left: 10px;
 }
 
 .print-button:hover, .save-button:hover {
-  background-color: #3a5ce5;
+  background-color: #4a8cc7;
 }
 
 .print-button:disabled, .save-button:disabled {
@@ -102,14 +102,14 @@
   border-radius: 4px;
   width: 150px;
   background-color: white;
-  color: #333;
+  color: #555;
 }
 
 select.form-control {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23555' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
   background-size: 16px 12px;
@@ -117,7 +117,7 @@ select.form-control {
 }
 
 .save-button.saved {
-  background-color: #4caf50;
+  background-color: #6aaa64;
 }
 
 /* Performance Graphs Section */
@@ -130,7 +130,7 @@ select.form-control {
 .graphs-title {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #003366;
+  color: #2c6aa0;
   margin-bottom: 20px;
 }
 
@@ -159,7 +159,7 @@ select.form-control {
 .graph-card h4 {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #333;
+  color: #555;
   margin-top: 0;
   margin-bottom: 15px;
   text-align: center;
@@ -175,7 +175,7 @@ select.form-control {
   justify-content: center;
   align-items: center;
   height: 200px;
-  color: #666;
+  color: #777;
   font-style: italic;
   background-color: #f9f9f9;
   border-radius: 4px;

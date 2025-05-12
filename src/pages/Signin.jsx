@@ -6,7 +6,7 @@ import '../styles/Form.css';
 
 const Signin = () => {
   return (
-    <div className="auth-page">
+    <div className="auth-page signin-page">
       <SigninCard />
     </div>
   );

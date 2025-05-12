@@ -54,7 +54,7 @@
 .students-table th {
   background-color: #f8f9fa;
   font-weight: 600;
-  color: #333;
+  color: #555;
 }
 
 .students-table tr:last-child td {
@@ -62,7 +62,7 @@
 }
 
 .students-table tr:hover {
-  background-color: rgba(52, 152, 219, 0.05);
+  background-color: rgba(91, 155, 213, 0.05);
 }
 
 .student-name {
@@ -74,7 +74,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background-color: #3498db;
+  background-color: #5b9bd5;
   color: white;
   display: flex;
   align-items: center;
@@ -91,7 +91,7 @@
 
 .student-info .name {
   font-weight: 500;
-  color: #333;
+  color: #555;
 }
 
 .student-info .email {
@@ -115,19 +115,19 @@
 }
 
 .grade-a {
-  color: #2ecc71;
+  color: #6aaa64;
 }
 
 .grade-b {
-  color: #3498db;
+  color: #5b9bd5;
 }
 
 .grade-c {
-  color: #f39c12;
+  color: #f5b849;
 }
 
 .grade-d, .grade-f {
-  color: #e74c3c;
+  color: #e07a73;
 }
 
 .action-buttons {
@@ -137,8 +137,8 @@
 
 .btn-view {
   background-color: transparent;
-  border: 1px solid #3498db;
-  color: #3498db;
+  border: 1px solid #5b9bd5;
+  color: #5b9bd5;
   padding: 0.4rem 0.75rem;
   border-radius: 4px;
   font-size: 0.8rem;
@@ -149,7 +149,7 @@
 }
 
 .btn-view:hover {
-  background-color: #3498db;
+  background-color: #5b9bd5;
   color: white;
 }
 
@@ -171,11 +171,29 @@
 
 .empty-state h3 {
   margin: 0 0 0.5rem;
-  color: #333;
+  color: #555;
 }
 
 .empty-state p {
   margin: 0;
+}
+
+.progress-container {
+  width: 100%;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  height: 20px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: #5b9bd5;
+  text-align: center;
+  color: white;
+  font-size: 0.8rem;
+  line-height: 20px;
+  transition: width 0.3s ease;
 }
 
 @media (max-width: 768px) {

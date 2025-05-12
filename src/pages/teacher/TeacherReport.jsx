@@ -344,7 +344,7 @@ const TeacherReport = () => {
             body {
               font-family: Arial, sans-serif;
               padding: 20px;
-              color: #333;
+              color: #555;
             }
             .report-content {
               max-width: 100%;
@@ -359,7 +359,7 @@ const TeacherReport = () => {
             .graphs-title {
               font-size: 18px;
               font-weight: bold;
-              color: #003366;
+              color: #2c6aa0;
               margin-bottom: 20px;
               text-align: center;
             }
@@ -386,6 +386,7 @@ const TeacherReport = () => {
               text-align: center;
               margin-top: 0;
               margin-bottom: 15px;
+              color: #555;
             }
             .chart-container {
               height: 300px;
@@ -1224,8 +1225,8 @@ const TeacherReport = () => {
         datasets: [{
           label: 'Average Score',
           data: [0],
-          borderColor: '#4a6cf7',
-          backgroundColor: 'rgba(74, 108, 247, 0.2)',
+          borderColor: '#5b9bd5',
+          backgroundColor: 'rgba(91, 155, 213, 0.2)',
           tension: 0.4,
           fill: true
         }]
@@ -1240,8 +1241,8 @@ const TeacherReport = () => {
       datasets: [{
         label: 'Average Score',
         data: averages,
-        borderColor: '#4a6cf7',
-        backgroundColor: 'rgba(74, 108, 247, 0.2)',
+        borderColor: '#5b9bd5',
+        backgroundColor: 'rgba(91, 155, 213, 0.2)',
         tension: 0.4,
         fill: true
       }]
@@ -1265,10 +1266,10 @@ const TeacherReport = () => {
     
     // Create datasets for each subject
     const datasets = currentSubjectNames.map((subjectName, index) => {
-      // Generate a color based on the index
+      // Generate a color based on the index, but use lighter pastel colors
       const hue = (index * 137) % 360; // Use golden angle approximation for good distribution
-      const color = `hsl(${hue}, 70%, 60%)`;
-      const backgroundColor = `hsla(${hue}, 70%, 60%, 0.2)`;
+      const color = `hsl(${hue}, 60%, 70%)`; // Lighter saturation and higher lightness
+      const backgroundColor = `hsla(${hue}, 60%, 80%, 0.2)`; // Even lighter for background
       
       // Find this subject's scores in each historical report
       const data = historicalReports.map(report => {
@@ -1389,22 +1390,22 @@ const TeacherReport = () => {
                           {
                             label: 'Class Score (60%)',
                             data: subjects.map(subject => parseFloat(subject.classScore) || 0),
-                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                            borderColor: 'rgba(54, 162, 235, 1)',
+                            backgroundColor: 'rgba(100, 181, 246, 0.5)',
+                            borderColor: 'rgba(100, 181, 246, 1)',
                             borderWidth: 1
                           },
                           {
                             label: 'Exam Score (40%)',
                             data: subjects.map(subject => parseFloat(subject.examScore) || 0),
-                            backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                            borderColor: 'rgba(255, 99, 132, 1)',
+                            backgroundColor: 'rgba(255, 145, 158, 0.5)',
+                            borderColor: 'rgba(255, 145, 158, 1)',
                             borderWidth: 1
                           },
                           {
                             label: 'Total Score',
                             data: subjects.map(subject => (parseFloat(subject.classScore) || 0) + (parseFloat(subject.examScore) || 0)),
-                            backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(129, 199, 132, 0.5)',
+                            borderColor: 'rgba(129, 199, 132, 1)',
                             borderWidth: 1
                           }
                         ]
@@ -1442,12 +1443,12 @@ const TeacherReport = () => {
                         datasets: [{
                           label: 'Total Scores',
                           data: subjects.map(subject => (parseFloat(subject.classScore) || 0) + (parseFloat(subject.examScore) || 0)),
-                          backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                          borderColor: 'rgba(75, 192, 192, 1)',
-                          pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                          backgroundColor: 'rgba(129, 199, 132, 0.2)',
+                          borderColor: 'rgba(129, 199, 132, 1)',
+                          pointBackgroundColor: 'rgba(129, 199, 132, 1)',
                           pointBorderColor: '#fff',
                           pointHoverBackgroundColor: '#fff',
-                          pointHoverBorderColor: 'rgba(75, 192, 192, 1)'
+                          pointHoverBorderColor: 'rgba(129, 199, 132, 1)'
                         }]
                       }}
                       options={{

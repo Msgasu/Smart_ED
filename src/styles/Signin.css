@@ -1,20 +1,23 @@
-.illustration-side {
+/* .illustration-side {
   flex: 1;
   padding: 40px;
   background: #f8f9fa;
   display: flex;
   align-items: center;
   justify-content: center;
-}
+} */
 
+/* Clean up any unused styles */
+
+/* Responsive styles for the signin page */
 @media (max-width: 768px) {
-  .illustration-side {
-    padding: 30px;
+  .form-side {
+    padding: 2rem;
   }
 }
 
 @media (max-width: 480px) {
-  .illustration-side {
-    padding: 20px;
+  .form-side {
+    padding: 1.5rem;
   }
 }

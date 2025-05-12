@@ -1,8 +1,6 @@
 .form-side {
-  flex: 1.5;
-  max-height: 92vh;
-  overflow-y: auto;
-  padding: 3rem 3.5rem;
+  flex: 1;
+  padding: 2.5rem;
   background: #ffffff;
   display: flex;
   flex-direction: column;
@@ -15,10 +13,10 @@
 
 .form-title {
   font-size: 28px;
-  margin-bottom: 2.5rem;
+  margin-bottom: 1.5rem;
   color: #03332E;
   font-weight: 600;
-  text-align: left;
+  text-align: center;
 }
 
 .form-control {
@@ -49,9 +47,9 @@
 
 .btn-login {
   width: 100%;
-  margin-top: 2.5rem;
+  margin-top: 2rem;
   padding: 14px;
-  background-color:  #03332E;
+  background-color: #03332E;
   color: white;
   border: none;
   border-radius: 8px;
@@ -60,13 +58,13 @@
   display: block;
   letter-spacing: 0.5px;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(3, 166, 74, 0.2);
+  box-shadow: 0 4px 6px rgba(3, 51, 46, 0.2);
 }
 
 .btn-login:hover {
-  background-color: #038f41;
+  background-color: #044941;
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(3, 166, 74, 0.25);
+  box-shadow: 0 6px 12px rgba(3, 51, 46, 0.25);
 }
 
 .btn-login:active {
@@ -76,9 +74,9 @@
 
 .signup-text {
   text-align: center;
-  margin-top: 2rem;
+  margin-top: 1.5rem;
   font-size: 15px;
-  color: #03332E;
+  color: #555;
 }
 
 .signup-text a {
@@ -100,12 +98,23 @@
 
 .password-toggle {
   position: absolute;
-  right: 10px;
+  right: 12px;
   top: 50%;
   transform: translateY(-50%);
   border: none;
   background: none;
   cursor: pointer;
+  color: #03332E;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-toggle:hover {
+  opacity: 1;
 }
 
 .role-fields {
@@ -339,4 +348,44 @@ button[type="submit"]:disabled {
   .form-row .form-group {
     flex: 1;
   }
+}
+
+.form-subtitle {
+  text-align: center;
+  color: #666;
+  margin-bottom: 2rem;
+  font-size: 15px;
+}
+
+.input-with-icon {
+  position: relative;
+}
+
+.input-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #03332E;
+  opacity: 0.7;
+}
+
+.input-with-icon .form-control {
+  padding-left: 45px;
+}
+
+.forgot-password {
+  text-align: right;
+  margin-top: -10px;
+  margin-bottom: 1rem;
+}
+
+.forgot-password a {
+  color: #03332E;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.forgot-password a:hover {
+  text-decoration: underline;
 }
