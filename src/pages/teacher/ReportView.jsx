@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FaArrowLeft, FaPrint, FaDownload } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
+import Chart from 'chart.js/auto';
 import TeacherLayout from '../../components/teacher/TeacherLayout.jsx';
 import { getStudentReport } from '../../backend/teachers';
 import './styles/ReportView.css';
@@ -10,6 +11,11 @@ const ReportView = () => {
   const { reportId } = useParams();
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
+  const chartRef = useRef(null);
+  const radarChartRef = useRef(null);
+  const chartInstance = useRef(null);
+  const radarChartInstance = useRef(null);
+  const [chartType, setChartType] = useState('bar'); // 'bar' or 'radar'
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -42,6 +48,155 @@ const ReportView = () => {
       fetchReport();
     }
   }, [reportId]);
+
+  // Effect for rendering the chart when report data is available
+  useEffect(() => {
+    if (report && report.grades && report.grades.length > 0) {
+      // Prepare data for the chart
+      const subjects = report.grades.map(grade => grade.subject?.name || 'Unknown');
+      const classScores = report.grades.map(grade => grade.class_score || 0);
+      const examScores = report.grades.map(grade => grade.exam_score || 0);
+      const totalScores = report.grades.map(grade => grade.total_score || 0);
+
+      // Bar Chart
+      if (chartRef.current) {
+        // Destroy existing chart if it exists
+        if (chartInstance.current) {
+          chartInstance.current.destroy();
+        }
+
+        // Create new bar chart
+        const ctx = chartRef.current.getContext('2d');
+        chartInstance.current = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: subjects,
+            datasets: [
+              {
+                label: 'Class Score (60%)',
+                data: classScores,
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+              },
+              {
+                label: 'Exam Score (40%)',
+                data: examScores,
+                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1
+              },
+              {
+                label: 'Total Score',
+                data: totalScores,
+                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 100,
+                title: {
+                  display: true,
+                  text: 'Score'
+                }
+              },
+              x: {
+                title: {
+                  display: true,
+                  text: 'Subjects'
+                }
+              }
+            },
+            plugins: {
+              title: {
+                display: true,
+                text: 'Performance Across Subjects',
+                font: {
+                  size: 16
+                }
+              },
+              legend: {
+                position: 'top'
+              }
+            }
+          }
+        });
+      }
+
+      // Radar Chart
+      if (radarChartRef.current) {
+        // Destroy existing radar chart if it exists
+        if (radarChartInstance.current) {
+          radarChartInstance.current.destroy();
+        }
+
+        // Create new radar chart
+        const radarCtx = radarChartRef.current.getContext('2d');
+        radarChartInstance.current = new Chart(radarCtx, {
+          type: 'radar',
+          data: {
+            labels: subjects,
+            datasets: [{
+              label: 'Total Scores',
+              data: totalScores,
+              backgroundColor: 'rgba(75, 192, 192, 0.2)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+              pointBorderColor: '#fff',
+              pointHoverBackgroundColor: '#fff',
+              pointHoverBorderColor: 'rgba(75, 192, 192, 1)'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              r: {
+                beginAtZero: true,
+                max: 100,
+                ticks: {
+                  stepSize: 20
+                }
+              }
+            },
+            plugins: {
+              title: {
+                display: true,
+                text: 'Performance Profile',
+                font: {
+                  size: 16
+                }
+              },
+              legend: {
+                position: 'top'
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // Cleanup function to destroy charts when component unmounts
+    return () => {
+      if (chartInstance.current) {
+        chartInstance.current.destroy();
+      }
+      if (radarChartInstance.current) {
+        radarChartInstance.current.destroy();
+      }
+    };
+  }, [report, chartType]);
+
+  const toggleChartType = () => {
+    setChartType(chartType === 'bar' ? 'radar' : 'bar');
+  };
 
   const handlePrint = () => {
     // Create a new window for printing just the report content
@@ -147,10 +302,186 @@ const ReportView = () => {
               font-size: 0.9em;
               color: #666;
             }
+            .performance-chart-section {
+              margin: 2rem 0;
+              padding: 1.5rem;
+              background-color: #fff;
+              border-radius: 8px;
+              border: 1px solid #eaedf2;
+              page-break-inside: avoid;
+            }
+            .performance-chart-section h3 {
+              margin-bottom: 1.5rem;
+              color: #333;
+              font-size: 1.2rem;
+              font-weight: 600;
+            }
+            .chart-container {
+              position: relative;
+              height: 350px;
+              width: 100%;
+              margin-bottom: 1rem;
+            }
+            .chart-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 1.5rem;
+            }
+            .charts-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 20px;
+              margin-top: 20px;
+            }
+            .chart-box {
+              border: 1px solid #eaedf2;
+              border-radius: 8px;
+              padding: 15px;
+            }
+            .chart-title {
+              font-size: 1rem;
+              font-weight: 600;
+              margin-bottom: 10px;
+              text-align: center;
+            }
+            @media print {
+              .charts-grid {
+                page-break-inside: avoid;
+              }
+            }
           </style>
+          <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         </head>
         <body>
           ${reportContent}
+          <script>
+            // Re-create the charts in the print window
+            window.onload = function() {
+              try {
+                const chartData = ${JSON.stringify({
+                  labels: report.grades.map(grade => grade.subject?.name || 'Unknown'),
+                  classScores: report.grades.map(grade => grade.class_score || 0),
+                  examScores: report.grades.map(grade => grade.exam_score || 0),
+                  totalScores: report.grades.map(grade => grade.total_score || 0)
+                })};
+                
+                // Replace the chart containers with a grid of both charts
+                const chartSection = document.querySelector('.performance-chart-section');
+                if (chartSection) {
+                  // Remove existing canvas elements
+                  const chartContainer = chartSection.querySelector('.chart-container');
+                  if (chartContainer) {
+                    chartContainer.innerHTML = '';
+                    
+                    // Create a grid for both charts
+                    const chartsGrid = document.createElement('div');
+                    chartsGrid.className = 'charts-grid';
+                    
+                    // Bar chart container
+                    const barChartBox = document.createElement('div');
+                    barChartBox.className = 'chart-box';
+                    const barChartTitle = document.createElement('div');
+                    barChartTitle.className = 'chart-title';
+                    barChartTitle.textContent = 'Performance by Subject';
+                    const barCanvas = document.createElement('canvas');
+                    barCanvas.id = 'bar-chart';
+                    barCanvas.height = 300;
+                    barChartBox.appendChild(barChartTitle);
+                    barChartBox.appendChild(barCanvas);
+                    
+                    // Radar chart container
+                    const radarChartBox = document.createElement('div');
+                    radarChartBox.className = 'chart-box';
+                    const radarChartTitle = document.createElement('div');
+                    radarChartTitle.className = 'chart-title';
+                    radarChartTitle.textContent = 'Performance Profile';
+                    const radarCanvas = document.createElement('canvas');
+                    radarCanvas.id = 'radar-chart';
+                    radarCanvas.height = 300;
+                    radarChartBox.appendChild(radarChartTitle);
+                    radarChartBox.appendChild(radarCanvas);
+                    
+                    // Add both charts to the grid
+                    chartsGrid.appendChild(barChartBox);
+                    chartsGrid.appendChild(radarChartBox);
+                    chartContainer.appendChild(chartsGrid);
+                    
+                    // Create the bar chart
+                    new Chart(barCanvas, {
+                      type: 'bar',
+                      data: {
+                        labels: chartData.labels,
+                        datasets: [
+                          {
+                            label: 'Class Score (60%)',
+                            data: chartData.classScores,
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                          },
+                          {
+                            label: 'Exam Score (40%)',
+                            data: chartData.examScores,
+                            backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1
+                          },
+                          {
+                            label: 'Total Score',
+                            data: chartData.totalScores,
+                            backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                          }
+                        ]
+                      },
+                      options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                          y: {
+                            beginAtZero: true,
+                            max: 100
+                          }
+                        }
+                      }
+                    });
+                    
+                    // Create the radar chart
+                    new Chart(radarCanvas, {
+                      type: 'radar',
+                      data: {
+                        labels: chartData.labels,
+                        datasets: [{
+                          label: 'Total Scores',
+                          data: chartData.totalScores,
+                          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                          borderColor: 'rgba(75, 192, 192, 1)',
+                          pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                          pointBorderColor: '#fff',
+                          pointHoverBackgroundColor: '#fff',
+                          pointHoverBorderColor: 'rgba(75, 192, 192, 1)'
+                        }]
+                      },
+                      options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                          r: {
+                            beginAtZero: true,
+                            max: 100
+                          }
+                        }
+                      }
+                    });
+                  }
+                }
+              } catch (error) {
+                console.error('Error recreating charts:', error);
+              }
+            };
+          </script>
         </body>
       </html>
     `);
@@ -162,7 +493,7 @@ const ReportView = () => {
     setTimeout(() => {
       printWindow.print();
       printWindow.close();
-    }, 500);
+    }, 1500);
   };
 
   const handleExportPDF = () => {
@@ -287,6 +618,39 @@ const ReportView = () => {
                 )}
               </tbody>
             </table>
+          </div>
+          
+          {/* Add Performance Chart */}
+          <div className="performance-chart-section">
+            <div className="chart-header">
+              <h3>Performance Visualization</h3>
+              <div className="chart-controls">
+                <button 
+                  className={`chart-type-btn ${chartType === 'bar' ? 'active' : ''}`}
+                  onClick={() => setChartType('bar')}
+                >
+                  Bar Chart
+                </button>
+                <button 
+                  className={`chart-type-btn ${chartType === 'radar' ? 'active' : ''}`}
+                  onClick={() => setChartType('radar')}
+                >
+                  Radar Chart
+                </button>
+              </div>
+            </div>
+            <div className="chart-container">
+              <canvas 
+                ref={chartRef} 
+                height="300" 
+                style={{ display: chartType === 'bar' ? 'block' : 'none' }}
+              ></canvas>
+              <canvas 
+                ref={radarChartRef} 
+                height="300" 
+                style={{ display: chartType === 'radar' ? 'block' : 'none' }}
+              ></canvas>
+            </div>
           </div>
           
           <div className="additional-info">

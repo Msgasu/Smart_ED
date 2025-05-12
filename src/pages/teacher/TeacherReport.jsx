@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { FaArrowLeft, FaPrint, FaSave, FaCheck, FaTrashAlt } from 'react-icons/fa';
+import { FaArrowLeft, FaPrint, FaSave, FaCheck, FaTrashAlt, FaChartLine } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import TeacherLayout from '../../components/teacher/TeacherLayout.jsx';
 import Reports from '../../components/admin/Reports';
@@ -14,10 +14,16 @@ import {
   deleteSubjectGrade,
   saveStudentReport, 
   getStudentReport, 
-  calculateClassScoreFromAssignments
+  calculateClassScoreFromAssignments,
+  getStudentReports
 } from '../../backend/teachers';
 import './styles/TeacherReport.css';
 import { supabase } from '../../lib/supabase';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, RadialLinearScale, ArcElement, Title, Tooltip, Legend } from 'chart.js';
+import { Bar, Line, Radar } from 'react-chartjs-2';
+
+// Register ChartJS components
+ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, RadialLinearScale, ArcElement, Title, Tooltip, Legend);
 
 const TeacherReport = () => {
   const { studentId } = useParams();
@@ -28,6 +34,8 @@ const TeacherReport = () => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [reportData, setReportData] = useState(null);
+  const [historicalReports, setHistoricalReports] = useState([]);
+  const [loadingHistorical, setLoadingHistorical] = useState(false);
   const studentNameInputRef = useRef(null);
   const averageInputRef = useRef(null);
   const termSelectRef = useRef(null);
@@ -315,7 +323,101 @@ const TeacherReport = () => {
   }, []);  // Only run once on mount
 
   const handlePrint = () => {
-    window.print();
+    // Create a new window for printing with custom styling
+    const printWindow = window.open('', '_blank');
+    
+    if (!printWindow) {
+      toast.error('Pop-up blocked. Please allow pop-ups and try again.');
+      return;
+    }
+    
+    // Get the content to print
+    const reportContent = document.getElementById('printable-report').innerHTML;
+    
+    // Create HTML with embedded chart data
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Student Report</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 20px;
+              color: #333;
+            }
+            .report-content {
+              max-width: 100%;
+              margin: 0 auto;
+            }
+            .performance-graphs-section {
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 1px solid #eaeaea;
+              page-break-before: always;
+            }
+            .graphs-title {
+              font-size: 18px;
+              font-weight: bold;
+              color: #003366;
+              margin-bottom: 20px;
+              text-align: center;
+            }
+            .graphs-container {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 20px;
+            }
+            .graph-card {
+              flex: 1;
+              min-width: 45%;
+              border: 1px solid #eaeaea;
+              border-radius: 8px;
+              padding: 15px;
+              margin-bottom: 20px;
+            }
+            .graph-card.full-width {
+              width: 100%;
+              flex-basis: 100%;
+            }
+            .graph-card h4 {
+              font-size: 16px;
+              font-weight: bold;
+              text-align: center;
+              margin-top: 0;
+              margin-bottom: 15px;
+            }
+            .chart-container {
+              height: 300px;
+              position: relative;
+            }
+            @media print {
+              .performance-graphs-section {
+                page-break-before: always;
+              }
+            }
+          </style>
+          <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        </head>
+        <body>
+          <div class="report-content">
+            ${reportContent}
+          </div>
+          
+          <script>
+            // Wait for charts to load
+            window.onload = function() {
+              setTimeout(() => {
+                window.print();
+                setTimeout(() => window.close(), 500);
+              }, 1000);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
   };
 
   // Handle term selection change
@@ -1068,6 +1170,138 @@ const TeacherReport = () => {
     }
   }, [subjects]);
 
+  // Fetch historical report data for the student
+  const fetchHistoricalReports = async () => {
+    try {
+      setLoadingHistorical(true);
+      const { data: reports, error } = await getStudentReports(studentId);
+      
+      if (error) {
+        console.error('Error fetching historical reports:', error);
+        return;
+      }
+      
+      if (reports && reports.length > 0) {
+        // Sort reports by academic year and term
+        const sortedReports = [...reports].sort((a, b) => {
+          // Sort by academic year first
+          const yearA = a.academic_year || '';
+          const yearB = b.academic_year || '';
+          
+          if (yearA !== yearB) {
+            return yearA.localeCompare(yearB);
+          }
+          
+          // Then sort by term
+          const termOrder = { 'Term 1': 1, 'Term 2': 2, 'Term 3': 3 };
+          return termOrder[a.term] - termOrder[b.term];
+        });
+        
+        setHistoricalReports(sortedReports);
+      }
+    } catch (error) {
+      console.error('Error in fetchHistoricalReports:', error);
+    } finally {
+      setLoadingHistorical(false);
+    }
+  };
+
+  // Calculate average score for a report
+  const calculateReportAverage = (report) => {
+    if (!report.grades || report.grades.length === 0) {
+      return 0;
+    }
+    
+    const totalScore = report.grades.reduce((sum, grade) => sum + (grade.total_score || 0), 0);
+    return totalScore / report.grades.length;
+  };
+
+  // Prepare data for the performance trend chart
+  const getPerformanceTrendData = () => {
+    if (historicalReports.length === 0) {
+      return {
+        labels: ['No historical data'],
+        datasets: [{
+          label: 'Average Score',
+          data: [0],
+          borderColor: '#4a6cf7',
+          backgroundColor: 'rgba(74, 108, 247, 0.2)',
+          tension: 0.4,
+          fill: true
+        }]
+      };
+    }
+
+    const labels = historicalReports.map(report => `${report.term} ${report.academic_year}`);
+    const averages = historicalReports.map(report => calculateReportAverage(report));
+    
+    return {
+      labels,
+      datasets: [{
+        label: 'Average Score',
+        data: averages,
+        borderColor: '#4a6cf7',
+        backgroundColor: 'rgba(74, 108, 247, 0.2)',
+        tension: 0.4,
+        fill: true
+      }]
+    };
+  };
+  
+  // Get subject-specific performance trends
+  const getSubjectPerformanceTrends = () => {
+    if (historicalReports.length === 0 || !subjects.length) {
+      return {
+        labels: ['No historical data'],
+        datasets: []
+      };
+    }
+
+    // Get unique subject names from current subjects
+    const currentSubjectNames = subjects.map(subject => subject.name);
+    
+    // Create labels from historical reports
+    const labels = historicalReports.map(report => `${report.term} ${report.academic_year}`);
+    
+    // Create datasets for each subject
+    const datasets = currentSubjectNames.map((subjectName, index) => {
+      // Generate a color based on the index
+      const hue = (index * 137) % 360; // Use golden angle approximation for good distribution
+      const color = `hsl(${hue}, 70%, 60%)`;
+      const backgroundColor = `hsla(${hue}, 70%, 60%, 0.2)`;
+      
+      // Find this subject's scores in each historical report
+      const data = historicalReports.map(report => {
+        const subjectGrade = report.grades?.find(grade => 
+          grade.subject?.name?.toLowerCase() === subjectName.toLowerCase()
+        );
+        return subjectGrade ? subjectGrade.total_score || 0 : null;
+      });
+      
+      return {
+        label: subjectName,
+        data,
+        borderColor: color,
+        backgroundColor: backgroundColor,
+        tension: 0.4,
+        fill: false,
+        pointRadius: 4
+      };
+    });
+    
+    return {
+      labels,
+      datasets
+    };
+  };
+
+  // Fetch historical data when component mounts
+  useEffect(() => {
+    if (studentId) {
+      fetchHistoricalReports();
+    }
+  }, [studentId]);
+
   if (loading) {
     return (
       <TeacherLayout>
@@ -1139,6 +1373,193 @@ const TeacherReport = () => {
             onSubjectsChange={setSubjects}
             studentAge={studentData.age}
           />
+          
+          {/* Performance Graphs Section */}
+          {subjects.length > 0 && (
+            <div className="performance-graphs-section">
+              <h3 className="graphs-title">Performance Analysis</h3>
+              <div className="graphs-container">
+                <div className="graph-card">
+                  <h4>Subject Performance</h4>
+                  <div className="chart-container">
+                    <Bar 
+                      data={{
+                        labels: subjects.map(subject => subject.name),
+                        datasets: [
+                          {
+                            label: 'Class Score (60%)',
+                            data: subjects.map(subject => parseFloat(subject.classScore) || 0),
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                          },
+                          {
+                            label: 'Exam Score (40%)',
+                            data: subjects.map(subject => parseFloat(subject.examScore) || 0),
+                            backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1
+                          },
+                          {
+                            label: 'Total Score',
+                            data: subjects.map(subject => (parseFloat(subject.classScore) || 0) + (parseFloat(subject.examScore) || 0)),
+                            backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                          }
+                        ]
+                      }}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                          y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                              display: true,
+                              text: 'Score'
+                            }
+                          }
+                        },
+                        plugins: {
+                          title: {
+                            display: true,
+                            text: 'Subject Score Breakdown'
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+                
+                <div className="graph-card">
+                  <h4>Performance Profile</h4>
+                  <div className="chart-container">
+                    <Radar
+                      data={{
+                        labels: subjects.map(subject => subject.name),
+                        datasets: [{
+                          label: 'Total Scores',
+                          data: subjects.map(subject => (parseFloat(subject.classScore) || 0) + (parseFloat(subject.examScore) || 0)),
+                          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                          borderColor: 'rgba(75, 192, 192, 1)',
+                          pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                          pointBorderColor: '#fff',
+                          pointHoverBackgroundColor: '#fff',
+                          pointHoverBorderColor: 'rgba(75, 192, 192, 1)'
+                        }]
+                      }}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                          r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                              stepSize: 20
+                            }
+                          }
+                        },
+                        plugins: {
+                          title: {
+                            display: true,
+                            text: 'Student Strengths and Weaknesses'
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Historical Performance Trend */}
+              <div className="graph-card full-width">
+                <h4>Performance Trend Across Terms</h4>
+                {loadingHistorical ? (
+                  <div className="loading-spinner">Loading historical data...</div>
+                ) : historicalReports.length > 0 ? (
+                  <div className="chart-container">
+                    <Line 
+                      data={getPerformanceTrendData()}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                          y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                              display: true,
+                              text: 'Average Score'
+                            }
+                          }
+                        },
+                        plugins: {
+                          title: {
+                            display: true,
+                            text: 'Student Progress Over Time'
+                          },
+                          tooltip: {
+                            callbacks: {
+                              title: function(context) {
+                                return context[0].label;
+                              },
+                              label: function(context) {
+                                return `Average Score: ${context.parsed.y.toFixed(1)}%`;
+                              }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="no-data-message">No historical data available</div>
+                )}
+              </div>
+              
+              {/* Subject Performance Trends */}
+              {historicalReports.length > 1 && (
+                <div className="graph-card full-width">
+                  <h4>Subject Performance Trends</h4>
+                  <div className="chart-container">
+                    <Line 
+                      data={getSubjectPerformanceTrends()}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                          y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                              display: true,
+                              text: 'Score'
+                            }
+                          }
+                        },
+                        plugins: {
+                          title: {
+                            display: true,
+                            text: 'Subject Progress Over Time'
+                          },
+                          tooltip: {
+                            callbacks: {
+                              label: function(context) {
+                                return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`;
+                              }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </TeacherLayout>
