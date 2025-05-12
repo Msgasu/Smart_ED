@@ -1128,7 +1128,7 @@ const Reports = ({
           <div className="school-logo-placeholder">LIC</div>
           </div>
         <div className="school-details text-center">
-            <h3>Life International College</h3>
+            <h3>SmartED sample report</h3>
             <p>Private mail Bag, 252 Tema. / Tel: 024 437 7584</p>
             <h4>TERMINAL REPORT</h4>
           </div>

@@ -17,7 +17,7 @@ const Sidebar = () => {
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
-        <img src="/logo.png" alt="LIC" height="40" />
+      <h1>SmartED</h1>
       </div>
       <nav className="sidebar-nav">
         <div className="nav-item">
@@ -33,7 +33,7 @@ const Sidebar = () => {
             className={`nav-link ${path === "/admin/Students" ? "active" : ""}`}
             to="/admin/Students"
           >
-            <FaUsers /> <span>Students</span>
+            <FaUsers /> <span>Users</span>
           </Link>
         </div>
         {/* <div className="nav-item">
