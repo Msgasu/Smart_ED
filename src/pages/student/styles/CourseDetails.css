@@ -448,387 +448,83 @@
   text-decoration: underline;
 }
 
-/* Performance Chart Styling */
+/* Performance Chart Container Styling */
 .performance-chart-container {
   background-color: var(--bg-light);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 1.25rem;
-  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
   border: 1px solid var(--border-color);
+  overflow: hidden;
 }
 
 .performance-chart-container h3 {
-  margin-top: 0;
-  margin-bottom: 1rem;
+  margin: 0 0 1rem;
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-color);
-}
-
-.chart-wrapper {
-  height: 260px;
-}
-
-/* Assignments Tab Styling */
-.assignments-tab {
-  background-color: var(--bg-light);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 1.25rem;
-  border: 1px solid var(--border-color);
-}
-
-.assignments-header {
-  margin-bottom: 1.25rem;
-}
-
-.assignments-header h2 {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-/* Grades Tab Styling */
-.grades-tab {
-  background-color: var(--bg-light);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 1.25rem;
-  margin-top: 1.5rem;
-}
-
-.grades-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.grades-header h2 {
-  font-size: 1.3rem;
-  font-weight: 600;
-  margin-bottom: 1.25rem;
-  color: var(--text-color);
-}
-
-.overall-grade {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  max-width: 450px;
-  background-color: #f7fafc;
-  border-radius: var(--radius);
-  padding: 1.5rem;
-  box-shadow: var(--shadow-sm);
-}
-
-.grade-progress-circle {
-  width: 110px;
-  height: 110px;
-  border-radius: 50%;
-  background: conic-gradient(
-    var(--primary-color) calc(var(--grade-percent, 0) * 3.6deg),
-    #edf2f7 0deg
-  );
-  position: relative;
-  margin-right: 1.75rem;
-}
-
-.grade-circle-inner {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  right: 8px;
-  bottom: 8px;
-  border-radius: 50%;
-  background-color: white;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.grade-percentage {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: var(--primary-color);
-  line-height: 1;
-}
-
-.grade-percent-sign {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-light);
-}
-
-.grade-details {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-}
-
-.grade-letter {
-  font-size: 2.2rem;
-  font-weight: 700;
-  color: var(--primary-color);
-  margin-bottom: 0.5rem;
-}
-
-.grade-fraction {
-  display: flex;
-  align-items: baseline;
-  font-size: 0.95rem;
-  color: var(--text-light);
-}
-
-.grade-earned {
-  font-weight: 700;
-  color: var(--text-color);
-  font-size: 1.2rem;
-}
-
-.grade-separator {
-  margin: 0 0.25rem;
-}
-
-.grade-possible {
-  color: var(--text-light);
-}
-
-.grade-points {
-  margin-left: 0.5rem;
-  font-size: 0.8rem;
-  color: var(--text-light);
-}
-
-.grades-detail-section {
-  margin-top: 1.25rem;
-}
-
-.grade-stats {
-  display: flex;
-  flex-direction: column;
   gap: 0.5rem;
 }
 
-.grade-completion {
-  font-size: 0.8rem;
-  color: var(--text-light);
-}
-
-.grades-filters {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.chart-wrapper {
+  position: relative;
+  height: 400px;
   margin-bottom: 1rem;
 }
 
-.grades-filters h3 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0;
-}
-
-.grades-table-wrapper {
-  overflow-x: auto;
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
-}
-
-.grades-table {
+/* New Performance Chart Styling */
+.performance-chart {
+  position: relative;
   width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-  min-width: 650px;
+  height: 100%;
 }
 
-.grades-table th {
-  text-align: left;
-  padding: 0.75rem 1rem;
-  background-color: #f7fafc;
-  border-bottom: 1px solid var(--border-color);
-  color: var(--text-color);
-  font-weight: 600;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.date-column, .status-column, .grade-column {
-  width: 12%;
-}
-
-.score-column {
-  width: 12%;
-}
-
-.percentage-column {
-  width: 18%;
-}
-
-.grades-table td {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border-color);
-  color: var(--text-color);
-  vertical-align: middle;
-}
-
-.grade-row {
-  transition: background-color 0.2s ease;
-}
-
-.grade-row:hover {
-  background-color: #f7fafc;
-}
-
-.grade-row.status-graded {
-  background-color: var(--secondary-light);
-}
-
-.grade-row.status-submitted {
-  background-color: var(--primary-light);
-}
-
-.grade-row.status-pending {
-  background-color: var(--warning-light);
-}
-
-.assignment-title {
-  font-weight: 500;
-  font-size: 0.9rem;
-}
-
-.score-cell, .grade-cell {
-  font-weight: 600;
-  color: var(--primary-color);
-}
-
-.percentage-display {
-  position: relative;
-  height: 18px;
-  display: flex;
-  align-items: center;
-}
-
-.percentage-bar {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 6px;
-  background-color: var(--primary-color);
-  border-radius: 3px;
-  z-index: 1;
-}
-
-.percentage-display span {
-  position: relative;
-  z-index: 2;
-  margin-left: 0.5rem;
-  font-size: 0.85rem;
+.chart-title {
+  font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-color);
-}
-
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.3rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.status-badge.status-graded {
-  background-color: var(--secondary-light);
-  color: var(--secondary-color);
-}
-
-.status-badge.status-submitted {
-  background-color: var(--primary-light);
-  color: var(--primary-color);
-}
-
-.status-badge.status-pending {
-  background-color: var(--warning-light);
-  color: var(--warning-color);
-}
-
-.no-grades-message {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem 1rem;
-  color: var(--text-light);
-  font-size: 0.95rem;
+  margin: 0 0 1rem;
   text-align: center;
-  gap: 1rem;
 }
 
-.check-assignments-btn {
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: 0.6rem 1.2rem;
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.check-assignments-btn:hover {
-  background-color: var(--primary-dark);
-  transform: translateY(-1px);
-}
-
-/* Loading State */
-.course-details-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 50vh;
-}
-
-.loading-spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid rgba(52, 152, 219, 0.15);
-  border-radius: 50%;
-  border-top-color: var(--primary-color);
-  animation: spin 1s ease-in-out infinite;
+.chart-container {
+  position: relative;
+  height: 350px;
+  width: 100%;
   margin-bottom: 1rem;
 }
 
-.loading-text {
+.chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legend-color {
+  display: block;
+  width: 2rem;
+  height: 0.5rem;
+  border-radius: 2px;
+}
+
+.legend-text {
+  font-size: 0.85rem;
   color: var(--text-light);
-  font-weight: 500;
-  font-size: 0.95rem;
 }
 
-.course-not-found {
-  text-align: center;
-  padding: 3rem;
-  color: var(--danger-color);
-  font-weight: 500;
-}
-
-/* Responsive Adjustments */
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .course-details-container {
     padding: 1rem;
@@ -860,6 +556,16 @@
   
   .tab-button {
     padding: 0.75rem 1rem;
+  }
+  
+  .chart-container {
+    height: 300px;
+  }
+  
+  .chart-legend {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
   }
 }
 
