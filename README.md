@@ -22,6 +22,14 @@ Smart ED is a comprehensive educational management system designed to streamline
   - Communication with teachers
   - Attendance monitoring
 
+- **Admin Portal**
+  - User management (students, teachers, guardians)
+  - Course and department management
+  - System configuration and settings
+  - Analytics and reporting
+  - Role and permission management
+  - System monitoring and maintenance
+
 ## Tech Stack
 
 - Frontend: React.js with modern JavaScript (ES6+)
@@ -144,6 +152,15 @@ smart-ed/
 3. Monitor grades and attendance
 4. Communicate with teachers
 
+### For Administrators
+
+1. Log in to your admin account
+2. Manage user accounts and permissions
+3. Configure system settings
+4. Monitor system performance
+5. Generate institutional reports
+6. Manage courses and departments
+7. Handle system maintenance
 
 ## Contributing
 
@@ -152,7 +169,6 @@ smart-ed/
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
-
 
 ## Support
 

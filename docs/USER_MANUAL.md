@@ -6,7 +6,8 @@
 3. [Student Guide](#student-guide)
 4. [Teacher Guide](#teacher-guide)
 5. [Guardian Guide](#guardian-guide)
-6. [Troubleshooting](#troubleshooting)
+6. [Admin Guide](#admin-guide)
+7. [Troubleshooting](#troubleshooting)
 
 ## Introduction
 
@@ -119,6 +120,82 @@ The student dashboard provides:
 - View performance charts
 - Download progress reports
 - Track improvement areas
+
+## Admin Guide
+
+### User Management
+1. **Managing Users**
+   - Access the user management dashboard
+   - Create new user accounts
+   - Edit existing user information
+   - Deactivate/reactivate accounts
+   - Reset user passwords
+   - Assign user roles and permissions
+
+2. **Role Management**
+   - Create custom roles
+   - Define role permissions
+   - Assign roles to users
+   - Modify role settings
+   - Audit role assignments
+
+### System Configuration
+1. **General Settings**
+   - Configure system parameters
+   - Set up email notifications
+   - Manage system preferences
+   - Configure security settings
+   - Set up backup schedules
+
+2. **Department Management**
+   - Create and manage departments
+   - Assign department heads
+   - Configure department settings
+   - Manage department resources
+
+### Course Administration
+1. **Course Management**
+   - Create and manage courses
+   - Assign teachers to courses
+   - Set course schedules
+   - Manage course materials
+   - Configure course settings
+
+2. **Academic Calendar**
+   - Set academic terms
+   - Configure holidays
+   - Manage exam schedules
+   - Set registration periods
+
+### System Monitoring
+1. **Performance Monitoring**
+   - Monitor system performance
+   - Track user activity
+   - View system logs
+   - Monitor resource usage
+   - Set up alerts
+
+2. **Reports and Analytics**
+   - Generate institutional reports
+   - View system statistics
+   - Export data for analysis
+   - Monitor user engagement
+   - Track system usage
+
+### Maintenance
+1. **System Maintenance**
+   - Perform system updates
+   - Manage database backups
+   - Monitor system health
+   - Handle system issues
+   - Schedule maintenance windows
+
+2. **Security Management**
+   - Monitor security logs
+   - Manage access controls
+   - Configure security policies
+   - Handle security incidents
+   - Perform security audits
 
 ## Troubleshooting
 
