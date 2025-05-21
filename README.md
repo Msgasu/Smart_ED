@@ -1,6 +1,6 @@
 # Smart ED - Educational Management System
 
-Smart ED is a comprehensive educational management system designed to streamline the learning experience for students, teachers, and guardians. The system provides features for course management, assignment tracking, grade monitoring, and performance analytics.
+Smart ED is a comprehensive educational management system designed to streamline the learning experience for students, teachers, and guardians. The system provides features for course management, assignment tracking, grade monitoring, and performance analytics. It also has features for presbopic users.
 
 ## Features
 
@@ -9,18 +9,30 @@ Smart ED is a comprehensive educational management system designed to streamline
   - Assignment submission and tracking
   - Grade viewing and performance analytics
   - Interactive course materials
+  - font size scaling
+  - career course recomendation
 
 - **Teacher Portal**
   - Course creation and management
   - Assignment creation and grading
   - Student performance monitoring
   - Grade management and reporting
+  - - font size scaling
 
 - **Guardian Portal**
   - Student progress monitoring
   - Grade and performance tracking
   - Communication with teachers
   - Attendance monitoring
+
+
+- **Admin Portal**
+  - User management (students, teachers, guardians)
+  - Course and department management
+  - System configuration and settings
+  - Analytics and reporting
+  - Role and permission management
+  - System monitoring and maintenance
 
 ## Tech Stack
 
@@ -143,6 +155,16 @@ smart-ed/
 2. View your ward's progress
 3. Monitor grades and attendance
 4. Communicate with teachers
+
+### For Administrators
+
+1. Log in to your admin account
+2. Manage user accounts and permissions
+3. Configure system settings
+4. Monitor system performance
+5. Generate institutional reports
+6. Manage courses and departments
+7. Handle system maintenance
 
 
 ## Contributing
