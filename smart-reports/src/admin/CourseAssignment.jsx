@@ -92,7 +92,7 @@ const CourseAssignment = () => {
         .from('profiles')
         .select(`
           *,
-          students (
+          students!inner (
             profile_id,
             student_id,
             class_year
