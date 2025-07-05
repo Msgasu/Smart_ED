@@ -1,0 +1,53 @@
+/* Smart Reports Main Styles */
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+}
+
+.card {
+  border: none;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  margin-bottom: 1rem;
+}
+
+.card-header {
+  background-color: #fff;
+  border-bottom: 1px solid #dee2e6;
+  font-weight: 600;
+}
+
+.btn {
+  border-radius: 0.375rem;
+}
+
+.table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  border-top: none;
+}
+
+.grade-input {
+  width: 80px;
+  text-align: center;
+}
+
+.student-row:hover {
+  background-color: #f8f9fa;
+}
+
+.stats-card {
+  transition: transform 0.2s;
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+}
+
+.class-group {
+  transition: all 0.3s ease;
+}
+
+.class-group:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+} 
