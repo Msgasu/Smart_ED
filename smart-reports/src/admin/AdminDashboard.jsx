@@ -5,6 +5,8 @@ import toast from 'react-hot-toast'
 import AdminLayout from './AdminLayout'
 import UsersPage from './UsersPage'
 import Reports from './Reports'
+import ClassManagement from './ClassManagement'
+import CourseAssignment from './CourseAssignment'
 import { FaGraduationCap, FaChalkboardTeacher, FaBook, FaFileAlt, FaUserCheck, FaClock, FaSync } from 'react-icons/fa'
 
 const AdminDashboard = ({ user, profile }) => {
@@ -441,7 +443,7 @@ const AdminDashboard = ({ user, profile }) => {
                   letterSpacing: '1px',
                   fontWeight: '700'
                 }}
-                onClick={() => setActiveTab('analytics')}
+                onClick={() => setActiveTab('classes')}
               >
                 <div style={{ 
                   fontSize: '0.9rem',
@@ -450,9 +452,39 @@ const AdminDashboard = ({ user, profile }) => {
                   padding: '0.5rem 1rem',
                   borderRadius: '4px'
                 }}>
-                  ANALYTICS
+                  CLASSES
                 </div>
-                <span>View Analytics</span>
+                <span>Manage Classes</span>
+              </button>
+              
+              <button 
+                className="btn"
+                style={{
+                  padding: '1.5rem',
+                  background: 'var(--wine-light)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  fontWeight: '700'
+                }}
+                onClick={() => setActiveTab('courses')}
+              >
+                <div style={{ 
+                  fontSize: '0.9rem',
+                  backgroundColor: 'white',
+                  color: 'var(--wine)',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '4px'
+                }}>
+                  COURSES
+                </div>
+                <span>Assign Courses</span>
               </button>
             </div>
           </div>
@@ -469,6 +501,10 @@ const AdminDashboard = ({ user, profile }) => {
         return <UsersPage />
       case 'reports':
         return <Reports />
+      case 'classes':
+        return <ClassManagement />
+      case 'courses':
+        return <CourseAssignment />
       case 'analytics':
         return (
           <div className="page-header">
