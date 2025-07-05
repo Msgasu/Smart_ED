@@ -104,6 +104,21 @@ const Reports = () => {
     try {
       setReportLoading(true)
       
+      // First, always load the student's enrolled courses
+      const { data: enrolledCourses, error: coursesError } = await supabase
+        .from('student_courses')
+        .select(`
+          course_id,
+          courses (
+            id,
+            name,
+            code
+          )
+        `)
+        .eq('student_id', selectedStudent.id)
+
+      if (coursesError) throw coursesError
+
       // Get existing report
       const { data: existingReport, error: reportError } = await supabase
         .from('student_reports')
@@ -143,24 +158,80 @@ const Reports = () => {
 
         if (gradesError) throw gradesError
 
-        const subjectsWithGrades = grades.map(grade => ({
-          id: grade.id,
-          courseId: grade.subject_id,
-          name: grade.courses.name,
-          code: grade.courses.code,
-          classScore: grade.class_score?.toString() || '',
-          examScore: grade.exam_score?.toString() || '',
-          totalScore: grade.total_score?.toString() || '',
-          position: grade.position || '',
-          grade: grade.grade || '',
-          remark: grade.remark || '',
-          teacherSignature: grade.teacher_signature || ''
-        }))
+        // Create a map of existing grades by course ID
+        const existingGradesMap = new Map(
+          grades.map(grade => [grade.subject_id, grade])
+        )
+
+        // Combine enrolled courses with existing grades
+        const subjectsWithGrades = enrolledCourses.map(enrollment => {
+          const existingGrade = existingGradesMap.get(enrollment.course_id)
+          
+          if (existingGrade) {
+            return {
+              id: existingGrade.id,
+              courseId: existingGrade.subject_id,
+              name: existingGrade.courses.name,
+              code: existingGrade.courses.code,
+              classScore: existingGrade.class_score?.toString() || '',
+              examScore: existingGrade.exam_score?.toString() || '',
+              totalScore: existingGrade.total_score?.toString() || '',
+              position: existingGrade.position || '',
+              grade: existingGrade.grade || '',
+              remark: existingGrade.remark || '',
+              teacherSignature: existingGrade.teacher_signature || ''
+            }
+          } else {
+            // Create empty grade entry for enrolled course
+            return {
+              id: uuidv4(),
+              courseId: enrollment.course_id,
+              name: enrollment.courses.name,
+              code: enrollment.courses.code,
+              classScore: '',
+              examScore: '',
+              totalScore: '',
+              position: '',
+              grade: '',
+              remark: '',
+              teacherSignature: ''
+            }
+          }
+        })
 
         setSubjects(subjectsWithGrades)
+        
+        // Notify user about loaded data
+        const gradesCount = subjectsWithGrades.filter(s => s.classScore || s.examScore).length
+        if (gradesCount > 0) {
+          toast.success(`Loaded existing report with ${gradesCount} graded subjects`)
+        } else {
+          toast.info(`Report template loaded with ${subjectsWithGrades.length} enrolled courses`)
+        }
       } else {
-        // Load default subjects based on student's enrolled courses
-        loadDefaultSubjects()
+        // No existing report, create default subjects from enrolled courses
+        const defaultSubjects = enrolledCourses.map(enrollment => ({
+          id: uuidv4(),
+          courseId: enrollment.course_id,
+          name: enrollment.courses.name,
+          code: enrollment.courses.code,
+          classScore: '',
+          examScore: '',
+          totalScore: '',
+          position: '',
+          grade: '',
+          remark: '',
+          teacherSignature: ''
+        }))
+
+        setSubjects(defaultSubjects)
+        
+        // Notify user that courses have been loaded
+        if (defaultSubjects.length > 0) {
+          toast.success(`${defaultSubjects.length} enrolled courses loaded for ${selectedStudent.first_name}`)
+        } else {
+          toast.info(`No enrolled courses found for ${selectedStudent.first_name}`)
+        }
       }
     } catch (error) {
       console.error('Error loading student report:', error)
@@ -170,44 +241,7 @@ const Reports = () => {
     }
   }
 
-  const loadDefaultSubjects = async () => {
-    if (!selectedStudent) return
 
-    try {
-      const { data: enrolledCourses, error } = await supabase
-        .from('student_courses')
-        .select(`
-          course_id,
-          courses (
-            id,
-            name,
-            code
-          )
-        `)
-        .eq('student_id', selectedStudent.id)
-
-      if (error) throw error
-
-      const defaultSubjects = enrolledCourses.map(enrollment => ({
-        id: uuidv4(),
-        courseId: enrollment.course_id,
-        name: enrollment.courses.name,
-        code: enrollment.courses.code,
-        classScore: '',
-        examScore: '',
-        totalScore: '',
-        position: '',
-        grade: '',
-        remark: '',
-        teacherSignature: ''
-      }))
-
-      setSubjects(defaultSubjects)
-    } catch (error) {
-      console.error('Error loading default subjects:', error)
-      setSubjects([])
-    }
-  }
 
   const calculateAge = (dateOfBirth) => {
     if (!dateOfBirth) return ''
@@ -299,7 +333,7 @@ const Reports = () => {
   const addSubject = (course) => {
     const existingSubject = subjects.find(s => s.courseId === course.id)
     if (existingSubject) {
-      toast.error('Subject already added')
+      toast.error(`${course.name} is already in the report`)
       return
     }
 
@@ -318,7 +352,7 @@ const Reports = () => {
     }
 
     setSubjects([...subjects, newSubject])
-    toast.success(`${course.name} added successfully`)
+    toast.success(`${course.name} added to report`)
   }
 
   const removeSubject = (id) => {
@@ -721,7 +755,10 @@ const Reports = () => {
                   ) : (
                     <tr>
                       <td colSpan="9" className="empty-subjects">
-                        No subjects added. Click "Add Subject" to add courses.
+                        {selectedStudent 
+                          ? `No courses found for ${selectedStudent.first_name} ${selectedStudent.last_name}. You can add subjects manually using "Add Subject".`
+                          : 'Select a student to view their enrolled courses, or add subjects manually.'
+                        }
                       </td>
                     </tr>
                   )}
