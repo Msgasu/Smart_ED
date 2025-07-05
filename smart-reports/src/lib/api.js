@@ -5,6 +5,9 @@ export const studentReportsAPI = {
   // Create or update a student report
   upsertReport: async (reportData) => {
     try {
+      console.log('💾 API: Attempting to save report for student:', reportData.student_id)
+      console.log('📋 Report data:', reportData)
+      
       // First check if report exists
       const { data: existingReport } = await supabase
         .from('student_reports')
@@ -13,11 +16,13 @@ export const studentReportsAPI = {
         .eq('term', reportData.term)
         .eq('academic_year', reportData.academic_year)
         .single()
+        
+      console.log('🔍 Existing report check:', existingReport ? `Found ID: ${existingReport.id}` : 'No existing report')
 
       let result
       if (existingReport) {
         // Update existing report
-        result = await supabase
+        const { data: updatedData, error: updateError } = await supabase
           .from('student_reports')
           .update({
             class_year: reportData.class_year,
@@ -34,9 +39,11 @@ export const studentReportsAPI = {
           .eq('id', existingReport.id)
           .select()
           .single()
+          
+        result = { data: updatedData, error: updateError }
       } else {
         // Create new report
-        result = await supabase
+        const { data: insertedData, error: insertError } = await supabase
           .from('student_reports')
           .insert({
             student_id: reportData.student_id,
@@ -54,6 +61,8 @@ export const studentReportsAPI = {
           })
           .select()
           .single()
+          
+        result = { data: insertedData, error: insertError }
       }
 
       return { data: result.data, error: result.error }
