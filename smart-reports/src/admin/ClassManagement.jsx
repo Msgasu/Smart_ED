@@ -7,6 +7,7 @@ import './ClassManagement.css'
 const ClassManagement = () => {
   const [activeTab, setActiveTab] = useState('classes')
   const [students, setStudents] = useState([])
+  const [unassignedStudents, setUnassignedStudents] = useState([])
   const [classes, setClasses] = useState([])
   const [loading, setLoading] = useState(false)
   const [selectedClass, setSelectedClass] = useState('')
@@ -22,14 +23,60 @@ const ClassManagement = () => {
   ]
 
   useEffect(() => {
-    fetchStudents()
+    fetchAllStudents()
     generateClassStats()
   }, [])
 
+  // Fetch students WITH class assignments (for statistics)
   const fetchStudents = async () => {
     try {
       setLoading(true)
       const { data, error } = await supabase
+        .from('profiles')
+        .select(`
+          *,
+          students!inner (
+            profile_id,
+            student_id,
+            class_year
+          )
+        `)
+        .eq('role', 'student')
+        .order('first_name')
+
+      if (error) throw error
+      setStudents(data || [])
+    } catch (error) {
+      console.error('Error fetching students:', error)
+      toast.error('Error loading students')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Fetch ALL students (for showing unassigned ones)
+  const fetchAllStudents = async () => {
+    try {
+      setLoading(true)
+      
+      // First get assigned students
+      const { data: assignedData, error: assignedError } = await supabase
+        .from('profiles')
+        .select(`
+          *,
+          students!inner (
+            profile_id,
+            student_id,
+            class_year
+          )
+        `)
+        .eq('role', 'student')
+        .order('first_name')
+
+      if (assignedError) throw assignedError
+
+      // Then get ALL students to find unassigned ones
+      const { data: allStudentsData, error: allStudentsError } = await supabase
         .from('profiles')
         .select(`
           *,
@@ -42,8 +89,23 @@ const ClassManagement = () => {
         .eq('role', 'student')
         .order('first_name')
 
-      if (error) throw error
-      setStudents(data || [])
+      if (allStudentsError) throw allStudentsError
+
+      // Set assigned students for statistics
+      setStudents(assignedData || [])
+      
+      // Find unassigned students (those without student records or without class_year)
+      const assignedStudentIds = (assignedData || []).map(s => s.id)
+      const unassigned = (allStudentsData || []).filter(student => 
+        !assignedStudentIds.includes(student.id)
+      )
+      
+      // Store unassigned students in state
+      setUnassignedStudents(unassigned)
+      
+      console.log('Assigned students:', assignedData?.length || 0)
+      console.log('Unassigned students:', unassigned.length)
+      
     } catch (error) {
       console.error('Error fetching students:', error)
       toast.error('Error loading students')
@@ -104,7 +166,7 @@ const ClassManagement = () => {
       }
 
       toast.success(`Student assigned to ${newClass}`)
-      fetchStudents()
+      fetchAllStudents()
     } catch (error) {
       console.error('Error assigning student to class:', error)
       toast.error('Error assigning student to class')
@@ -153,7 +215,7 @@ const ClassManagement = () => {
       setSelectedStudents([])
       setTransferToClass('')
       setShowTransferModal(false)
-      fetchStudents()
+      fetchAllStudents()
     } catch (error) {
       console.error('Error transferring students:', error)
       toast.error('Error transferring students')
@@ -186,7 +248,7 @@ const ClassManagement = () => {
         toast.error('Student record not found')
       }
 
-      fetchStudents()
+      fetchAllStudents()
     } catch (error) {
       console.error('Error removing student from class:', error)
       toast.error('Error removing student from class')
@@ -256,10 +318,6 @@ const ClassManagement = () => {
   )
 
   const StudentManagement = () => {
-    const unassignedStudents = students.filter(
-      student => !student.students?.[0]?.class_year
-    )
-    
     const classStudents = selectedClass 
       ? students.filter(student => student.students?.[0]?.class_year === selectedClass)
       : []
@@ -292,65 +350,71 @@ const ClassManagement = () => {
         </div>
 
         {/* Unassigned Students Section */}
-        {!selectedClass && unassignedStudents.length > 0 && (
+        {!selectedClass && (
           <div className="unassigned-section">
             <h3>Unassigned Students ({unassignedStudents.length})</h3>
-            <div className="students-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>
-                      <input
-                        type="checkbox"
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedStudents(unassignedStudents.map(s => s.id))
-                          } else {
-                            setSelectedStudents([])
-                          }
-                        }}
-                      />
-                    </th>
-                    <th>Student Name</th>
-                    <th>Student ID</th>
-                    <th>Email</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {unassignedStudents.map(student => (
-                    <tr key={student.id}>
-                      <td>
+            {unassignedStudents.length > 0 ? (
+              <div className="students-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>
                         <input
                           type="checkbox"
-                          checked={selectedStudents.includes(student.id)}
-                          onChange={() => handleStudentSelection(student.id)}
-                        />
-                      </td>
-                      <td>{student.first_name} {student.last_name}</td>
-                      <td>{student.students?.student_id || 'N/A'}</td>
-                      <td>{student.email}</td>
-                      <td>
-                        <select
                           onChange={(e) => {
-                            if (e.target.value) {
-                              assignStudentToClass(student.id, e.target.value)
+                            if (e.target.checked) {
+                              setSelectedStudents(unassignedStudents.map(s => s.id))
+                            } else {
+                              setSelectedStudents([])
                             }
                           }}
-                          defaultValue=""
-                          className="assign-select"
-                        >
-                          <option value="">Assign to Class</option>
-                          {classStructure.map(className => (
-                            <option key={className} value={className}>{className}</option>
-                          ))}
-                        </select>
-                      </td>
+                        />
+                      </th>
+                      <th>Student Name</th>
+                      <th>Student ID</th>
+                      <th>Email</th>
+                      <th>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {unassignedStudents.map(student => (
+                      <tr key={student.id}>
+                        <td>
+                          <input
+                            type="checkbox"
+                            checked={selectedStudents.includes(student.id)}
+                            onChange={() => handleStudentSelection(student.id)}
+                          />
+                        </td>
+                        <td>{student.first_name} {student.last_name}</td>
+                        <td>{student.students?.[0]?.student_id || 'N/A'}</td>
+                        <td>{student.email}</td>
+                        <td>
+                          <select
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                assignStudentToClass(student.id, e.target.value)
+                              }
+                            }}
+                            defaultValue=""
+                            className="assign-select"
+                          >
+                            <option value="">Assign to Class</option>
+                            {classStructure.map(className => (
+                              <option key={className} value={className}>{className}</option>
+                            ))}
+                          </select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="no-students">
+                <p>All students have been assigned to classes!</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -391,7 +455,7 @@ const ClassManagement = () => {
                         />
                       </td>
                       <td>{student.first_name} {student.last_name}</td>
-                      <td>{student.students?.student_id || 'N/A'}</td>
+                      <td>{student.students?.[0]?.student_id || 'N/A'}</td>
                       <td>{student.email}</td>
                       <td>
                         <button
@@ -422,7 +486,7 @@ const ClassManagement = () => {
                     {classData.students.map(student => (
                       <div key={student.id} className="student-item">
                         <span>{student.first_name} {student.last_name}</span>
-                        <small>{student.students?.student_id}</small>
+                        <small>{student.students?.[0]?.student_id}</small>
                       </div>
                     ))}
                   </div>
@@ -511,4 +575,4 @@ const ClassManagement = () => {
   )
 }
 
-export default ClassManagement 
+export default ClassManagement
