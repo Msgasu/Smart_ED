@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { FaPlus, FaSearch, FaTrashAlt, FaCalendarAlt, FaSave, FaPrint, FaFileExport } from 'react-icons/fa'
 import { supabase } from '../lib/supabase'
+import { studentReportsAPI, studentGradesAPI, studentsAPI, coursesAPI } from '../lib/api'
 import toast from 'react-hot-toast'
 import { v4 as uuidv4 } from 'uuid'
 import './Reports.css'
@@ -45,32 +46,49 @@ const Reports = () => {
   // Update report data when student changes
   useEffect(() => {
     if (selectedStudent) {
-      setReportData(prev => ({
-        ...prev,
+      // CLEAR ALL PREVIOUS DATA FIRST to ensure no data leakage
+      setSubjects([])
+      setReportData({
         studentName: `${selectedStudent.first_name} ${selectedStudent.last_name}`,
         studentClass: selectedStudent.students?.class_year || '',
-        studentAge: calculateAge(selectedStudent.date_of_birth) || ''
-      }))
+        studentAge: calculateAge(selectedStudent.date_of_birth) || '',
+        studentGender: '',
+        attendance: '',
+        conduct: '',
+        nextClass: '',
+        teacherRemarks: '',
+        principalSignature: '',
+        reopeningDate: ''
+      })
       
-      // Load existing report data if any
+      console.log(`🔄 Loading data for NEW STUDENT: ${selectedStudent.first_name} ${selectedStudent.last_name} (ID: ${selectedStudent.id})`)
+      console.log(`📅 Term: ${selectedTerm}, Year: ${selectedYear}`)
+      
+      // Load data specific to this student only
       loadStudentReport()
+    } else {
+      // Clear all data when no student is selected
+      setSubjects([])
+      setReportData({
+        studentName: '',
+        studentClass: '',
+        studentAge: '',
+        studentGender: '',
+        attendance: '',
+        conduct: '',
+        nextClass: '',
+        teacherRemarks: '',
+        principalSignature: '',
+        reopeningDate: ''
+      })
+      console.log('🔄 Cleared all data - no student selected')
     }
   }, [selectedStudent, selectedTerm, selectedYear])
 
   const fetchStudents = async () => {
     try {
       setLoading(true)
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(`
-          *,
-          students (
-            class_year,
-            student_id
-          )
-        `)
-        .eq('role', 'student')
-        .order('first_name')
+      const { data, error } = await studentsAPI.getStudents()
 
       if (error) throw error
       setStudents(data || [])
@@ -84,10 +102,7 @@ const Reports = () => {
 
   const fetchCourses = async () => {
     try {
-      const { data, error } = await supabase
-        .from('courses')
-        .select('*')
-        .order('name')
+      const { data, error } = await coursesAPI.getCourses()
 
       if (error) throw error
       setAvailableCourses(data || [])
@@ -99,40 +114,39 @@ const Reports = () => {
   }
 
   const loadStudentReport = async () => {
-    if (!selectedStudent) return
+    if (!selectedStudent) {
+      console.log('❌ No student selected - cannot load report')
+      return
+    }
     
     try {
       setReportLoading(true)
+      console.log(`📚 Loading courses for student: ${selectedStudent.first_name} ${selectedStudent.last_name} (ID: ${selectedStudent.id})`)
       
-      // First, always load the student's enrolled courses
-      const { data: enrolledCourses, error: coursesError } = await supabase
-        .from('student_courses')
-        .select(`
-          course_id,
-          courses (
-            id,
-            name,
-            code
-          )
-        `)
-        .eq('student_id', selectedStudent.id)
+      // First, always load the student's enrolled courses - STUDENT SPECIFIC
+      const { data: enrolledCourses, error: coursesError } = await studentsAPI.getStudentCourses(selectedStudent.id)
 
       if (coursesError) throw coursesError
+      
+      console.log(`✅ Found ${enrolledCourses?.length || 0} enrolled courses for this student`)
+      if (enrolledCourses?.length > 0) {
+        console.log('📋 Enrolled courses:', enrolledCourses.map(c => c.courses.name))
+      }
 
-      // Get existing report
-      const { data: existingReport, error: reportError } = await supabase
-        .from('student_reports')
-        .select('*')
-        .eq('student_id', selectedStudent.id)
-        .eq('term', selectedTerm)
-        .eq('academic_year', selectedYear)
-        .single()
+      // Get existing report - STUDENT SPECIFIC
+      console.log(`🔍 Looking for existing report for student ${selectedStudent.id}, term: ${selectedTerm}, year: ${selectedYear}`)
+      const { data: existingReport, error: reportError } = await studentReportsAPI.getReport(
+        selectedStudent.id, 
+        selectedTerm, 
+        selectedYear
+      )
 
       if (reportError && reportError.code !== 'PGRST116') {
         throw reportError
       }
 
       if (existingReport) {
+        console.log(`📄 Found existing report (ID: ${existingReport.id}) for this specific student + term + year`);
         setReportData(prev => ({
           ...prev,
           attendance: existingReport.attendance || '',
@@ -143,20 +157,13 @@ const Reports = () => {
           reopeningDate: existingReport.reopening_date || ''
         }))
 
-        // Load grades for this report
-        const { data: grades, error: gradesError } = await supabase
-          .from('student_grades')
-          .select(`
-            *,
-            courses (
-              id,
-              name,
-              code
-            )
-          `)
-          .eq('report_id', existingReport.id)
+        // Load grades for this specific report only
+        console.log(`📊 Loading grades for report ID: ${existingReport.id} (specific to this student + term + year)`)
+        const { data: grades, error: gradesError } = await studentGradesAPI.getGradesByReport(existingReport.id)
 
         if (gradesError) throw gradesError
+        
+        console.log(`✅ Found ${grades?.length || 0} grade records for this specific report`)
 
         // Create a map of existing grades by course ID
         const existingGradesMap = new Map(
@@ -206,10 +213,14 @@ const Reports = () => {
         if (gradesCount > 0) {
           toast.success(`Loaded existing report with ${gradesCount} graded subjects`)
         } else {
-          toast.info(`Report template loaded with ${subjectsWithGrades.length} enrolled courses`)
+          toast(`Report template loaded with ${subjectsWithGrades.length} enrolled courses`, {
+            icon: 'ℹ️',
+            duration: 3000
+          })
         }
       } else {
         // No existing report, create default subjects from enrolled courses
+        console.log(`📝 No existing report found. Creating new template with ${enrolledCourses.length} enrolled courses for ${selectedStudent.first_name}`)
         const defaultSubjects = enrolledCourses.map(enrollment => ({
           id: uuidv4(),
           courseId: enrollment.course_id,
@@ -230,7 +241,10 @@ const Reports = () => {
         if (defaultSubjects.length > 0) {
           toast.success(`${defaultSubjects.length} enrolled courses loaded for ${selectedStudent.first_name}`)
         } else {
-          toast.info(`No enrolled courses found for ${selectedStudent.first_name}`)
+          toast(`No enrolled courses found for ${selectedStudent.first_name}`, {
+            icon: 'ℹ️',
+            duration: 3000
+          })
         }
       }
     } catch (error) {
@@ -395,9 +409,18 @@ const Reports = () => {
       return
     }
 
+    if (!selectedTerm || !selectedYear) {
+      toast.error('Please select term and academic year')
+      return
+    }
+
     try {
       setReportLoading(true)
       toast.loading('Saving report...')
+      
+      console.log('Saving report for student:', selectedStudent.id)
+      console.log('Term:', selectedTerm, 'Year:', selectedYear)
+      console.log('Subjects:', subjects.length)
 
       // Create or update student report
       const reportPayload = {
@@ -415,13 +438,7 @@ const Reports = () => {
         reopening_date: reportData.reopeningDate
       }
 
-      const { data: savedReport, error: reportError } = await supabase
-        .from('student_reports')
-        .upsert(reportPayload, {
-          onConflict: 'student_id,term,academic_year'
-        })
-        .select()
-        .single()
+      const { data: savedReport, error: reportError } = await studentReportsAPI.upsertReport(reportPayload)
 
       if (reportError) throw reportError
 
@@ -438,11 +455,7 @@ const Reports = () => {
         teacher_signature: subject.teacherSignature
       }))
 
-      const { error: gradesError } = await supabase
-        .from('student_grades')
-        .upsert(gradesPayload, {
-          onConflict: 'report_id,subject_id'
-        })
+      const { error: gradesError } = await studentGradesAPI.upsertGrades(gradesPayload)
 
       if (gradesError) throw gradesError
 
@@ -454,7 +467,16 @@ const Reports = () => {
     } catch (error) {
       toast.dismiss()
       console.error('Error saving report:', error)
-      toast.error('Error saving report')
+      
+      // Show more detailed error message
+      let errorMessage = 'Error saving report'
+      if (error?.message) {
+        errorMessage += `: ${error.message}`
+      } else if (typeof error === 'object') {
+        errorMessage += `: ${JSON.stringify(error)}`
+      }
+      
+      toast.error(errorMessage)
     } finally {
       setReportLoading(false)
     }
