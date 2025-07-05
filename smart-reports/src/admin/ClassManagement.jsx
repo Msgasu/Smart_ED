@@ -115,10 +115,12 @@ const ClassManagement = () => {
   }
 
   const generateClassStats = () => {
+    console.log('Students data for stats:', students) // Debug log
     const classStats = classStructure.map(className => {
       const studentsInClass = students.filter(
-        student => student.students?.[0]?.class_year === className
+        student => student.students?.class_year === className
       )
+      console.log(`Students in ${className}:`, studentsInClass.length) // Debug log
       return {
         name: className,
         studentCount: studentsInClass.length,
@@ -126,6 +128,7 @@ const ClassManagement = () => {
       }
     })
     setClasses(classStats)
+    console.log('Generated class stats:', classStats) // Debug log
   }
 
   useEffect(() => {
@@ -319,7 +322,7 @@ const ClassManagement = () => {
 
   const StudentManagement = () => {
     const classStudents = selectedClass 
-      ? students.filter(student => student.students?.[0]?.class_year === selectedClass)
+      ? students.filter(student => student.students?.class_year === selectedClass)
       : []
 
     return (
@@ -387,7 +390,7 @@ const ClassManagement = () => {
                           />
                         </td>
                         <td>{student.first_name} {student.last_name}</td>
-                        <td>{student.students?.[0]?.student_id || 'N/A'}</td>
+                        <td>{student.students?.student_id || 'N/A'}</td>
                         <td>{student.email}</td>
                         <td>
                           <select
@@ -455,7 +458,7 @@ const ClassManagement = () => {
                         />
                       </td>
                       <td>{student.first_name} {student.last_name}</td>
-                      <td>{student.students?.[0]?.student_id || 'N/A'}</td>
+                      <td>{student.students?.student_id || 'N/A'}</td>
                       <td>{student.email}</td>
                       <td>
                         <button
@@ -486,7 +489,7 @@ const ClassManagement = () => {
                     {classData.students.map(student => (
                       <div key={student.id} className="student-item">
                         <span>{student.first_name} {student.last_name}</span>
-                        <small>{student.students?.[0]?.student_id}</small>
+                        <small>{student.students?.student_id}</small>
                       </div>
                     ))}
                   </div>
