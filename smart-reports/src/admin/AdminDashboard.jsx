@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { studentReportsAPI, profilesAPI } from '../lib/api'
 import toast from 'react-hot-toast'
 import AdminLayout from './AdminLayout'
 import UsersPage from './UsersPage'
@@ -49,10 +50,7 @@ const AdminDashboard = ({ user, profile }) => {
           id, first_name, last_name,
           students!inner(class_year)
         `).eq('role', 'student'),
-        supabase.from('student_reports').select(`
-          id, term, academic_year, created_at,
-          profiles!inner(first_name, last_name)
-        `).order('created_at', { ascending: false }).limit(10)
+        studentReportsAPI.getReports(10, 0)
       ])
 
       // Set basic statistics
@@ -86,15 +84,37 @@ const AdminDashboard = ({ user, profile }) => {
       }
 
       // Set recent activity
-      if (recentReportsRes.data) {
-        const activities = recentReportsRes.data.map(report => ({
-          id: report.id,
-          type: 'report_generated',
-          description: `Report generated for ${report.profiles.first_name} ${report.profiles.last_name}`,
-          term: report.term,
-          timestamp: report.created_at
-        }))
+      if (recentReportsRes.data && recentReportsRes.data.length > 0) {
+        // Get student names for the reports
+        const studentIds = recentReportsRes.data.map(report => report.student_id).filter(Boolean)
+        
+        let studentProfiles = []
+        if (studentIds.length > 0) {
+          const { data: profiles } = await profilesAPI.getProfilesByIds(studentIds)
+          studentProfiles = profiles || []
+        }
+
+        const profilesMap = new Map(
+          studentProfiles.map(profile => [profile.id, profile])
+        )
+
+        const activities = recentReportsRes.data.map(report => {
+          const profile = profilesMap.get(report.student_id)
+          const studentName = profile 
+            ? `${profile.first_name} ${profile.last_name}`
+            : 'Unknown Student'
+          
+          return {
+            id: report.id,
+            type: 'report_generated',
+            description: `Report generated for ${studentName}`,
+            term: report.term,
+            timestamp: report.created_at
+          }
+        })
         setRecentActivity(activities)
+      } else {
+        setRecentActivity([])
       }
 
     } catch (error) {
