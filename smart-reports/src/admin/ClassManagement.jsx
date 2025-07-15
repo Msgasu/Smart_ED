@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { FaPlus, FaUsers, FaExchangeAlt, FaEdit, FaTrash, FaGraduationCap } from 'react-icons/fa'
+import { useNavigate } from 'react-router-dom'
+import { FaPlus, FaUsers, FaExchangeAlt, FaEdit, FaTrash, FaGraduationCap, FaFileAlt } from 'react-icons/fa'
 import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
 import './ClassManagement.css'
 
 const ClassManagement = () => {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('classes')
   const [students, setStudents] = useState([])
   const [unassignedStudents, setUnassignedStudents] = useState([])
@@ -292,7 +294,13 @@ const ClassManagement = () => {
         {classes.map(classData => (
           <div key={classData.name} className="class-card">
             <div className="class-header">
-              <h3>{classData.name}</h3>
+              <h3 
+                className="class-name-clickable"
+                onClick={() => navigate(`/admin/class-reports/${encodeURIComponent(classData.name)}`)}
+                title="Click to view class reports"
+              >
+                {classData.name}
+              </h3>
               <span className="student-count">{classData.studentCount} students</span>
             </div>
             <div className="class-students">
@@ -313,6 +321,12 @@ const ClassManagement = () => {
               }}
             >
               View Students
+            </button>
+            <button 
+              className="view-reports-btn"
+              onClick={() => navigate(`/admin/class-reports/${encodeURIComponent(classData.name)}`)}
+            >
+              View Reports
             </button>
           </div>
         ))}

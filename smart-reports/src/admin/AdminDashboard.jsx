@@ -250,18 +250,7 @@ const AdminDashboard = ({ user, profile }) => {
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: '0.75rem' }}>
-                        <button 
-                          className="btn btn-primary"
-                          style={{ 
-                            padding: '0.75rem 1.25rem', 
-                            fontSize: '0.8rem',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px'
-                          }}
-                          onClick={() => toast.success(`Generating reports for Class ${classItem.className}`)}
-                        >
-                          Generate Reports
-                        </button>
+
                         <button 
                           className="btn"
                           style={{ 

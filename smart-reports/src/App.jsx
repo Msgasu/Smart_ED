@@ -8,6 +8,8 @@ import AdminDashboard from './admin/AdminDashboard'
 import TeacherDashboard from './teacher/TeacherDashboard'
 import StudentDashboard from './student/StudentDashboard'
 import Login from './shared/Login'
+import ClassReportsPage from './admin/ClassReportsPage'
+import ReportViewer from './admin/ReportViewer'
 
 function App() {
   const [user, setUser] = useState(null)
@@ -92,6 +94,16 @@ function App() {
       <Routes>
         <Route path="/" element={renderDashboard()} />
         <Route path="/dashboard" element={renderDashboard()} />
+        
+        {/* Admin-specific routes */}
+        {userProfile?.role === 'admin' && (
+          <>
+            <Route path="/admin/class-reports/:className" element={<ClassReportsPage />} />
+            <Route path="/admin/report-view/:reportId" element={<ReportViewer />} />
+            <Route path="/admin/report-print/:reportId" element={<ReportViewer />} />
+          </>
+        )}
+        
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>

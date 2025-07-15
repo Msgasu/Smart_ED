@@ -86,11 +86,15 @@ const AdminLayout = ({ children, activeTab, setActiveTab, user, profile }) => {
         {/* User Profile */}
         <div className="sidebar-profile">
           <div className="profile-avatar">
-            {profile.first_name?.[0]}{profile.last_name?.[0]}
+            {profile?.first_name?.[0] || 'U'}{profile?.last_name?.[0] || 'S'}
           </div>
           <div className="profile-info">
-            <div className="profile-name">{profile.first_name} {profile.last_name}</div>
-            <div className="profile-role">Administrator</div>
+            <div className="profile-name">
+              {profile?.first_name || 'Unknown'} {profile?.last_name || 'User'}
+            </div>
+            <div className="profile-role">
+              {profile?.role === 'admin' ? 'Administrator' : (profile?.role || 'User')}
+            </div>
           </div>
         </div>
 

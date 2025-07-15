@@ -455,4 +455,33 @@
   .tab-navigation {
     flex-direction: column;
   }
+}
+
+/* New Class Report Features */
+.class-name-clickable {
+  cursor: pointer;
+  color: #3498db;
+  transition: all 0.2s ease;
+}
+
+.class-name-clickable:hover {
+  color: #2980b9;
+  text-decoration: underline;
+}
+
+.view-reports-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background: #e67e22;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+  margin-top: 0.5rem;
+}
+
+.view-reports-btn:hover {
+  background: #d68910;
 } 
