@@ -422,12 +422,7 @@ const Dashboard = () => {
                 <div className="action-text">Create Course</div>
               </button>
               
-              <button className="action-button">
-                <div className="action-icon generate-report">
-                  <FaFileAlt />
-                </div>
-                <div className="action-text">Generate Report</div>
-              </button>
+
               
               <button 
                 className="action-button"

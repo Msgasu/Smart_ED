@@ -220,19 +220,7 @@ const StudentAnalysis = () => {
                 ))}
               </select>
             </div>
-            <Link 
-              to={`/teacher/report/${studentId}/${selectedCourseId}`} 
-              className="generate-report-button"
-              onClick={(e) => {
-                if (!selectedCourseId) {
-                  e.preventDefault();
-                  toast.error('Please select a course first');
-                }
-              }}
-            >
-              <FaFileAlt className="report-icon" />
-              Generate Report
-            </Link>
+
           </div>
         </div>
         

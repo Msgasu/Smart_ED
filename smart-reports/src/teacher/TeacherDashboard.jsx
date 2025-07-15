@@ -231,7 +231,7 @@ const TeacherDashboard = ({ user, profile }) => {
       <div className="row mb-4">
         <div className="col">
           <h1>Smart Reports - Teacher Dashboard</h1>
-          <p className="text-muted">Enter student grades and generate reports</p>
+                          <p className="text-muted">Enter student grades and manage reports</p>
         </div>
       </div>
 

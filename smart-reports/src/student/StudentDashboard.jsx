@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { getReportsByStatus, getReportById, REPORT_STATUS } from '../lib/reportApi'
 import toast from 'react-hot-toast'
 
 const StudentDashboard = ({ user, profile }) => {
@@ -14,21 +15,31 @@ const StudentDashboard = ({ user, profile }) => {
 
   const fetchStudentReports = async () => {
     try {
-      // Fetch student reports
-      const { data: reportsData, error: reportsError } = await supabase
-        .from('student_reports')
-        .select('*')
-        .eq('student_id', user.id)
-        .order('created_at', { ascending: false })
+      // Fetch only completed student reports using new API
+      const { data: reportsData, error } = await getReportsByStatus(
+        REPORT_STATUS.COMPLETED, 
+        { student_id: user.id }
+      )
 
-      if (reportsError) throw reportsError
+      if (error) {
+        toast.error(error)
+        return
+      }
 
-      setReports(reportsData || [])
+      // Sort by academic year and term (most recent first)
+      const sortedReports = (reportsData || []).sort((a, b) => {
+        if (a.academic_year !== b.academic_year) {
+          return b.academic_year.localeCompare(a.academic_year)
+        }
+        return b.term.localeCompare(a.term)
+      })
+
+      setReports(sortedReports)
 
       // If there are reports, fetch grades for the most recent one
-      if (reportsData && reportsData.length > 0) {
-        setSelectedReport(reportsData[0])
-        fetchReportGrades(reportsData[0].id)
+      if (sortedReports && sortedReports.length > 0) {
+        setSelectedReport(sortedReports[0])
+        fetchReportGrades(sortedReports[0].id)
       }
     } catch (error) {
       console.error('Error fetching reports:', error)
@@ -153,7 +164,8 @@ const StudentDashboard = ({ user, profile }) => {
             <div className="card-body">
               {reports.length === 0 ? (
                 <div className="text-center text-muted py-4">
-                  No reports available yet.
+                  <p><strong>No completed reports available yet.</strong></p>
+                  <p>Your reports will appear here once they have been finalized by your teachers and administrators.</p>
                 </div>
               ) : (
                 <div className="list-group list-group-flush">
