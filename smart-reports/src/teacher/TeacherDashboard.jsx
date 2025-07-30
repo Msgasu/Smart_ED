@@ -1342,10 +1342,18 @@ const TeacherDashboard = ({ user, profile }) => {
         <>
           {/* Report Header */}
           <div className="report-header-section">
-            <div className="school-info">
-              <h2>Smart Educational Dashboard</h2>
-              <p>Private Mail Bag, 252 Tema. / Tel: 024 437 7584</p>
-              <h3>TERMINAL REPORT</h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', marginBottom: '1rem' }}>
+              <img 
+                src="/life-international-logo.svg" 
+                alt="Life International College" 
+                style={{ width: '60px', height: '60px' }}
+              />
+              <div className="school-info" style={{ textAlign: 'center' }}>
+                <h2 style={{ color: '#722F37', margin: '0 0 0.5rem 0', fontSize: '1.5rem' }}>Life International College</h2>
+                <p style={{ color: '#8BC34A', margin: '0 0 0.5rem 0', fontWeight: '600' }}>Knowledge • Excellence • Christ</p>
+                <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.9rem' }}>Private Mail Bag, 252 Tema. / Tel: 024 437 7584</p>
+                <h3 style={{ color: '#722F37', margin: 0, fontSize: '1.2rem' }}>TERMINAL REPORT</h3>
+              </div>
             </div>
           </div>
 
@@ -2304,9 +2312,19 @@ const TeacherDashboard = ({ user, profile }) => {
       <div className="report-viewer-content">
         {/* School Header */}
         <div className="text-center mb-4 p-3 border-bottom">
-          <h3 className="text-primary">Smart Educational Dashboard</h3>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '1rem' }}>
+            <img 
+              src="/life-international-logo.svg" 
+              alt="Life International College" 
+              style={{ width: '50px', height: '50px' }}
+            />
+            <div>
+              <h3 style={{ color: '#722F37', margin: '0 0 0.25rem 0' }}>Life International College</h3>
+              <p style={{ color: '#8BC34A', margin: '0 0 0.25rem 0', fontSize: '0.9rem', fontWeight: '600' }}>Knowledge • Excellence • Christ</p>
+            </div>
+          </div>
           <p className="text-muted">Private Mail Bag, 252 Tema / Tel: 024 437 7584</p>
-          <h4 className="text-danger">TERMINAL REPORT</h4>
+          <h4 style={{ color: '#722F37' }}>TERMINAL REPORT</h4>
         </div>
 
         {/* Student Information */}
