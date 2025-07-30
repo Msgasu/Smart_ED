@@ -1,0 +1,305 @@
+/* =====================================================
+   LIFE INTERNATIONAL COLLEGE - REPORT ENHANCEMENTS
+   Creative styling for logo integration and branding
+===================================================== */
+
+/* Enhanced Report Header Styling */
+.report-header-section {
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.report-header-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #722F37 0%, #8BC34A 50%, #722F37 100%);
+}
+
+.report-header-section::after {
+  content: '';
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, rgba(139,195,74,0.1) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+/* Logo Animation */
+.report-header-section img {
+  transition: transform 0.3s ease;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.1));
+}
+
+.report-header-section:hover img {
+  transform: scale(1.05);
+}
+
+/* School Info Enhancements */
+.school-info h2 {
+  background: linear-gradient(135deg, #722F37 0%, #8B4049 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.school-info h3 {
+  background: linear-gradient(135deg, #722F37 0%, #5A252A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  position: relative;
+}
+
+.school-info h3::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 2px;
+  background: linear-gradient(90deg, #722F37 0%, #8BC34A 100%);
+  border-radius: 1px;
+}
+
+/* Motto Styling */
+.school-motto {
+  background: linear-gradient(135deg, #8BC34A 0%, #689F38 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  position: relative;
+}
+
+/* Enhanced Login Card */
+.login-card-enhancement {
+  position: relative;
+}
+
+.login-card-enhancement::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #8BC34A, #722F37, #8BC34A);
+  border-radius: 22px;
+  z-index: -1;
+  opacity: 0.7;
+  filter: blur(8px);
+}
+
+/* Logo Hover Effects */
+.logo-container {
+  position: relative;
+  display: inline-block;
+}
+
+.logo-container::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  background: radial-gradient(circle, rgba(139,195,74,0.2) 0%, transparent 70%);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  z-index: -1;
+}
+
+.logo-container:hover::after {
+  width: 120%;
+  height: 120%;
+}
+
+/* Print Optimizations */
+@media print {
+  .report-header-section {
+    background: white !important;
+    border: 1px solid #000 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+  
+  .report-header-section::before,
+  .report-header-section::after {
+    display: none !important;
+  }
+  
+  .school-info h2,
+  .school-info h3,
+  .school-motto {
+    color: #000 !important;
+    -webkit-text-fill-color: #000 !important;
+  }
+}
+
+/* Responsive Logo Sizing */
+@media (max-width: 768px) {
+  .report-header-section img {
+    width: 50px !important;
+    height: 50px !important;
+  }
+  
+  .report-header-section {
+    padding: 1.5rem 1rem;
+  }
+  
+  .school-info h2 {
+    font-size: 1.2rem !important;
+  }
+  
+  .school-info h3 {
+    font-size: 1rem !important;
+  }
+}
+
+/* Sidebar Brand Enhancement */
+.brand-icon {
+  background: linear-gradient(135deg, #722F37 0%, #8B4049 100%) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.brand-icon::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+  transform: rotate(45deg);
+  transition: all 0.6s ease;
+  opacity: 0;
+}
+
+.brand-icon:hover::after {
+  opacity: 1;
+  transform: rotate(45deg) translate(25%, 25%);
+}
+
+/* Stats Card Enhancements */
+.stats-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.stats-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(139,195,74,0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.stats-card:hover::before {
+  left: 100%;
+}
+
+/* Button Enhancements */
+.btn-primary {
+  background: linear-gradient(135deg, #722F37 0%, #8B4049 100%) !important;
+  border: none !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  background: rgba(255,255,255,0.2);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #8BC34A 0%, #689F38 100%) !important;
+  border: none !important;
+}
+
+/* Form Control Enhancements */
+.form-control:focus {
+  border-color: #8BC34A !important;
+  box-shadow: 0 0 0 3px rgba(139,195,74,0.2) !important;
+}
+
+/* Table Enhancements */
+.table-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #722F37 0%, #8BC34A 100%);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #8B4049 0%, #689F38 100%);
+}
+
+/* Loading Animation Enhancement */
+@keyframes pulse-logo {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.loading .logo-container img {
+  animation: pulse-logo 2s ease-in-out infinite;
+}
+
+/* Success/Error State Styling */
+.alert-success {
+  background: linear-gradient(135deg, rgba(139,195,74,0.1) 0%, rgba(104,159,56,0.1) 100%) !important;
+  border-left: 4px solid #8BC34A !important;
+}
+
+.alert-danger {
+  background: linear-gradient(135deg, rgba(114,47,55,0.1) 0%, rgba(90,37,42,0.1) 100%) !important;
+  border-left: 4px solid #722F37 !important;
+} 
