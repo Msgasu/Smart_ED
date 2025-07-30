@@ -5,6 +5,7 @@ import { studentReportsAPI, studentGradesAPI, studentsAPI, coursesAPI } from '..
 import toast from 'react-hot-toast'
 import { v4 as uuidv4 } from 'uuid'
 import './Reports.css'
+import '../styles/report-enhancements.css'
 
 const Reports = () => {
   const [subjects, setSubjects] = useState([])
@@ -533,10 +534,18 @@ const Reports = () => {
         <>
           {/* Report Header */}
           <div className="report-header-section">
-            <div className="school-info">
-              <h2>Smart Educational Dashboard</h2>
-              <p>Private Mail Bag, 252 Tema. / Tel: 024 437 7584</p>
-              <h3>TERMINAL REPORT</h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', marginBottom: '1rem' }}>
+              <img 
+                src="/life-international-logo.svg" 
+                alt="Life International College" 
+                style={{ width: '60px', height: '60px' }}
+              />
+              <div className="school-info" style={{ textAlign: 'center' }}>
+                <h2 style={{ color: '#722F37', margin: '0 0 0.5rem 0', fontSize: '1.5rem' }}>Life International College</h2>
+                <p style={{ color: '#8BC34A', margin: '0 0 0.5rem 0', fontWeight: '600' }}>Knowledge • Excellence • Christ</p>
+                <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.9rem' }}>Private Mail Bag, 252 Tema. / Tel: 024 437 7584</p>
+                <h3 style={{ color: '#722F37', margin: 0, fontSize: '1.2rem' }}>TERMINAL REPORT</h3>
+              </div>
             </div>
           </div>
 
