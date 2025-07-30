@@ -2171,10 +2171,10 @@ const TeacherDashboard = ({ user, profile }) => {
       {/* Report Viewer Modal */}
       {showReportViewer && (
         <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-xl">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Complete Report Card</h5>
+          <div className="modal-dialog modal-xl" style={{ maxWidth: '100vw', width: '100vw', maxHeight: '100vh', margin: '0', padding: '0' }}>
+                          <div className="modal-content" style={{ height: '100vh', maxHeight: '100vh', margin: '0', borderRadius: '0' }}>
+              <div className="modal-header" style={{ padding: '1rem 2rem' }}>
+                <h5 className="modal-title" style={{ fontSize: '1.5rem', fontWeight: '600' }}>Complete Report Card</h5>
                 <button
                   type="button"
                   className="btn-close"
@@ -2184,7 +2184,7 @@ const TeacherDashboard = ({ user, profile }) => {
                   }}
                 ></button>
               </div>
-              <div className="modal-body" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+              <div className="modal-body" style={{ height: 'calc(100vh - 140px)', maxHeight: 'calc(100vh - 140px)', overflowY: 'auto', padding: '2rem' }}>
                 {reportViewerLoading ? (
                   <div className="text-center py-5">
                     <div className="spinner-border text-primary" role="status">
@@ -2200,7 +2200,7 @@ const TeacherDashboard = ({ user, profile }) => {
                   </div>
                 )}
               </div>
-              <div className="modal-footer">
+              <div className="modal-footer" style={{ padding: '1rem 2rem' }}>
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -2676,7 +2676,7 @@ const TeacherDashboard = ({ user, profile }) => {
             </div>
 
             {/* Performance Visualization Section - EXACT LIKE THE IMAGE */}
-            <div className="mb-4">
+            <div className="mb-4 performance-visualization">
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <h5 className="border-bottom pb-2 mb-0">Performance Visualization</h5>
                 <div className="btn-group" role="group">
@@ -2699,7 +2699,7 @@ const TeacherDashboard = ({ user, profile }) => {
               
               <div className="card">
                 <div className="card-body">
-                  <div style={{ height: '400px', position: 'relative' }}>
+                  <div className="chart-container" style={{ height: '500px', position: 'relative', minHeight: '500px' }}>
                     {chartType === 'bar' ? (
                       // Bar Chart
                       (() => {
