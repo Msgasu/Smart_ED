@@ -10,6 +10,9 @@ import StudentDashboard from './student/StudentDashboard'
 import Login from './shared/Login'
 import ClassReportsPage from './admin/ClassReportsPage'
 import ReportViewer from './admin/ReportViewer'
+import TeacherReportViewer from './teacher/TeacherReportViewer'
+import TeacherReportEditor from './teacher/TeacherReportEditor'
+import TeacherClassReportsPage from './teacher/TeacherClassReportsPage'
 
 function App() {
   const [user, setUser] = useState(null)
@@ -101,6 +104,16 @@ function App() {
             <Route path="/admin/class-reports/:className" element={<ClassReportsPage />} />
             <Route path="/admin/report-view/:reportId" element={<ReportViewer />} />
             <Route path="/admin/report-print/:reportId" element={<ReportViewer />} />
+          </>
+        )}
+        
+        {/* Teacher-specific routes */}
+        {userProfile?.role === 'faculty' && (
+          <>
+            <Route path="/teacher/report-view/:reportId" element={<TeacherReportViewer user={user} profile={userProfile} />} />
+            <Route path="/teacher/report-edit/:reportId" element={<TeacherReportEditor user={user} profile={userProfile} />} />
+            <Route path="/teacher/report-create" element={<TeacherReportEditor user={user} profile={userProfile} />} />
+            <Route path="/teacher/class-reports/:className" element={<TeacherClassReportsPage user={user} profile={userProfile} />} />
           </>
         )}
         
