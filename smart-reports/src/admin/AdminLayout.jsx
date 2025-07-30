@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
 import { FaHome, FaUsers, FaChartBar, FaCog, FaSignOutAlt, FaBars, FaChevronLeft, FaChevronRight } from 'react-icons/fa'
+import '../styles/report-enhancements.css'
 
 const AdminLayout = ({ children, activeTab, setActiveTab, user, profile }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -72,7 +73,7 @@ const AdminLayout = ({ children, activeTab, setActiveTab, user, profile }) => {
         <div className="sidebar-header">
           <div className="brand">
             <span className="brand-icon"></span>
-            <span className="brand-text">Smart Reports</span>
+            <span className="brand-text">Life International College</span>
           </div>
           <button 
             className="sidebar-toggle"
