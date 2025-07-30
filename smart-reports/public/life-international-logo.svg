@@ -1,0 +1,45 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer Green Circle -->
+  <circle cx="100" cy="100" r="95" fill="#8BC34A" stroke="none"/>
+  
+  <!-- Inner White Circle -->
+  <circle cx="100" cy="100" r="75" fill="white" stroke="none"/>
+  
+  <!-- Top Text "LIFE INTERNATIONAL" -->
+  <path id="top-curve" d="M 35 100 A 65 65 0 0 1 165 100" fill="none"/>
+  <text font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#8BC34A">
+    <textPath href="#top-curve" startOffset="0%">LIFE INTERNATIONAL</textPath>
+  </text>
+  
+  <!-- Bottom Text "COLLEGE" -->
+  <path id="bottom-curve" d="M 165 100 A 65 65 0 0 1 35 100" fill="none"/>
+  <text font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#8BC34A">
+    <textPath href="#bottom-curve" startOffset="0%">COLLEGE</textPath>
+  </text>
+  
+  <!-- Central Shield -->
+  <path d="M 100 45 L 85 50 L 85 120 Q 85 135 100 145 Q 115 135 115 120 L 115 50 Z" fill="#722F37" stroke="#8BC34A" stroke-width="2"/>
+  
+  <!-- Cross in Shield -->
+  <line x1="100" y1="55" x2="100" y2="125" stroke="white" stroke-width="3"/>
+  <line x1="88" y1="70" x2="112" y2="70" stroke="white" stroke-width="3"/>
+  
+  <!-- Open Book under Cross -->
+  <path d="M 88 75 Q 100 72 112 75 L 112 110 Q 100 113 88 110 Z" fill="none" stroke="white" stroke-width="1.5"/>
+  <line x1="100" y1="75" x2="100" y2="110" stroke="white" stroke-width="1"/>
+  
+  <!-- Left Banner "KNOWLEDGE" -->
+  <path d="M 45 110 Q 35 115 45 120 L 70 125 Q 75 115 70 110 Z" fill="#722F37"/>
+  <text x="57" y="118" font-family="Arial, sans-serif" font-size="7" font-weight="bold" fill="#8BC34A" text-anchor="middle">KNOWLEDGE</text>
+  
+  <!-- Right Banner "EXCELLENCE" -->
+  <path d="M 155 110 Q 165 115 155 120 L 130 125 Q 125 115 130 110 Z" fill="#722F37"/>
+  <text x="143" y="118" font-family="Arial, sans-serif" font-size="7" font-weight="bold" fill="#8BC34A" text-anchor="middle">EXCELLENCE</text>
+  
+  <!-- Bottom Banner "CHRIST" -->
+  <path d="M 80 135 Q 100 145 120 135 L 118 145 Q 100 150 82 145 Z" fill="#8BC34A"/>
+  <text x="100" y="143" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#722F37" text-anchor="middle">CHRIST</text>
+  
+  <!-- Year "2008" -->
+  <text x="100" y="175" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white" text-anchor="middle">•2008•</text>
+</svg> 
