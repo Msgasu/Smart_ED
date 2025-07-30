@@ -244,12 +244,17 @@ const ReportViewer = () => {
           {/* School Header */}
           <div className="school-header">
             <div className="school-logo">
-              <div className="logo-placeholder">SE</div>
+              <img 
+                src="/life-international-logo.svg" 
+                alt="Life International College" 
+                style={{ width: '80px', height: '80px' }}
+              />
             </div>
             <div className="school-info">
-              <h2>Smart Educational Dashboard</h2>
+              <h2 style={{ color: '#722F37' }}>Life International College</h2>
+              <p style={{ color: '#8BC34A', fontWeight: '600' }}>Knowledge • Excellence • Christ</p>
               <p>Private Mail Bag, 252 Tema / Tel: 024 437 7584</p>
-              <h3>TERMINAL REPORT</h3>
+              <h3 style={{ color: '#722F37' }}>TERMINAL REPORT</h3>
             </div>
           </div>
 
