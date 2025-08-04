@@ -1,10 +1,12 @@
 .form-side {
   flex: 1;
-  padding: 2.5rem;
+  padding: 2rem;
   background: #ffffff;
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  border-radius: 0 20px 20px 0;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
 }
 
 .roles-side {
@@ -15,61 +17,115 @@
   font-size: 28px;
   margin-bottom: 1.5rem;
   color: #03332E;
-  font-weight: 600;
+  font-weight: 700;
   text-align: center;
+  text-shadow: 0 2px 4px rgba(3, 51, 46, 0.1);
+  position: relative;
+}
+
+.form-title::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(135deg, #8BC34A 0%, #689F38 100%);
+  border-radius: 2px;
 }
 
 .form-control {
-  padding: 14px 16px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  padding: 12px 16px;
+  border: 2px solid #E5E7EB;
+  border-radius: 10px;
   font-size: 15px;
   transition: all 0.3s ease;
-  background-color: #ffffff;
+  background-color: #F9FAFB;
   color: #333;
   width: 100%;
   display: block;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+  outline: none;
 }
 
 .form-control:focus {
-  border-color:  #03332E;
-  box-shadow: 0 0 0 3px rgba(3, 166, 74, 0.1);
+  border-color: #8BC34A;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(139, 195, 74, 0.15), 0 4px 8px rgba(0,0,0,0.1);
+  transform: translateY(-1px);
+}
+
+.form-control:hover:not(:focus) {
+  border-color: #D1D5DB;
+  background-color: #ffffff;
 }
 
 .form-label {
-  font-size: 15px;
+  font-size: 14px;
   color: #03332E;
   margin-bottom: 8px;
   font-weight: 600;
   display: block;
+  letter-spacing: 0.02em;
 }
 
 .btn-login {
   width: 100%;
-  margin-top: 2rem;
-  padding: 14px;
-  background-color: #03332E;
+  margin-top: 1.5rem;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #8BC34A 0%, #689F38 100%);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 16px;
   font-weight: 600;
   display: block;
   letter-spacing: 0.5px;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(3, 51, 46, 0.2);
+  box-shadow: 0 6px 20px rgba(139, 195, 74, 0.3);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-login::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s ease;
 }
 
 .btn-login:hover {
-  background-color: #044941;
+  background: linear-gradient(135deg, #9CCC65 0%, #7CB342 100%);
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(3, 51, 46, 0.25);
+  box-shadow: 0 8px 25px rgba(139, 195, 74, 0.4);
+}
+
+.btn-login:hover::before {
+  left: 100%;
 }
 
 .btn-login:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(3, 166, 74, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(139, 195, 74, 0.3);
+}
+
+.btn-login:disabled {
+  background: #94A3B8;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 2px 4px rgba(148, 163, 184, 0.2);
+}
+
+.btn-login:disabled:hover {
+  background: #94A3B8;
+  transform: none;
+  box-shadow: 0 2px 4px rgba(148, 163, 184, 0.2);
 }
 
 .signup-text {
@@ -119,9 +175,9 @@
 
 .role-fields {
   background: #f8f9fa;
-  padding: 20px;
+  padding: 15px;
   border-radius: 8px;
-  margin: 25px 0;
+  margin: 15px 0;
   border: 1px solid #e9ecef;
 }
 
@@ -145,9 +201,9 @@
   background: #044941;
 }
 
-/* Increase spacing between form groups */
+/* Reduce spacing between form groups for more compact layout */
 .mb-3 {
-  margin-bottom: 2rem !important;
+  margin-bottom: 1rem !important;
   width: 100%;
 }
 
@@ -332,6 +388,143 @@ button[type="submit"]:disabled {
   color: #03A64A;
   text-decoration: none;
   font-weight: 500;
+}
+
+/* Modern Role Fields Styling */
+.role-fields {
+  background: linear-gradient(135deg, #F8FDF9 0%, #F1F8E9 100%);
+  border: 2px solid #E8F5E8;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.role-fields::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(135deg, #8BC34A 0%, #689F38 100%);
+}
+
+.role-title {
+  color: #03332E;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+  text-align: center;
+  position: relative;
+}
+
+.role-title::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(135deg, #8BC34A 0%, #689F38 100%);
+  border-radius: 1px;
+}
+
+/* Enhanced form check styling */
+.form-check {
+  background: rgba(139, 195, 74, 0.05);
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(139, 195, 74, 0.2);
+  transition: all 0.3s ease;
+}
+
+.form-check:hover {
+  background: rgba(139, 195, 74, 0.1);
+  border-color: rgba(139, 195, 74, 0.3);
+}
+
+.form-check-input {
+  margin-right: 10px;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #8BC34A;
+  border-radius: 4px;
+  background-color: transparent;
+  transition: all 0.3s ease;
+}
+
+.form-check-input:checked {
+  background-color: #8BC34A;
+  border-color: #8BC34A;
+  box-shadow: 0 0 0 3px rgba(139, 195, 74, 0.2);
+}
+
+.form-check-label {
+  font-weight: 500;
+  color: #03332E;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Loading states and spinners */
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+}
+
+.spinner-border {
+  border: 2px solid rgba(139, 195, 74, 0.2);
+  border-right-color: #8BC34A;
+  border-radius: 50%;
+  animation: spinner-border 0.75s linear infinite;
+}
+
+@keyframes spinner-border {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Text styling enhancements */
+.text-danger {
+  color: #dc3545 !important;
+}
+
+.text-muted {
+  color: #6c757d !important;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* Enhanced select styling */
+select.form-control {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%238BC34A' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  background-size: 16px 12px;
+  padding-right: 40px;
+  appearance: none;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .form-side {
+    padding: 1.5rem;
+    border-radius: 0;
+  }
+  
+  .role-fields {
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .form-title {
+    font-size: 24px;
+  }
 }
 
 .signin-link a:hover {
