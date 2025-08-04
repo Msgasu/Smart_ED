@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import toast from 'react-hot-toast'
 
@@ -7,7 +7,9 @@ import toast from 'react-hot-toast'
 import AdminDashboard from './admin/AdminDashboard'
 import TeacherDashboard from './teacher/TeacherDashboard'
 import StudentDashboard from './student/StudentDashboard'
+import GuardianDashboard from './guardian/GuardianDashboard'
 import Login from './shared/Login'
+import Signup from './shared/Signup'
 import ClassReportsPage from './admin/ClassReportsPage'
 import ReportViewer from './admin/ReportViewer'
 import TeacherReportViewer from './teacher/TeacherReportViewer'
@@ -18,6 +20,7 @@ function App() {
   const [user, setUser] = useState(null)
   const [userProfile, setUserProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const location = useLocation()
 
   useEffect(() => {
     // Get initial session
@@ -75,7 +78,14 @@ function App() {
   }
 
   if (!user || !userProfile) {
-    return <Login />
+    return (
+      <Routes>
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/register" element={<Signup />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="*" element={<Login />} />
+      </Routes>
+    )
   }
 
   // Route based on user role
@@ -87,6 +97,8 @@ function App() {
         return <TeacherDashboard user={user} profile={userProfile} />
       case 'student':
         return <StudentDashboard user={user} profile={userProfile} />
+      case 'guardian':
+        return <GuardianDashboard user={user} profile={userProfile} />
       default:
         return <div>Unauthorized role</div>
     }
@@ -114,6 +126,13 @@ function App() {
             <Route path="/teacher/report-edit/:reportId" element={<TeacherReportEditor user={user} profile={userProfile} />} />
             <Route path="/teacher/report-create" element={<TeacherReportEditor user={user} profile={userProfile} />} />
             <Route path="/teacher/class-reports/:className" element={<TeacherClassReportsPage user={user} profile={userProfile} />} />
+          </>
+        )}
+        
+        {/* Guardian-specific routes */}
+        {userProfile?.role === 'guardian' && (
+          <>
+            <Route path="/guardian/ward/:wardId" element={<GuardianDashboard user={user} profile={userProfile} />} />
           </>
         )}
         
