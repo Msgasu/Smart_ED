@@ -7,6 +7,7 @@ import { getReportsByStatus, getReportById, REPORT_STATUS } from '../lib/reportA
 import toast from 'react-hot-toast'
 import { v4 as uuidv4 } from 'uuid'
 import TeacherLayout from './TeacherLayout'
+import logo from '../assets/logo_nbg.png'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, RadialLinearScale, ArcElement, Title, Tooltip, Legend } from 'chart.js'
 import { Bar, Line, Radar } from 'react-chartjs-2'
 
@@ -1344,7 +1345,7 @@ const TeacherDashboard = ({ user, profile }) => {
           <div className="report-header-section">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', marginBottom: '1rem' }}>
               <img 
-                src="/life-international-logo.svg" 
+                src={logo} 
                 alt="Life International College" 
                 style={{ width: '60px', height: '60px' }}
               />
@@ -2314,7 +2315,7 @@ const TeacherDashboard = ({ user, profile }) => {
         <div className="text-center mb-4 p-3 border-bottom">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '1rem' }}>
             <img 
-              src="/life-international-logo.svg" 
+              src={logo} 
               alt="Life International College" 
               style={{ width: '50px', height: '50px' }}
             />
