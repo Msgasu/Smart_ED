@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
+import logo from '../assets/logo_nbg.png'
 
 const Login = () => {
   const [email, setEmail] = useState('')
@@ -92,7 +94,7 @@ const Login = () => {
             boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
           }}>
             <img 
-              src="/life-international-logo.svg" 
+              src={logo} 
               alt="Life International College" 
               style={{ width: '70px', height: '70px' }}
             />
@@ -261,6 +263,31 @@ const Login = () => {
               )}
             </button>
           </form>
+
+          <div style={{
+            textAlign: 'center',
+            marginTop: '1.5rem'
+          }}>
+            <p style={{
+              color: '#666',
+              fontSize: '0.9rem',
+              margin: 0
+            }}>
+              Don't have an account?{' '}
+              <Link 
+                to="/signup" 
+                style={{
+                  color: '#8BC34A',
+                  textDecoration: 'none',
+                  fontWeight: '600'
+                }}
+                onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
+                onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
+              >
+                Sign up here
+              </Link>
+            </p>
+          </div>
 
           <div style={{
             textAlign: 'center',
