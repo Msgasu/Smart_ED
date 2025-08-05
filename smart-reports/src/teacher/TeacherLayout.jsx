@@ -69,7 +69,7 @@ const TeacherLayout = ({ children, activeTab, setActiveTab, user, profile }) => 
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            {sidebarCollapsed ? <FaChevronRight /> : <FaChevronLeft />}
+            <FaBars />
           </button>
         </div>
 
