@@ -67,6 +67,13 @@ const TeacherDashboard = ({ user, profile }) => {
   const [historicalReports, setHistoricalReports] = useState([])
   const [loadingHistorical, setLoadingHistorical] = useState(false)
 
+  // Class Reports state
+  const [teacherCourses, setTeacherCourses] = useState([])
+  const [selectedClass, setSelectedClass] = useState(null)
+  const [classStudents, setClassStudents] = useState([])
+  const [loadingCourses, setLoadingCourses] = useState(true)
+  const [loadingStudents, setLoadingStudents] = useState(false)
+
   // Refs for form fields (exact replica of admin Reports.jsx)
   const studentNameRef = useRef(null)
   const averageRef = useRef(null)
@@ -85,6 +92,13 @@ const TeacherDashboard = ({ user, profile }) => {
   useEffect(() => {
     if (activeTab === 'manage-reports') {
       fetchAllTeacherReports()
+    }
+  }, [activeTab])
+
+  // Fetch teacher courses when classes tab is activated
+  useEffect(() => {
+    if (activeTab === 'classes') {
+      fetchTeacherCourses()
     }
   }, [activeTab])
 
@@ -253,6 +267,121 @@ const TeacherDashboard = ({ user, profile }) => {
     } catch (error) {
       console.error('Error fetching courses:', error)
       toast.error('Error loading courses')
+    }
+  }
+
+  // Fetch teacher courses for class reports
+  const fetchTeacherCourses = async () => {
+    try {
+      setLoadingCourses(true)
+      const { data: facultyCourses, error } = await supabase
+        .from('faculty_courses')
+        .select(`
+          course_id,
+          courses (
+            id,
+            name,
+            code,
+            description
+          )
+        `)
+        .eq('faculty_id', user.id)
+
+      if (error) throw error
+
+      // Get student count for each course
+      const coursesWithCounts = await Promise.all(
+        facultyCourses.map(async (fc) => {
+          const { count } = await supabase
+            .from('student_courses')
+            .select('*', { count: 'exact', head: true })
+            .eq('course_id', fc.course_id)
+
+          return {
+            ...fc.courses,
+            studentCount: count || 0
+          }
+        })
+      )
+
+      setTeacherCourses(coursesWithCounts)
+    } catch (error) {
+      console.error('Error fetching teacher courses:', error)
+      toast.error('Failed to load courses')
+    } finally {
+      setLoadingCourses(false)
+    }
+  }
+
+  // Fetch students for a specific class
+  const fetchClassStudents = async (courseId) => {
+    try {
+      setLoadingStudents(true)
+      
+      // First get all student IDs enrolled in this course
+      const { data: studentCourses, error: enrollmentError } = await supabase
+        .from('student_courses')
+        .select('student_id')
+        .eq('course_id', courseId)
+
+      if (enrollmentError) throw enrollmentError
+
+      if (!studentCourses || studentCourses.length === 0) {
+        setClassStudents([])
+        return
+      }
+
+      const studentIds = studentCourses.map(sc => sc.student_id)
+
+      // Get all students using the same API as other parts of the code
+      const { data: allStudents, error: studentsError } = await studentsAPI.getStudents()
+      
+      if (studentsError) throw studentsError
+
+      // Filter students who are enrolled in this specific course
+      const courseStudents = allStudents.filter(student => 
+        studentIds.includes(student.id)
+      )
+
+      // Get latest reports for each student
+      const studentsWithReports = await Promise.all(
+        courseStudents.map(async (student) => {
+          const { data: reports, error: reportsError } = await supabase
+            .from('student_reports')
+            .select('*')
+            .eq('student_id', student.id)
+            .order('updated_at', { ascending: false })
+            .limit(1)
+
+          return {
+            ...student,
+            latestReport: reports?.[0] || null,
+            totalReports: reports?.length || 0
+          }
+        })
+      )
+
+      setClassStudents(studentsWithReports)
+    } catch (error) {
+      console.error('Error fetching class students:', error)
+      toast.error('Failed to load students')
+    } finally {
+      setLoadingStudents(false)
+    }
+  }
+
+  // Handle class selection
+  const handleClassSelect = (course) => {
+    setSelectedClass(course)
+    fetchClassStudents(course.id)
+  }
+
+  // Handle creating a report for a student
+  const handleCreateReport = (studentId) => {
+    const student = classStudents.find(s => s.id === studentId)
+    if (student) {
+      setSelectedStudent(student)
+      setActiveTab('reports')
     }
   }
 
@@ -2962,6 +3091,221 @@ const TeacherDashboard = ({ user, profile }) => {
     )
   }
 
+  // Class Reports Content - Shows all classes assigned to teacher
+  const renderClassReportsContent = () => {
+
+    if (!selectedClass) {
+      return (
+        <div className="container-fluid p-4">
+          <div className="row mb-4">
+            <div className="col">
+              <h2 className="mb-3">Class Reports</h2>
+              <p className="text-muted">Select a class to view and manage student reports</p>
+            </div>
+          </div>
+
+          {loadingCourses ? (
+            <div className="text-center py-5">
+              <div className="spinner-border text-primary" role="status"></div>
+              <p className="mt-3">Loading your classes...</p>
+            </div>
+          ) : teacherCourses.length === 0 ? (
+            <div className="row">
+              <div className="col-12">
+                <div className="alert alert-info text-center">
+                  <FaUsers className="mb-3" style={{ fontSize: '3rem', opacity: 0.5 }} />
+                  <h4>No Classes Assigned</h4>
+                  <p className="mb-0">You don't have any classes assigned yet. Contact your administrator for assistance.</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="row">
+              {teacherCourses.map((course) => (
+                <div key={course.id} className="col-lg-4 col-md-6 mb-4">
+                  <div 
+                    className="card h-100 border-0 shadow-sm class-card"
+                    style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
+                    onClick={() => handleClassSelect(course)}
+                    onMouseEnter={(e) => e.target.closest('.card').style.transform = 'translateY(-5px)'}
+                    onMouseLeave={(e) => e.target.closest('.card').style.transform = 'translateY(0)'}
+                  >
+                    <div className="card-body">
+                      <div className="d-flex align-items-center mb-3">
+                        <div 
+                          className="rounded-circle d-flex align-items-center justify-content-center me-3"
+                          style={{ 
+                            width: '50px', 
+                            height: '50px', 
+                            background: 'linear-gradient(135deg, var(--wine), var(--wine-light))',
+                            color: 'white'
+                          }}
+                        >
+                          <FaUsers />
+                        </div>
+                        <div className="flex-grow-1">
+                          <h5 className="card-title mb-1">{course.name}</h5>
+                          <small className="text-muted">{course.code}</small>
+                        </div>
+                      </div>
+                      
+                      <p className="card-text text-muted small mb-3">
+                        {course.description || 'No description available'}
+                      </p>
+                      
+                      <div className="d-flex justify-content-between align-items-center">
+                        <span className="badge bg-primary">{course.studentCount} students</span>
+                        <small className="text-muted">Click to view →</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )
+    }
+
+    return (
+      <div className="container-fluid p-4">
+        <div className="row mb-4">
+          <div className="col">
+            <div className="d-flex align-items-center mb-3">
+              <button 
+                className="btn btn-outline-secondary me-3"
+                onClick={() => setSelectedClass(null)}
+              >
+                ← Back to Classes
+              </button>
+              <div>
+                <h2 className="mb-1">{selectedClass.name}</h2>
+                <p className="text-muted mb-0">{selectedClass.code} • Manage student reports</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {loadingStudents ? (
+          <div className="text-center py-5">
+            <div className="spinner-border text-primary" role="status"></div>
+            <p className="mt-3">Loading students...</p>
+          </div>
+        ) : classStudents.length === 0 ? (
+          <div className="alert alert-info text-center">
+            <FaUsers className="mb-3" style={{ fontSize: '3rem', opacity: 0.5 }} />
+            <h4>No Students Enrolled</h4>
+            <p className="mb-0">This class doesn't have any students enrolled yet.</p>
+          </div>
+        ) : (
+          <div className="row">
+            <div className="col-12">
+              <div className="card">
+                <div className="card-body">
+                  <div className="table-responsive">
+                    <table className="table table-hover">
+                      <thead>
+                        <tr>
+                          <th>Student</th>
+                          <th>Student ID</th>
+                          <th>Latest Report</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {classStudents.map((student) => (
+                          <tr key={student.id}>
+                            <td>
+                              <div className="d-flex align-items-center">
+                                <div 
+                                  className="rounded-circle d-flex align-items-center justify-content-center me-3"
+                                  style={{ 
+                                    width: '40px', 
+                                    height: '40px', 
+                                    background: 'var(--wine)',
+                                    color: 'white',
+                                    fontSize: '14px',
+                                    fontWeight: '600'
+                                  }}
+                                >
+                                  {student.first_name[0]}{student.last_name[0]}
+                                </div>
+                                <div>
+                                  <div className="fw-medium">{student.first_name} {student.last_name}</div>
+                                  <small className="text-muted">{student.email}</small>
+                                </div>
+                              </div>
+                            </td>
+                            <td>
+                              <span className="badge bg-light text-dark">{student.student_id}</span>
+                            </td>
+                            <td>
+                              {student.latestReport ? (
+                                <div>
+                                  <div className="fw-medium">{student.latestReport.term} {student.latestReport.academic_year}</div>
+                                  <small className="text-muted">Grade: {student.latestReport.overall_grade}</small>
+                                </div>
+                              ) : (
+                                <span className="text-muted">No reports yet</span>
+                              )}
+                            </td>
+                            <td>
+                              <button 
+                                className="btn btn-primary btn-sm me-2"
+                                onClick={() => handleCreateReport(student.id)}
+                                title="Create/Edit Report"
+                              >
+                                <FaEdit className="me-1" />
+                                Edit Report
+                              </button>
+                              {student.latestReport && (
+                                <button 
+                                  className="btn btn-outline-secondary btn-sm"
+                                  onClick={() => {
+                                    setSelectedReport(student.latestReport)
+                                    setShowReportViewer(true)
+                                  }}
+                                  title="View Latest Report"
+                                >
+                                  <FaEye className="me-1" />
+                                  View
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Students Content - Simple placeholder for now
+  const renderStudentsContent = () => (
+    <div className="container-fluid p-4">
+      <div className="row mb-4">
+        <div className="col">
+          <h2 className="mb-3">Students</h2>
+          <p className="text-muted">View and manage your students</p>
+        </div>
+      </div>
+      <div className="row">
+        <div className="col-12">
+          <div className="alert alert-info">
+            <h4>Students Overview</h4>
+            <p className="mb-0">This section will show all students across your classes. For now, please use the <strong>Class Reports</strong> tab to view students by class.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -2970,6 +3314,10 @@ const TeacherDashboard = ({ user, profile }) => {
         return renderReportsContent()
       case 'manage-reports':
         return renderReportManagementContent()
+      case 'classes':
+        return renderClassReportsContent()
+      case 'students':
+        return renderStudentsContent()
       default:
         return renderDashboardContent()
     }
