@@ -270,7 +270,7 @@ const TeacherDashboard = ({ user, profile }) => {
     }
   }
 
-  // Fetch teacher courses for class reports
+  // Fetch teacher courses grouped by class for class reports
   const fetchTeacherCourses = async () => {
     try {
       setLoadingCourses(true)
@@ -289,22 +289,74 @@ const TeacherDashboard = ({ user, profile }) => {
 
       if (error) throw error
 
-      // Get student count for each course
-      const coursesWithCounts = await Promise.all(
-        facultyCourses.map(async (fc) => {
-          const { count } = await supabase
-            .from('student_courses')
-            .select('*', { count: 'exact', head: true })
-            .eq('course_id', fc.course_id)
+      // Get all students to determine which classes they belong to
+      const { data: allStudents, error: studentsError } = await studentsAPI.getStudents()
+      
+      if (studentsError) throw studentsError
 
-          return {
-            ...fc.courses,
-            studentCount: count || 0
+      // Group by course and class
+      const classCourseCombinations = []
+
+      for (const fc of facultyCourses) {
+        // Get all students enrolled in this course
+        const { data: studentCourses, error: enrollmentError } = await supabase
+          .from('student_courses')
+          .select('student_id')
+          .eq('course_id', fc.course_id)
+
+        if (enrollmentError) continue
+
+        if (!studentCourses || studentCourses.length === 0) continue
+
+        const enrolledStudentIds = studentCourses.map(sc => sc.student_id)
+        const enrolledStudents = allStudents.filter(student => 
+          enrolledStudentIds.includes(student.id)
+        )
+
+        // Group students by their class_year
+        const studentsByClass = enrolledStudents.reduce((acc, student) => {
+          // Get class from student data - check multiple possible fields
+          const classYear = student.students?.class_year || 
+                           student.class_year || 
+                           student.students?.class || 
+                           student.class ||
+                           'Unknown Class'
+          
+          if (!acc[classYear]) {
+            acc[classYear] = []
           }
-        })
-      )
+          acc[classYear].push(student)
+          return acc
+        }, {})
 
-      setTeacherCourses(coursesWithCounts)
+        // Create separate entries for each class-course combination
+        Object.keys(studentsByClass).forEach(classYear => {
+          classCourseCombinations.push({
+            id: `${fc.course_id}-${classYear}`,
+            courseId: fc.course_id,
+            courseName: fc.courses.name,
+            courseCode: fc.courses.code,
+            courseDescription: fc.courses.description,
+            classYear: classYear,
+            displayName: `${classYear} ${fc.courses.name}`,
+            displayCode: `${classYear} - ${fc.courses.code}`,
+            studentCount: studentsByClass[classYear].length,
+            students: studentsByClass[classYear]
+          })
+        })
+      }
+
+      // Sort by class year, then by course name
+      classCourseCombinations.sort((a, b) => {
+        // First sort by class year
+        if (a.classYear !== b.classYear) {
+          return a.classYear.localeCompare(b.classYear)
+        }
+        // Then by course name
+        return a.courseName.localeCompare(b.courseName)
+      })
+
+      setTeacherCourses(classCourseCombinations)
     } catch (error) {
       console.error('Error fetching teacher courses:', error)
       toast.error('Failed to load courses')
@@ -313,39 +365,22 @@ const TeacherDashboard = ({ user, profile }) => {
     }
   }
 
-  // Fetch students for a specific class
-  const fetchClassStudents = async (courseId) => {
+  // Fetch students for a specific class-course combination
+  const fetchClassStudents = async (classCourseId) => {
     try {
       setLoadingStudents(true)
       
-      // First get all student IDs enrolled in this course
-      const { data: studentCourses, error: enrollmentError } = await supabase
-        .from('student_courses')
-        .select('student_id')
-        .eq('course_id', courseId)
-
-      if (enrollmentError) throw enrollmentError
-
-      if (!studentCourses || studentCourses.length === 0) {
+      // Find the selected class-course combination
+      const selectedClassCourse = teacherCourses.find(tc => tc.id === classCourseId)
+      
+      if (!selectedClassCourse || !selectedClassCourse.students) {
         setClassStudents([])
         return
       }
 
-      const studentIds = studentCourses.map(sc => sc.student_id)
-
-      // Get all students using the same API as other parts of the code
-      const { data: allStudents, error: studentsError } = await studentsAPI.getStudents()
-      
-      if (studentsError) throw studentsError
-
-      // Filter students who are enrolled in this specific course
-      const courseStudents = allStudents.filter(student => 
-        studentIds.includes(student.id)
-      )
-
-      // Get latest reports for each student
+      // Students are already loaded, just need to get their report data
       const studentsWithReports = await Promise.all(
-        courseStudents.map(async (student) => {
+        selectedClassCourse.students.map(async (student) => {
           const { data: reports, error: reportsError } = await supabase
             .from('student_reports')
             .select('*')
@@ -3144,13 +3179,13 @@ const TeacherDashboard = ({ user, profile }) => {
                           <FaUsers />
                         </div>
                         <div className="flex-grow-1">
-                          <h5 className="card-title mb-1">{course.name}</h5>
-                          <small className="text-muted">{course.code}</small>
+                          <h5 className="card-title mb-1">{course.displayName}</h5>
+                          <small className="text-muted">{course.displayCode}</small>
                         </div>
                       </div>
                       
                       <p className="card-text text-muted small mb-3">
-                        {course.description || 'No description available'}
+                        {course.courseDescription || 'No description available'}
                       </p>
                       
                       <div className="d-flex justify-content-between align-items-center">
@@ -3179,8 +3214,8 @@ const TeacherDashboard = ({ user, profile }) => {
                 ← Back to Classes
               </button>
               <div>
-                <h2 className="mb-1">{selectedClass.name}</h2>
-                <p className="text-muted mb-0">{selectedClass.code} • Manage student reports</p>
+                <h2 className="mb-1">{selectedClass.displayName}</h2>
+                <p className="text-muted mb-0">{selectedClass.displayCode} • Manage student reports</p>
               </div>
             </div>
           </div>
