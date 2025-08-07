@@ -223,10 +223,10 @@ const Signup = () => {
 
   const renderRoleSelection = () => {
     const roles = [
-      { id: 'student', name: 'Student', icon: '🎓', desc: 'Access your academic reports and grades' },
+      // { id: 'student', name: 'Student', icon: '🎓', desc: 'Access your academic reports and grades' },
       { id: 'faculty', name: 'Teacher', icon: '👨‍🏫', desc: 'Create and manage student reports' },
-      { id: 'guardian', name: 'Guardian', icon: '👨‍👩‍👧‍👦', desc: 'View your children\'s academic progress' },
-      { id: 'admin', name: 'Administrator', icon: '⚙️', desc: 'Manage system and oversee reports' }
+      // { id: 'guardian', name: 'Guardian', icon: '👨‍👩‍👧‍👦', desc: 'View your children\'s academic progress' },
+      // { id: 'admin', name: 'Administrator', icon: '⚙️', desc: 'Manage system and oversee reports' }
     ]
 
     return (
@@ -1086,7 +1086,7 @@ const Signup = () => {
       </div>
 
       {/* CSS for animations */}
-      <style jsx>{`
+      <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
