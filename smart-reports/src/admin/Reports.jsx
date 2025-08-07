@@ -3,7 +3,7 @@ import { FaPlus, FaSearch, FaTrashAlt, FaCalendarAlt, FaSave, FaPrint, FaFileExp
 import { supabase } from '../lib/supabase'
 import { studentReportsAPI, studentGradesAPI, studentsAPI, coursesAPI } from '../lib/api'
 import toast from 'react-hot-toast'
-import { v4 as uuidv4 } from 'uuid'
+// Using native crypto.randomUUID() instead of uuid package
 import './Reports.css'
 import '../styles/report-enhancements.css'
 
@@ -192,7 +192,7 @@ const Reports = () => {
           } else {
             // Create empty grade entry for enrolled course
             return {
-              id: uuidv4(),
+              id: crypto.randomUUID(),
               courseId: enrollment.course_id,
               name: enrollment.courses.name,
               code: enrollment.courses.code,
@@ -223,7 +223,7 @@ const Reports = () => {
         // No existing report, create default subjects from enrolled courses
         console.log(`📝 No existing report found. Creating new template with ${enrolledCourses.length} enrolled courses for ${selectedStudent.first_name}`)
         const defaultSubjects = enrolledCourses.map(enrollment => ({
-          id: uuidv4(),
+          id: crypto.randomUUID(),
           courseId: enrollment.course_id,
           name: enrollment.courses.name,
           code: enrollment.courses.code,
@@ -353,7 +353,7 @@ const Reports = () => {
     }
 
     const newSubject = {
-      id: uuidv4(),
+      id: crypto.randomUUID(),
       courseId: course.id,
       name: course.name,
       code: course.code,

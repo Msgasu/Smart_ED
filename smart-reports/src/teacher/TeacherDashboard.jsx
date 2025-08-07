@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { studentReportsAPI, studentGradesAPI, studentsAPI, coursesAPI } from '../lib/api'
 import { getReportsByStatus, getReportById, REPORT_STATUS } from '../lib/reportApi'
 import toast from 'react-hot-toast'
-import { v4 as uuidv4 } from 'uuid'
+
 import TeacherLayout from './TeacherLayout'
 import logo from '../assets/logo_nbg.png'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, RadialLinearScale, ArcElement, Title, Tooltip, Legend } from 'chart.js'
@@ -1062,7 +1062,7 @@ const TeacherDashboard = ({ user, profile }) => {
           } else {
             // Create empty grade entry for enrolled course
             return {
-              id: uuidv4(),
+              id: crypto.randomUUID(),
               courseId: enrollment.course_id,
               name: enrollment.courses.name,
               code: enrollment.courses.code,
@@ -1095,7 +1095,7 @@ const TeacherDashboard = ({ user, profile }) => {
         // No existing report, create default subjects from enrolled courses
         console.log(`📝 No existing report found. Creating new template with ${allEnrolledCourses.length} enrolled courses for ${selectedStudent.first_name}`)
         const defaultSubjects = allEnrolledCourses.map(enrollment => ({
-          id: uuidv4(),
+          id: crypto.randomUUID(),
           courseId: enrollment.course_id,
           name: enrollment.courses.name,
           code: enrollment.courses.code,
@@ -1227,7 +1227,7 @@ const TeacherDashboard = ({ user, profile }) => {
     }
 
     const newSubject = {
-      id: uuidv4(),
+      id: crypto.randomUUID(),
       courseId: course.id,
       name: course.name,
       code: course.code,

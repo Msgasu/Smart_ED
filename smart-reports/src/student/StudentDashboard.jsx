@@ -9,6 +9,17 @@ const StudentDashboard = ({ user, profile }) => {
   const [grades, setGrades] = useState([])
   const [loading, setLoading] = useState(true)
 
+  // Logout function
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut()
+      toast.success('Logged out successfully')
+    } catch (error) {
+      console.error('Logout error:', error)
+      toast.error('Error logging out')
+    }
+  }
+
   useEffect(() => {
     fetchStudentReports()
   }, [])
@@ -110,13 +121,42 @@ const StudentDashboard = ({ user, profile }) => {
   }
 
   return (
-    <div className="container-fluid p-4">
-      <div className="row mb-4">
-        <div className="col">
-          <h1>Smart Reports - Student Dashboard</h1>
-          <p className="text-muted">View your academic reports and performance</p>
+    <div className="vh-100 d-flex flex-column">
+      {/* Navigation Header */}
+      <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+        <div className="container-fluid">
+          <div className="navbar-brand d-flex align-items-center">
+            <i className="fas fa-graduation-cap me-2"></i>
+            <span className="fw-bold">Smart Reports</span>
+          </div>
+          
+          <div className="navbar-nav ms-auto d-flex flex-row align-items-center">
+            <div className="nav-item dropdown me-3">
+              <span className="navbar-text text-white me-2">
+                <i className="fas fa-user-circle me-1"></i>
+                {profile?.first_name} {profile?.last_name}
+              </span>
+            </div>
+            <button 
+              className="btn btn-outline-light btn-sm"
+              onClick={handleLogout}
+              title="Logout"
+            >
+              <i className="fas fa-sign-out-alt me-1"></i>
+              Logout
+            </button>
+          </div>
         </div>
-      </div>
+      </nav>
+
+      {/* Main Content */}
+      <div className="container-fluid p-4 flex-grow-1">
+        <div className="row mb-4">
+          <div className="col">
+            <h1>Student Dashboard</h1>
+            <p className="text-muted">View your academic reports and performance</p>
+          </div>
+        </div>
 
       {/* Summary Cards */}
       <div className="row mb-4">
@@ -162,10 +202,18 @@ const StudentDashboard = ({ user, profile }) => {
               <h5>Your Reports</h5>
             </div>
             <div className="card-body">
-              {reports.length === 0 ? (
+              {loading ? (
+                <div className="text-center py-4">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                  <p className="mt-3 text-muted">Loading your reports...</p>
+                </div>
+              ) : reports.length === 0 ? (
                 <div className="text-center text-muted py-4">
-                  <p><strong>No completed reports available yet.</strong></p>
-                  <p>Your reports will appear here once they have been finalized by your teachers and administrators.</p>
+                  <i className="fas fa-clipboard-list fa-3x mb-3 text-light"></i>
+                  <h5>Reports Coming Soon</h5>
+                  <p className="small">Your academic reports will appear here once your teachers complete the grading process.</p>
                 </div>
               ) : (
                 <div className="list-group list-group-flush">
@@ -307,12 +355,46 @@ const StudentDashboard = ({ user, profile }) => {
           ) : (
             <div className="card">
               <div className="card-body text-center text-muted py-5">
-                <h5>Select a report to view details</h5>
-                <p>Choose a report from the list on the left to see your grades and performance.</p>
+                {reports.length === 0 ? (
+                  <div>
+                    <i className="fas fa-graduation-cap fa-4x mb-3 text-light"></i>
+                    <h4>Welcome to Your Academic Dashboard</h4>
+                    <p className="lead">Your report cards will be available here once your teachers complete the grading process.</p>
+                    <div className="row mt-4">
+                      <div className="col-md-4">
+                        <div className="mb-3">
+                          <i className="fas fa-chart-line fa-2x text-primary mb-2"></i>
+                          <h6>Track Progress</h6>
+                          <small>Monitor your academic performance across all subjects</small>
+                        </div>
+                      </div>
+                      <div className="col-md-4">
+                        <div className="mb-3">
+                          <i className="fas fa-trophy fa-2x text-warning mb-2"></i>
+                          <h6>View Grades</h6>
+                          <small>Access detailed grade breakdowns and feedback</small>
+                        </div>
+                      </div>
+                      <div className="col-md-4">
+                        <div className="mb-3">
+                          <i className="fas fa-comments fa-2x text-success mb-2"></i>
+                          <h6>Read Feedback</h6>
+                          <small>Review teacher comments and recommendations</small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <h5>Select a report to view details</h5>
+                    <p>Choose a report from the list on the left to see your grades and performance.</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   )

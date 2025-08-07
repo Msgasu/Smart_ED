@@ -3,7 +3,7 @@ import { FaPlus, FaSearch, FaTrashAlt, FaCalendarAlt } from 'react-icons/fa';
 import { supabase } from '../../lib/supabase';
 import './styles/AdminLayout.css';
 import './styles/Reports.css';
-import { v4 as uuidv4 } from 'uuid';
+// Using native crypto.randomUUID() instead of uuid package
 
 const Reports = ({ 
   studentNameRef, 
