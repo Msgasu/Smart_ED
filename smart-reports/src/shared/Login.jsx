@@ -315,14 +315,14 @@ const Login = () => {
                 fontSize: '0.85rem',
                 fontWeight: '600'
               }}>
-                Use your Life International College credentials
+                Use newly created Life International College credentials to login
               </small>
             </div>
             <small style={{
               color: '#888',
               fontSize: '0.8rem'
             }}>
-              Same login as your student portal account
+              
             </small>
           </div>
         </div>
