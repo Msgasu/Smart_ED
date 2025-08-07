@@ -180,7 +180,7 @@ For support, email support@smarted.com or create an issue in the GitHub reposito
 ## Acknowledgments
 
 - Chart.js for data visualization
-- React community for excellent documentation
+- React community for excellent documentation.
 - All contributors who have helped shape this project
 
 ---
