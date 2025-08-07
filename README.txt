@@ -185,4 +185,4 @@ For support, email support@smarted.com or create an issue in the GitHub reposito
 
 ---
 
-Made with ❤️ by the SmartED Team
+Made with ❤️ by the SmartED Team.
