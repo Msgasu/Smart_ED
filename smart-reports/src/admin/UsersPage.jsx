@@ -143,12 +143,12 @@ const UsersPage = () => {
     }
   }
 
-  // Handle user creation
+  // Handle user creation using AJAX approach (no auth state changes)
   const handleCreateUser = async () => {
     try {
       setAddUserLoading(true)
 
-      console.log('=== USER CREATION STARTED ===')
+      console.log('=== USER CREATION STARTED (AJAX) ===')
       console.log('Form data (newUser):', newUser)
 
       // Validation - email will be auto-generated
@@ -175,7 +175,11 @@ const UsersPage = () => {
         .select('email, id')
         .eq('email', generatedEmail)
 
-      console.log('Email check result:', { existingUsers, checkError })
+      if (checkError) {
+        console.error('Error checking existing users:', checkError)
+        toast.error('Error checking user existence')
+        return
+      }
 
       if (existingUsers && existingUsers.length > 0) {
         console.log('❌ Email already exists in profiles:', generatedEmail)
@@ -183,29 +187,47 @@ const UsersPage = () => {
         return
       }
 
-      // Create auth user - we'll handle the session issue after creation
+      // Check if student ID already exists
+      const { data: existingStudentIds, error: studentIdError } = await supabase
+        .from('students')
+        .select('student_id')
+        .eq('student_id', newUser.studentId)
+
+      if (studentIdError) {
+        console.error('Error checking student ID:', studentIdError)
+        toast.error('Error checking student ID')
+        return
+      }
+
+      if (existingStudentIds && existingStudentIds.length > 0) {
+        console.log('❌ Student ID already exists:', newUser.studentId)
+        toast.error('A student with this ID already exists')
+        return
+      }
+
+      // Store current session to restore afterwards
+      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError) {
+        console.error('Error getting current session:', sessionError)
+        toast.error('Session error')
+        return
+      }
+
+      console.log('Current session user:', currentSession?.user?.email)
+
+      // Create auth user with minimal session disruption
+      console.log('Creating auth user...')
       const tempPassword = 'TempPassword123!'
       
-      // Store current admin session before creating new user
-      const { data: { session: currentSession } } = await supabase.auth.getSession()
-      console.log('Current admin session:', currentSession?.user?.email)
-      
-      console.log('Creating auth user with email:', generatedEmail)
+      // Create the auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: generatedEmail,
         password: tempPassword
       })
-      
-      // Immediately restore admin session to prevent redirect
-      if (currentSession && authData.user) {
-        console.log('Restoring admin session...')
-        await supabase.auth.setSession(currentSession)
-        console.log('Admin session restored')
-      }
 
       if (authError) {
         console.error('❌ Error creating auth user:', authError)
-        toast.error('Error creating user account')
+        toast.error(`Error creating user account: ${authError.message}`)
         return
       }
 
@@ -215,9 +237,16 @@ const UsersPage = () => {
         return
       }
 
-      console.log('✅ Auth user created successfully:', authData.user.id)
+      console.log('✅ Auth user created:', authData.user.id)
 
-      // Prepare profile data
+      // Immediately restore the original session to prevent redirects
+      if (currentSession) {
+        console.log('Restoring original session...')
+        await supabase.auth.setSession(currentSession)
+        console.log('Session restored')
+      }
+
+      // Create profile record
       const profileData = {
         id: authData.user.id,
         email: generatedEmail,
@@ -227,12 +256,13 @@ const UsersPage = () => {
         status: 'active',
         unique_code: newUser.uniqueCode,
         program: newUser.program,
-        sex: newUser.sex
+        sex: newUser.sex,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }
 
       console.log('Creating profile with data:', profileData)
 
-      // Create profile record (using the schema fields)
       const { data: profileInsertData, error: profileError } = await supabase
         .from('profiles')
         .insert([profileData])
@@ -240,51 +270,30 @@ const UsersPage = () => {
 
       if (profileError) {
         console.error('❌ Error creating profile:', profileError)
-        console.error('Profile data that failed:', profileData)
         
-        // Handle specific error cases
+        // Handle case where profile might already exist from signup trigger
         if (profileError.code === '23505') {
-          // Unique constraint violation - profile might already exist
-          console.log('Profile might already exist, checking...')
-          
-          const { data: existingProfile, error: fetchError } = await supabase
+          console.log('Profile already exists, updating it...')
+          const { data: updatedProfile, error: updateError } = await supabase
             .from('profiles')
-            .select('*')
+            .update({
+              first_name: newUser.firstName,
+              last_name: newUser.lastName,
+              unique_code: newUser.uniqueCode,
+              program: newUser.program,
+              sex: newUser.sex,
+              updated_at: new Date().toISOString()
+            })
             .eq('id', authData.user.id)
-            .single()
+            .select()
             
-          if (existingProfile) {
-            console.log('✅ Profile already exists:', existingProfile)
-            
-            // Check if profile needs to be updated with missing data
-            if (!existingProfile.first_name || !existingProfile.last_name) {
-              console.log('Updating profile with missing name data...')
-              
-              const { data: updatedProfile, error: updateError } = await supabase
-                .from('profiles')
-                .update({
-                  first_name: newUser.firstName,
-                  last_name: newUser.lastName,
-                  unique_code: newUser.uniqueCode,
-                  program: newUser.program,
-                  sex: newUser.sex
-                })
-                .eq('id', authData.user.id)
-                .select()
-                
-              if (updateError) {
-                console.error('❌ Error updating profile:', updateError)
-                toast.error(`Error updating profile: ${updateError.message}`)
-                return
-              }
-              
-              console.log('✅ Profile updated successfully:', updatedProfile)
-            }
-            // Continue with student creation
-          } else {
-            toast.error(`Profile creation failed: ${profileError.message}`)
+          if (updateError) {
+            console.error('❌ Error updating profile:', updateError)
+            toast.error(`Error updating profile: ${updateError.message}`)
             return
           }
+          
+          console.log('✅ Profile updated successfully:', updatedProfile)
         } else {
           toast.error(`Error creating user profile: ${profileError.message}`)
           return
@@ -293,82 +302,44 @@ const UsersPage = () => {
         console.log('✅ Profile created successfully:', profileInsertData)
       }
 
-      // Prepare student data
+      // Create student record
       const studentData = {
         profile_id: authData.user.id,
         student_id: newUser.studentId,
         program: newUser.program,
         sex: newUser.sex,
-        unique_code: newUser.uniqueCode
+        unique_code: newUser.uniqueCode,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }
 
       console.log('Creating student record with data:', studentData)
 
-      // Check if student record already exists
-      const { data: existingStudent, error: studentCheckError } = await supabase
+      const { data: studentInsertData, error: studentError } = await supabase
         .from('students')
-        .select('profile_id')
-        .eq('profile_id', authData.user.id)
-        .single()
-
-      console.log('Student check result:', { existingStudent, studentCheckError })
-
-      let studentInsertData = null
-      let studentError = null
-
-      if (existingStudent) {
-        console.log('✅ Student record already exists for profile_id:', authData.user.id)
-        
-        // Update existing student record instead
-        const { data: updatedStudent, error: updateStudentError } = await supabase
-          .from('students')
-          .update({
-            student_id: newUser.studentId,
-            program: newUser.program,
-            sex: newUser.sex,
-            unique_code: newUser.uniqueCode
-          })
-          .eq('profile_id', authData.user.id)
-          .select()
-          
-        studentInsertData = updatedStudent
-        studentError = updateStudentError
-        
-        if (!updateStudentError) {
-          console.log('✅ Student record updated successfully:', updatedStudent)
-        }
-      } else {
-        // Create new student record
-        const { data: newStudentData, error: newStudentError } = await supabase
-          .from('students')
-          .insert([studentData])
-          .select()
-          
-        studentInsertData = newStudentData
-        studentError = newStudentError
-      }
+        .insert([studentData])
+        .select()
 
       if (studentError) {
         console.error('❌ Error creating student:', studentError)
-        console.error('Student data that failed:', studentData)
-        console.error('Error details:', studentError.details)
-        console.error('Error hint:', studentError.hint)
-        console.error('Error code:', studentError.code)
         toast.error(`Error creating student record: ${studentError.message}`)
         return
       }
 
       console.log('✅ Student record created successfully:', studentInsertData)
 
-      console.log('=== USER CREATION COMPLETED SUCCESSFULLY ===')
-      console.log('Auth ID:', authData.user.id)
+      console.log('=== USER CREATION COMPLETED SUCCESSFULLY (AJAX) ===')
       console.log('Profile created:', profileInsertData)
       console.log('Student created:', studentInsertData)
 
-      toast.success('Student created successfully!')
-      setShowAddUserModal(false)
-      fetchUsers() // Refresh the users list
+      // Add a small delay to ensure session is fully restored
+      await new Promise(resolve => setTimeout(resolve, 500))
 
+      toast.success(`Student created successfully! Email: ${generatedEmail}`)
+      
+      // Refresh the users list
+      await fetchUsers()
+      
       // Reset form
       setNewUser({
         firstName: '',
@@ -378,6 +349,9 @@ const UsersPage = () => {
         studentId: '',
         uniqueCode: ''
       })
+      
+      // Close modal after everything is done
+      setShowAddUserModal(false)
 
     } catch (error) {
       console.error('❌ FATAL ERROR in user creation:', error)
@@ -649,11 +623,20 @@ const UsersPage = () => {
       {showAddUserModal && (
         <div className="modal-overlay">
           <div className="modal-content">
+            {addUserLoading && (
+              <div className="modal-loading-overlay">
+                <div className="modal-loading-spinner">
+                  <div className="spinner"></div>
+                  <p>Creating student account...</p>
+                </div>
+              </div>
+            )}
             <div className="modal-header">
               <h2>Add New Student</h2>
               <button 
                 className="modal-close-btn"
                 onClick={() => setShowAddUserModal(false)}
+                disabled={addUserLoading}
               >
                 <FaTimes />
               </button>

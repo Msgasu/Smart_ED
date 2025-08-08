@@ -473,10 +473,10 @@ const CourseAssignment = () => {
 
   const StudentAssignmentTab = () => {
     const filteredStudents = selectedClass
-      ? students.filter(student => student.students?.[0]?.class_year === selectedClass)
+      ? students.filter(student => student.students?.class_year === selectedClass || student.students?.[0]?.class_year === selectedClass)
       : students.filter(student =>
           `${student.first_name} ${student.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          student.students?.[0]?.student_id?.toLowerCase().includes(searchTerm.toLowerCase())
+          (student.students?.student_id || student.students?.[0]?.student_id)?.toLowerCase().includes(searchTerm.toLowerCase())
         )
 
     return (
@@ -565,10 +565,10 @@ const CourseAssignment = () => {
                         <span className="student-email">{student.email}</span>
                       </div>
                     </td>
-                    <td>{student.students?.[0]?.student_id || 'N/A'}</td>
+                    <td>{student.students?.student_id || student.students?.[0]?.student_id || 'N/A'}</td>
                     <td>
                       <span className="class-badge">
-                        {student.students?.[0]?.class_year || 'Unassigned'}
+                        {student.students?.class_year || student.students?.[0]?.class_year || 'Unassigned'}
                       </span>
                     </td>
                     <td>
@@ -666,7 +666,7 @@ const CourseAssignment = () => {
                       }}
                     />
                     <label htmlFor={`student-${student.id}`}>
-                      {student.first_name} {student.last_name} - {student.students?.[0]?.class_year || 'Unassigned'}
+                      {student.first_name} {student.last_name} - {student.students?.class_year || student.students?.[0]?.class_year || 'Unassigned'}
                     </label>
                   </div>
                 ))}

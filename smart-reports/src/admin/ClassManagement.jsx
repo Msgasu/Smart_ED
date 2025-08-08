@@ -409,6 +409,7 @@ const ClassManagement = () => {
                       <th>Student Name</th>
                       <th>Student ID</th>
                       <th>Email</th>
+                      <th>Unique Code</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -425,6 +426,7 @@ const ClassManagement = () => {
                         <td>{student.first_name} {student.last_name}</td>
                         <td>{student.students?.student_id || student.students?.[0]?.student_id || 'N/A'}</td>
                         <td>{student.email}</td>
+                        <td>{student.unique_code || student.students?.unique_code || 'N/A'}</td>
                         <td>
                           <select
                             onChange={(e) => {
@@ -477,6 +479,7 @@ const ClassManagement = () => {
                     <th>Student Name</th>
                     <th>Student ID</th>
                     <th>Email</th>
+                    <th>Unique Code</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -493,6 +496,7 @@ const ClassManagement = () => {
                       <td>{student.first_name} {student.last_name}</td>
                       <td>{student.students?.student_id || student.students?.[0]?.student_id || 'N/A'}</td>
                       <td>{student.email}</td>
+                      <td>{student.unique_code || student.students?.unique_code || 'N/A'}</td>
                       <td>
                         <button
                           className="btn btn-danger btn-sm"
@@ -522,7 +526,8 @@ const ClassManagement = () => {
                     {classData.students.map(student => (
                       <div key={student.id} className="student-item">
                         <span>{student.first_name} {student.last_name}</span>
-                        <small>{student.students?.student_id || student.students?.[0]?.student_id}</small>
+                        <small>ID: {student.students?.student_id || student.students?.[0]?.student_id}</small>
+                        <small>Code: {student.unique_code || student.students?.unique_code || 'N/A'}</small>
                       </div>
                     ))}
                   </div>
