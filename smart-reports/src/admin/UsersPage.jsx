@@ -26,7 +26,6 @@ const UsersPage = () => {
   const [newUser, setNewUser] = useState({
     firstName: '',
     lastName: '',
-    email: '',
     sex: '',
     program: '',
     studentId: '',
@@ -127,7 +126,6 @@ const UsersPage = () => {
     setNewUser({
       firstName: '',
       lastName: '',
-      email: '',
       sex: '',
       program: '',
       studentId: '',
@@ -153,12 +151,11 @@ const UsersPage = () => {
       console.log('=== USER CREATION STARTED ===')
       console.log('Form data (newUser):', newUser)
 
-      // Validation
-      if (!newUser.firstName || !newUser.lastName || !newUser.email || !newUser.sex || !newUser.program || !newUser.studentId) {
+      // Validation - email will be auto-generated
+      if (!newUser.firstName || !newUser.lastName || !newUser.sex || !newUser.program || !newUser.studentId) {
         console.log('Validation failed - missing required fields:')
         console.log('firstName:', newUser.firstName)
         console.log('lastName:', newUser.lastName)
-        console.log('email:', newUser.email)
         console.log('sex:', newUser.sex)
         console.log('program:', newUser.program)
         console.log('studentId:', newUser.studentId)
@@ -166,19 +163,22 @@ const UsersPage = () => {
         return
       }
 
+      // Auto-generate email from student ID
+      const generatedEmail = `${newUser.studentId.toLowerCase()}@student.smarted.com`
+
       console.log('Validation passed ✓')
 
       // Check if email already exists in profiles
-      console.log('Checking if email already exists:', newUser.email)
+      console.log('Checking if email already exists:', generatedEmail)
       const { data: existingUsers, error: checkError } = await supabase
         .from('profiles')
         .select('email, id')
-        .eq('email', newUser.email)
+        .eq('email', generatedEmail)
 
       console.log('Email check result:', { existingUsers, checkError })
 
       if (existingUsers && existingUsers.length > 0) {
-        console.log('❌ Email already exists in profiles:', newUser.email)
+        console.log('❌ Email already exists in profiles:', generatedEmail)
         toast.error('A user with this email already exists')
         return
       }
@@ -190,9 +190,9 @@ const UsersPage = () => {
       const { data: { session: currentSession } } = await supabase.auth.getSession()
       console.log('Current admin session:', currentSession?.user?.email)
       
-      console.log('Creating auth user with email:', newUser.email)
+      console.log('Creating auth user with email:', generatedEmail)
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: newUser.email,
+        email: generatedEmail,
         password: tempPassword
       })
       
@@ -220,7 +220,7 @@ const UsersPage = () => {
       // Prepare profile data
       const profileData = {
         id: authData.user.id,
-        email: newUser.email,
+        email: generatedEmail,
         first_name: newUser.firstName,
         last_name: newUser.lastName,
         role: 'student',
@@ -373,7 +373,6 @@ const UsersPage = () => {
       setNewUser({
         firstName: '',
         lastName: '',
-        email: '',
         sex: '',
         program: '',
         studentId: '',
@@ -682,15 +681,7 @@ const UsersPage = () => {
                   />
                 </div>
 
-                <div className="form-group">
-                  <label><FaUser className="form-icon" /> Email *</label>
-                  <input
-                    type="email"
-                    value={newUser.email}
-                    onChange={(e) => setNewUser(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="Enter email address"
-                  />
-                </div>
+
 
                 <div className="form-group">
                   <label><FaVenusMars className="form-icon" /> Sex *</label>
