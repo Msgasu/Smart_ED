@@ -44,6 +44,7 @@ const ClassManagement = () => {
           )
         `)
         .eq('role', 'student')
+        .not('students.class_year', 'is', null)
         .order('first_name')
 
       if (error) throw error
@@ -61,7 +62,7 @@ const ClassManagement = () => {
     try {
       setLoading(true)
       
-      // First get assigned students
+      // First get assigned students (those with non-null class_year)
       const { data: assignedData, error: assignedError } = await supabase
         .from('profiles')
         .select(`
@@ -73,6 +74,7 @@ const ClassManagement = () => {
           )
         `)
         .eq('role', 'student')
+        .not('students.class_year', 'is', null)
         .order('first_name')
 
       if (assignedError) throw assignedError
@@ -96,10 +98,11 @@ const ClassManagement = () => {
       // Set assigned students for statistics
       setStudents(assignedData || [])
       
-      // Find unassigned students (those without student records or without class_year)
+      // Find unassigned students (those without student records or with null class_year)
       const assignedStudentIds = (assignedData || []).map(s => s.id)
       const unassigned = (allStudentsData || []).filter(student => 
-        !assignedStudentIds.includes(student.id)
+        !assignedStudentIds.includes(student.id) || 
+        (student.students && student.students.class_year === null)
       )
       
       // Store unassigned students in state
@@ -118,9 +121,21 @@ const ClassManagement = () => {
 
   const generateClassStats = () => {
     console.log('Students data for stats:', students) // Debug log
+    
+    // Debug each student's class_year value
+    students.forEach((student, index) => {
+      console.log(`Student ${index + 1}:`, {
+        name: `${student.first_name} ${student.last_name}`,
+        students_object: student.students,
+        class_year: student.students?.class_year,
+        class_year_array: student.students?.[0]?.class_year
+      })
+    })
+    
     const classStats = classStructure.map(className => {
+      // Try both potential data structures for compatibility
       const studentsInClass = students.filter(
-        student => student.students?.class_year === className
+        student => student.students?.class_year === className || student.students?.[0]?.class_year === className
       )
       console.log(`Students in ${className}:`, studentsInClass.length) // Debug log
       return {
@@ -336,8 +351,12 @@ const ClassManagement = () => {
 
   const StudentManagement = () => {
     const classStudents = selectedClass 
-      ? students.filter(student => student.students?.class_year === selectedClass)
+      ? students.filter(student => student.students?.class_year === selectedClass || student.students?.[0]?.class_year === selectedClass)
       : []
+
+    console.log('Selected class:', selectedClass)
+    console.log('All students:', students)
+    console.log('Class students for', selectedClass, ':', classStudents)
 
     return (
       <div className="student-management">
@@ -404,7 +423,7 @@ const ClassManagement = () => {
                           />
                         </td>
                         <td>{student.first_name} {student.last_name}</td>
-                        <td>{student.students?.student_id || 'N/A'}</td>
+                        <td>{student.students?.student_id || student.students?.[0]?.student_id || 'N/A'}</td>
                         <td>{student.email}</td>
                         <td>
                           <select
@@ -472,7 +491,7 @@ const ClassManagement = () => {
                         />
                       </td>
                       <td>{student.first_name} {student.last_name}</td>
-                      <td>{student.students?.student_id || 'N/A'}</td>
+                      <td>{student.students?.student_id || student.students?.[0]?.student_id || 'N/A'}</td>
                       <td>{student.email}</td>
                       <td>
                         <button
@@ -503,7 +522,7 @@ const ClassManagement = () => {
                     {classData.students.map(student => (
                       <div key={student.id} className="student-item">
                         <span>{student.first_name} {student.last_name}</span>
-                        <small>{student.students?.student_id}</small>
+                        <small>{student.students?.student_id || student.students?.[0]?.student_id}</small>
                       </div>
                     ))}
                   </div>
