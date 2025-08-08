@@ -147,6 +147,11 @@ const UsersPage = () => {
   const handleCreateUser = async () => {
     try {
       setAddUserLoading(true)
+      
+      // Set flag to prevent auth state changes from causing redirects
+      if (window.setIsCreatingUser) {
+        window.setIsCreatingUser(true)
+      }
 
       console.log('=== USER CREATION STARTED (AJAX) ===')
       console.log('Form data (newUser):', newUser)
@@ -160,6 +165,11 @@ const UsersPage = () => {
         console.log('program:', newUser.program)
         console.log('studentId:', newUser.studentId)
         toast.error('Please fill in all required fields')
+        
+        // Clear flag on validation error
+        if (window.setIsCreatingUser) {
+          window.setIsCreatingUser(false)
+        }
         return
       }
 
@@ -178,12 +188,14 @@ const UsersPage = () => {
       if (checkError) {
         console.error('Error checking existing users:', checkError)
         toast.error('Error checking user existence')
+        if (window.setIsCreatingUser) window.setIsCreatingUser(false)
         return
       }
 
       if (existingUsers && existingUsers.length > 0) {
         console.log('❌ Email already exists in profiles:', generatedEmail)
         toast.error('A user with this email already exists')
+        if (window.setIsCreatingUser) window.setIsCreatingUser(false)
         return
       }
 
@@ -196,12 +208,14 @@ const UsersPage = () => {
       if (studentIdError) {
         console.error('Error checking student ID:', studentIdError)
         toast.error('Error checking student ID')
+        if (window.setIsCreatingUser) window.setIsCreatingUser(false)
         return
       }
 
       if (existingStudentIds && existingStudentIds.length > 0) {
         console.log('❌ Student ID already exists:', newUser.studentId)
         toast.error('A student with this ID already exists')
+        if (window.setIsCreatingUser) window.setIsCreatingUser(false)
         return
       }
 
@@ -210,6 +224,7 @@ const UsersPage = () => {
       if (sessionError) {
         console.error('Error getting current session:', sessionError)
         toast.error('Session error')
+        if (window.setIsCreatingUser) window.setIsCreatingUser(false)
         return
       }
 
@@ -228,12 +243,14 @@ const UsersPage = () => {
       if (authError) {
         console.error('❌ Error creating auth user:', authError)
         toast.error(`Error creating user account: ${authError.message}`)
+        if (window.setIsCreatingUser) window.setIsCreatingUser(false)
         return
       }
 
       if (!authData.user) {
         console.error('❌ No user data returned from auth creation')
         toast.error('Failed to create user account')
+        if (window.setIsCreatingUser) window.setIsCreatingUser(false)
         return
       }
 
@@ -290,12 +307,14 @@ const UsersPage = () => {
           if (updateError) {
             console.error('❌ Error updating profile:', updateError)
             toast.error(`Error updating profile: ${updateError.message}`)
+            if (window.setIsCreatingUser) window.setIsCreatingUser(false)
             return
           }
           
           console.log('✅ Profile updated successfully:', updatedProfile)
         } else {
           toast.error(`Error creating user profile: ${profileError.message}`)
+          if (window.setIsCreatingUser) window.setIsCreatingUser(false)
           return
         }
       } else {
@@ -323,6 +342,7 @@ const UsersPage = () => {
       if (studentError) {
         console.error('❌ Error creating student:', studentError)
         toast.error(`Error creating student record: ${studentError.message}`)
+        if (window.setIsCreatingUser) window.setIsCreatingUser(false)
         return
       }
 
@@ -359,6 +379,11 @@ const UsersPage = () => {
       toast.error('Failed to create user')
     } finally {
       setAddUserLoading(false)
+      
+      // Always clear the flag regardless of success or error
+      if (window.setIsCreatingUser) {
+        window.setIsCreatingUser(false)
+      }
     }
   }
 

@@ -20,7 +20,11 @@ function App() {
   const [user, setUser] = useState(null)
   const [userProfile, setUserProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [isCreatingUser, setIsCreatingUser] = useState(false)
   const location = useLocation()
+
+  // Make the flag available globally
+  window.setIsCreatingUser = setIsCreatingUser
 
   useEffect(() => {
     // Get initial session
@@ -36,6 +40,12 @@ function App() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        // Skip auth state changes during user creation to prevent redirects
+        if (isCreatingUser) {
+          console.log('Skipping auth state change during user creation')
+          return
+        }
+        
         setUser(session?.user ?? null)
         if (session?.user) {
           fetchUserProfile(session.user.id)
@@ -47,7 +57,7 @@ function App() {
     )
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [isCreatingUser])
 
   const fetchUserProfile = async (userId) => {
     try {
