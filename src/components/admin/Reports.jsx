@@ -133,6 +133,22 @@ const Reports = ({
     }
   }, [studentId]);
 
+  // Helper function to get display percentages based on form level (text only)
+  const getDisplayPercentages = (classYear) => {
+    if (!classYear) return { classText: '40%', examText: '60%' }; // Default fallback
+    
+    const classYearStr = classYear.toString().toLowerCase();
+    
+    if (classYearStr.includes('form1') || classYearStr.includes('form 1')) {
+      return { classText: '30%', examText: '70%' };
+    } else if (classYearStr.includes('form2') || classYearStr.includes('form 2')) {
+      return { classText: '40%', examText: '60%' };
+    }
+    
+    // Default for other forms/grades
+    return { classText: '40%', examText: '60%' };
+  };
+
   // Helper function to calculate grade
   const calculateGrade = (total) => {
     if (!total || isNaN(total)) return 'F9';
@@ -924,7 +940,7 @@ const Reports = ({
     }
   };
 
-  // Calculate total score for a subject
+  // Calculate total score for a subject (simple addition since scores are already weighted)
   const calculateTotal = (classScore, examScore) => {
     const class_score = parseFloat(classScore) || 0;
     const exam_score = parseFloat(examScore) || 0;
@@ -1309,8 +1325,12 @@ const Reports = ({
           <thead>
             <tr>
                 <th style={{ width: '20%' }}>Subject</th>
-                <th style={{ width: '10%' }}>Class Score (60%)</th>
-                <th style={{ width: '10%' }}>Exam Score (40%)</th>
+                <th style={{ width: '10%' }}>
+                  Class Score ({getDisplayPercentages(studentData.class_year).classText})
+                </th>
+                <th style={{ width: '10%' }}>
+                  Exam Score ({getDisplayPercentages(studentData.class_year).examText})
+                </th>
                 <th style={{ width: '8%' }}>Total</th>
                 <th style={{ width: '8%' }}>Position</th>
                 <th style={{ width: '8%' }}>Grade</th>
