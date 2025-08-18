@@ -19,6 +19,22 @@ const TeacherDashboard = ({ user, profile }) => {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('dashboard')
   
+  // Helper function to get display percentages based on form level (text only)
+  const getDisplayPercentages = (classYear) => {
+    if (!classYear) return { classText: '40%', examText: '60%' }; // Default fallback
+    
+    const classYearStr = classYear.toString().toLowerCase();
+    
+    if (classYearStr.includes('form1') || classYearStr.includes('form 1')) {
+      return { classText: '30%', examText: '70%' };
+    } else if (classYearStr.includes('form2') || classYearStr.includes('form 2')) {
+      return { classText: '40%', examText: '60%' };
+    }
+    
+    // Default for other forms/grades
+    return { classText: '40%', examText: '60%' };
+  };
+  
   // Reports Tab State (exact replica of admin Reports.jsx)
   const [subjects, setSubjects] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -1667,8 +1683,8 @@ const TeacherDashboard = ({ user, profile }) => {
                 <thead>
                   <tr>
                     <th>Subject</th>
-                    <th>Class Score (60%)</th>
-                    <th>Exam Score (40%)</th>
+                    <th>Class Score ({getDisplayPercentages(reportData.studentClass).classText})</th>
+                    <th>Exam Score ({getDisplayPercentages(reportData.studentClass).examText})</th>
                     <th>Total</th>
                     <th>Position</th>
                     <th>Grade</th>
@@ -2540,8 +2556,8 @@ const TeacherDashboard = ({ user, profile }) => {
                   <tr>
                     <th>#</th>
                     <th>Subject</th>
-                    <th>Class Score</th>
-                    <th>Exam Score</th>
+                    <th>Class Score ({getDisplayPercentages(report.class_year).classText})</th>
+                    <th>Exam Score ({getDisplayPercentages(report.class_year).examText})</th>
                     <th>Total Score</th>
                     <th>Grade</th>
                     <th>Position</th>
