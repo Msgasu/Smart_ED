@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getReportsByStatus, getReportById, REPORT_STATUS } from '../lib/reportApi'
 import toast from 'react-hot-toast'
 
 const StudentDashboard = ({ user, profile }) => {
+  const navigate = useNavigate()
   const [reports, setReports] = useState([])
   const [selectedReport, setSelectedReport] = useState(null)
   const [grades, setGrades] = useState([])
@@ -14,6 +16,7 @@ const StudentDashboard = ({ user, profile }) => {
     try {
       await supabase.auth.signOut()
       toast.success('Logged out successfully')
+      navigate('/login') // Add redirect to login page
     } catch (error) {
       console.error('Logout error:', error)
       toast.error('Error logging out')

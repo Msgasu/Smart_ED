@@ -73,11 +73,30 @@ const TeacherLayout = ({ children }) => {
 
   const handleLogout = async () => {
     try {
+      // Try to sign out, but don't let errors prevent logout
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (error) {
+        console.warn('Logout warning:', error);
+        // Even if signOut fails, we should still redirect to clear the UI
+      }
+      
+      // Clear any local session data
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Force redirect to signin
       navigate('/signin');
+      
+      // Reload page to ensure clean state
+      window.location.reload();
     } catch (error) {
       console.error('Error logging out:', error);
+      
+      // Even if logout fails, clear local data and redirect
+      localStorage.clear();
+      sessionStorage.clear();
+      navigate('/signin');
+      window.location.reload();
     }
   };
 

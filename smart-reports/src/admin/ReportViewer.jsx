@@ -10,6 +10,23 @@ import './ReportViewer.css'
 const ReportViewer = () => {
   const { reportId } = useParams()
   const navigate = useNavigate()
+  
+  // Helper function to get display percentages based on form level (text only)
+  const getDisplayPercentages = (classYear) => {
+    if (!classYear) return { classText: '40%', examText: '60%' }; // Default fallback
+    
+    const classYearStr = classYear.toString().toLowerCase();
+    
+    if (classYearStr.includes('form1') || classYearStr.includes('form 1')) {
+      return { classText: '30%', examText: '70%' };
+    } else if (classYearStr.includes('form2') || classYearStr.includes('form 2')) {
+      return { classText: '40%', examText: '60%' };
+    }
+    
+    // Default for other forms/grades
+    return { classText: '40%', examText: '60%' };
+  };
+
   const [report, setReport] = useState(null)
   const [loading, setLoading] = useState(true)
   const [printing, setPrinting] = useState(false)
@@ -301,8 +318,8 @@ const ReportViewer = () => {
                 <thead>
                   <tr>
                     <th>Subject</th>
-                    <th>Class Score</th>
-                    <th>Exam Score</th>
+                    <th>Class Score ({getDisplayPercentages(report?.class_year).classText})</th>
+                    <th>Exam Score ({getDisplayPercentages(report?.class_year).examText})</th>
                     <th>Total Score</th>
                     <th>Grade</th>
                     <th>Position</th>

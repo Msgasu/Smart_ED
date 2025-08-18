@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
 import { FaHome, FaUser, FaFileAlt, FaSignOutAlt, FaBars, FaChevronLeft, FaChevronRight } from 'react-icons/fa'
@@ -6,6 +7,7 @@ import '../styles/guardian.css'
 import '../styles/report-enhancements.css'
 
 const GuardianLayout = ({ children, activeTab, setActiveTab, user, profile }) => {
+  const navigate = useNavigate()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -13,6 +15,7 @@ const GuardianLayout = ({ children, activeTab, setActiveTab, user, profile }) =>
     try {
       await supabase.auth.signOut()
       toast.success('Logged out successfully')
+      navigate('/login') // Add redirect to login page
     } catch (error) {
       console.error('Logout error:', error)
       toast.error('Error logging out')

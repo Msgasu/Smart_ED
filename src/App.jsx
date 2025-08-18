@@ -38,16 +38,25 @@ import ReportView from './pages/teacher/ReportView';
 
 function App() {
   const [session, setSession] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
+      setLoading(false)
     })
 
-    supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
+      setLoading(false)
     })
+
+    return () => subscription.unsubscribe()
   }, [])
+
+  if (loading) {
+    return <div>Loading...</div>
+  }
 
   return (
     <Router>
@@ -57,40 +66,48 @@ function App() {
         <Route path="/signin" element={<Signin />} />
         <Route path="/signup" element={<Signup />} />
         
-        {/* Admin routes */}
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/reports" element={<AdminReports />} />
-        <Route path="/admin/settings" element={<AdminSettings />} />
-        <Route path="/admin/students" element={<AdminStudents />} />
-        
-        {/* Student routes */}
-        <Route path="/student/dashboard" element={<StudentDashboard />} />
-        <Route path="/student/courses" element={<StudentCourses />} />
-        <Route path="/student/courses/:courseId" element={<CourseDetails />} />
-        <Route path="/student/assignments" element={<StudentAssignments />} />
-        <Route path="/student/assignments/:assignmentId" element={<StudentAssignmentDetail />} />
-        {/* Update route for Career Prediction */}
-        <Route path="/student/career-prediction" element={<CareerPrediction />} />
-        
-        {/* Teacher routes */}
-        <Route path="/teacher" element={<Navigate to="/teacher/dashboard" />} />
-        <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-        <Route path="/teacher/courses" element={<TeacherCourses />} />
-        <Route path="/teacher/courses/:courseId/students" element={<TeacherStudents />} />
-        <Route path="/teacher/courses/:courseId/assignments" element={<TeacherAssignments />} />
-        <Route path="/teacher/assignments" element={<AssignmentsCourseSelect />} />
-        <Route path="/teacher/courses/:courseId/students/:studentId/analysis/:courseId?" element={<StudentAnalysis />} />
-        <Route path="/teacher/students/:studentId" element={<StudentAnalysis />} />
-        <Route path="/teacher/assignments/:assignmentId/grade" element={<GradeAssignment />} />
-        <Route path="/teacher/report/:studentId/:courseId" element={<TeacherReport />} />
-        <Route path="/teacher/reports" element={<ReportsList />} />
-        <Route path="/teacher/report-view/:reportId" element={<ReportView />} />
-        
-        {/* Notifications route */}
-        <Route path="/notifications" element={<Notifications />} />
-        
-        {/* Default redirect */}
-        <Route path="/" element={<Navigate to="/signin" />} />
+        {/* Protected routes - only accessible when logged in */}
+        {session ? (
+          <>
+            {/* Admin routes */}
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/reports" element={<AdminReports />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
+            <Route path="/admin/students" element={<AdminStudents />} />
+            
+            {/* Student routes */}
+            <Route path="/student/dashboard" element={<StudentDashboard />} />
+            <Route path="/student/courses" element={<StudentCourses />} />
+            <Route path="/student/courses/:courseId" element={<CourseDetails />} />
+            <Route path="/student/assignments" element={<StudentAssignments />} />
+            <Route path="/student/assignments/:assignmentId" element={<StudentAssignmentDetail />} />
+            {/* Update route for Career Prediction */}
+            <Route path="/student/career-prediction" element={<CareerPrediction />} />
+            
+            {/* Teacher routes */}
+            <Route path="/teacher" element={<Navigate to="/teacher/dashboard" />} />
+            <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+            <Route path="/teacher/courses" element={<TeacherCourses />} />
+            <Route path="/teacher/courses/:courseId/students" element={<TeacherStudents />} />
+            <Route path="/teacher/courses/:courseId/assignments" element={<TeacherAssignments />} />
+            <Route path="/teacher/assignments" element={<AssignmentsCourseSelect />} />
+            <Route path="/teacher/courses/:courseId/students/:studentId/analysis/:courseId?" element={<StudentAnalysis />} />
+            <Route path="/teacher/students/:studentId" element={<StudentAnalysis />} />
+            <Route path="/teacher/assignments/:assignmentId/grade" element={<GradeAssignment />} />
+            <Route path="/teacher/report/:studentId/:courseId" element={<TeacherReport />} />
+            <Route path="/teacher/reports" element={<ReportsList />} />
+            <Route path="/teacher/report-view/:reportId" element={<ReportView />} />
+            
+            {/* Notifications route */}
+            <Route path="/notifications" element={<Notifications />} />
+            
+            {/* Default redirect when logged in */}
+            <Route path="/" element={<Navigate to="/signin" />} />
+          </>
+        ) : (
+          /* If not logged in, redirect all routes to signin */
+          <Route path="*" element={<Navigate to="/signin" />} />
+        )}
       </Routes>
     </Router>
   );

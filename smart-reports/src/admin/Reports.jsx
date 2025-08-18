@@ -8,6 +8,22 @@ import './Reports.css'
 import '../styles/report-enhancements.css'
 
 const Reports = () => {
+  // Helper function to get display percentages based on form level (text only)
+  const getDisplayPercentages = (classYear) => {
+    if (!classYear) return { classText: '40%', examText: '60%' }; // Default fallback
+    
+    const classYearStr = classYear.toString().toLowerCase();
+    
+    if (classYearStr.includes('form1') || classYearStr.includes('form 1')) {
+      return { classText: '30%', examText: '70%' };
+    } else if (classYearStr.includes('form2') || classYearStr.includes('form 2')) {
+      return { classText: '40%', examText: '60%' };
+    }
+    
+    // Default for other forms/grades
+    return { classText: '40%', examText: '60%' };
+  };
+
   const [subjects, setSubjects] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
@@ -694,8 +710,8 @@ const Reports = () => {
                 <thead>
                   <tr>
                     <th>Subject</th>
-                    <th>Class Score (60%)</th>
-                    <th>Exam Score (40%)</th>
+                    <th>Class Score ({getDisplayPercentages(reportData.studentClass).classText})</th>
+                    <th>Exam Score ({getDisplayPercentages(reportData.studentClass).examText})</th>
                     <th>Total</th>
                     <th>Position</th>
                     <th>Grade</th>

@@ -135,16 +135,22 @@ const Reports = ({
 
   // Helper function to get display percentages based on form level (text only)
   const getDisplayPercentages = (classYear) => {
+    console.log('getDisplayPercentages called with:', classYear); // Debug log
+    
     if (!classYear) return { classText: '40%', examText: '60%' }; // Default fallback
     
     const classYearStr = classYear.toString().toLowerCase();
+    console.log('classYearStr:', classYearStr); // Debug log
     
     if (classYearStr.includes('form1') || classYearStr.includes('form 1')) {
+      console.log('Matched Form 1'); // Debug log
       return { classText: '30%', examText: '70%' };
     } else if (classYearStr.includes('form2') || classYearStr.includes('form 2')) {
+      console.log('Matched Form 2'); // Debug log
       return { classText: '40%', examText: '60%' };
     }
     
+    console.log('Using default percentages'); // Debug log
     // Default for other forms/grades
     return { classText: '40%', examText: '60%' };
   };
