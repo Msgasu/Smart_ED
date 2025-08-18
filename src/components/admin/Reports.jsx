@@ -536,7 +536,7 @@ const Reports = ({
                     classScore: grade.class_score.toString(),
                     examScore: grade.exam_score.toString(),
                     totalScore: (grade.class_score + grade.exam_score).toString(),
-                    position: grade.position ? grade.position.toString() : '',
+                    position: grade.position || '',
                     grade: grade.grade || calculateGrade(grade.class_score + grade.exam_score),
                     remark: grade.remark || calculateRemark(grade.class_score + grade.exam_score),
                     teacherSignature: grade.teacher_signature || ''

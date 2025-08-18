@@ -450,7 +450,7 @@ const Reports = () => {
         class_score: parseFloat(subject.classScore) || 0,
         exam_score: parseFloat(subject.examScore) || 0,
         total_score: parseFloat(subject.totalScore) || 0,
-        position: subject.position || null,
+        position: subject.position || '',
         grade: subject.grade,
         remark: subject.remark,
         teacher_signature: subject.teacherSignature

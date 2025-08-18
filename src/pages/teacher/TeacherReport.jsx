@@ -545,7 +545,7 @@ const TeacherReport = () => {
       class_score: classScore,
       exam_score: examScore,
       total_score: totalScore,
-      position: parseInt(row.querySelector('input[placeholder="Position"]')?.value) || 0,
+      position: row.querySelector('input[placeholder="Position"]')?.value || '',
       grade: grade, // Use the new grade format
       remark: row.querySelector('input[placeholder="Remark"]')?.value,
       teacher_signature: row.querySelector('input[placeholder="Sign"]')?.value,
@@ -1057,7 +1057,7 @@ const TeacherReport = () => {
           class_score: classScore,
           exam_score: examScore,
           total_score: totalScore,
-          position: parseInt(subject.position) || null,
+          position: subject.position || '',
           grade: grade,
           remark: subject.remark || '',
           teacher_signature: subject.teacherSignature || ''

@@ -926,7 +926,7 @@ const TeacherDashboard = ({ user, profile }) => {
           exam_score: grade.exam_score ? parseFloat(grade.exam_score) : null,
           total_score: grade.total_score ? parseFloat(grade.total_score) : null,
           grade: grade.grade || null,
-          position: grade.position || null,
+          position: grade.position || '',
           remark: grade.remark || null,
           updated_at: new Date().toISOString()
         })
@@ -1325,7 +1325,7 @@ const TeacherDashboard = ({ user, profile }) => {
         class_score: parseFloat(subject.classScore) || 0,
         exam_score: parseFloat(subject.examScore) || 0,
         total_score: parseFloat(subject.totalScore) || 0,
-        position: subject.position || null,
+        position: subject.position || '',
         grade: subject.grade,
         remark: subject.remark,
         teacher_signature: subject.teacherSignature
