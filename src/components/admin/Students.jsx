@@ -15,6 +15,15 @@ const Students = () => {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedCourses, setSelectedCourses] = useState([]);
+  const [courseSearchTerm, setCourseSearchTerm] = useState('');
+  
+  // Bulk assignment states
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [selectedStudents, setSelectedStudents] = useState([]);
+  const [bulkSelectedCourses, setBulkSelectedCourses] = useState([]);
+  const [bulkCourseSearchTerm, setBulkCourseSearchTerm] = useState('');
+  const [bulkStudentSearchTerm, setBulkStudentSearchTerm] = useState('');
+  
   const [stats, setStats] = useState({
     total: 0,
     students: 0,
@@ -105,6 +114,75 @@ const Students = () => {
     } catch (error) {
       console.error('Error:', error);
       toast.error('Error assigning courses: ' + error.message);
+    }
+  };
+
+  // Bulk assign multiple courses to multiple students
+  const handleBulkAssignCourses = async () => {
+    try {
+      if (!selectedStudents.length || !bulkSelectedCourses.length) {
+        toast.error('Please select students and courses');
+        return;
+      }
+
+      setLoading(true);
+      
+      // Create assignments for all student-course combinations
+      const assignments = [];
+      const reportEntries = [];
+      
+      for (const studentId of selectedStudents) {
+        for (const courseId of bulkSelectedCourses) {
+          // Check if assignment already exists
+          const { data: existing } = await supabase
+            .from('student_courses')
+            .select('id')
+            .eq('student_id', studentId)
+            .eq('course_id', courseId)
+            .single();
+            
+          if (!existing) {
+            assignments.push({
+              student_id: studentId,
+              course_id: courseId,
+              status: 'enrolled'
+            });
+            
+            reportEntries.push({ studentId, courseId });
+          }
+        }
+      }
+
+      if (assignments.length === 0) {
+        toast.error('All selected students already have these courses');
+        setLoading(false);
+        return;
+      }
+
+      // Insert all assignments
+      const { error: assignError } = await supabase
+        .from('student_courses')
+        .insert(assignments);
+
+      if (assignError) throw assignError;
+
+      // Create default report entries for new assignments
+      for (const { studentId, courseId } of reportEntries) {
+        await createDefaultReportEntries(studentId, [courseId]);
+      }
+
+      toast.success(`Successfully assigned ${bulkSelectedCourses.length} courses to ${selectedStudents.length} students`);
+      setShowBulkModal(false);
+      setSelectedStudents([]);
+      setBulkSelectedCourses([]);
+      setBulkCourseSearchTerm('');
+      setBulkStudentSearchTerm('');
+      fetchUsers(); // Refresh the data
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Error bulk assigning courses: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -219,6 +297,37 @@ const Students = () => {
     }
   };
 
+  // Filter courses based on search term
+  const filteredCourses = courses.filter(course => 
+    course.name.toLowerCase().includes(courseSearchTerm.toLowerCase()) ||
+    course.code.toLowerCase().includes(courseSearchTerm.toLowerCase())
+  );
+
+  // Filter courses for bulk assignment
+  const filteredBulkCourses = courses.filter(course => 
+    course.name.toLowerCase().includes(bulkCourseSearchTerm.toLowerCase()) ||
+    course.code.toLowerCase().includes(bulkCourseSearchTerm.toLowerCase())
+  );
+
+  // Filter students for bulk assignment
+  const filteredBulkStudents = users.filter(user => {
+    if (user.role !== 'student') return false;
+    const fullName = `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase();
+    const searchTerm = bulkStudentSearchTerm.toLowerCase();
+    return fullName.includes(searchTerm) || 
+           (user.email || '').toLowerCase().includes(searchTerm) ||
+           (user.class_year || '').toString().includes(searchTerm);
+  });
+
+  // Handle select all students
+  const handleSelectAllStudents = (checked) => {
+    if (checked) {
+      setSelectedStudents(filteredBulkStudents.map(student => student.id));
+    } else {
+      setSelectedStudents([]);
+    }
+  };
+
   const columns = [
     {
       name: 'Full Name',
@@ -263,6 +372,7 @@ const Students = () => {
             onClick={() => {
               setSelectedUser(row);
               setSelectedCourses([]);
+              setCourseSearchTerm('');
               setShowAssignModal(true);
             }}
           >
@@ -353,18 +463,28 @@ const Students = () => {
               </div>
             </div>
             <div className="col-md-6">
-              {roleFilter === 'student' && (
-                <select 
-                  className="form-select w-auto ms-auto"
-                  value={yearFilter}
-                  onChange={(e) => setYearFilter(e.target.value)}
-                >
-                  <option value="">All Years</option>
-                  <option value="1">Year 1</option>
-                  <option value="2">Year 2</option>
-                  <option value="3">Year 3</option>
-                </select>
-              )}
+              <div className="d-flex align-items-center justify-content-end gap-3">
+                {roleFilter === 'student' && (
+                  <select 
+                    className="form-select w-auto"
+                    value={yearFilter}
+                    onChange={(e) => setYearFilter(e.target.value)}
+                  >
+                    <option value="">All Years</option>
+                    <option value="1">Year 1</option>
+                    <option value="2">Year 2</option>
+                    <option value="3">Year 3</option>
+                  </select>
+                )}
+                {roleFilter === 'student' && (
+                  <Button
+                    variant="success"
+                    onClick={() => setShowBulkModal(true)}
+                  >
+                    Bulk Assign Courses
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -412,7 +532,10 @@ const Students = () => {
       </div>
 
       {/* Course Assignment Modal */}
-      <Modal show={showAssignModal} onHide={() => setShowAssignModal(false)}>
+      <Modal show={showAssignModal} onHide={() => {
+        setShowAssignModal(false);
+        setCourseSearchTerm('');
+      }}>
         <Modal.Header closeButton>
           <Modal.Title>
             Assign Courses to {selectedUser?.first_name} {selectedUser?.last_name}
@@ -420,37 +543,208 @@ const Students = () => {
         </Modal.Header>
         <Modal.Body>
           <div className="mb-3">
-            <label className="form-label">Select Courses</label>
-            <div className="d-flex flex-wrap gap-2">
-              {courses.map(course => (
-                <div key={course.id} className="form-check">
-                  <input
-                    type="checkbox"
-                    className="form-check-input"
-                    id={`course-${course.id}`}
-                    checked={selectedCourses.includes(course.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedCourses([...selectedCourses, course.id]);
-                      } else {
-                        setSelectedCourses(selectedCourses.filter(id => id !== course.id));
-                      }
-                    }}
-                  />
-                  <label className="form-check-label" htmlFor={`course-${course.id}`}>
-                    {course.code} - {course.name}
-                  </label>
-                </div>
-              ))}
+            <label className="form-label">Search Courses</label>
+            <input
+              type="text"
+              className="form-control mb-3"
+              placeholder="Search by course name or code..."
+              value={courseSearchTerm}
+              onChange={(e) => setCourseSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Select Courses ({filteredCourses.length} found)</label>
+            <div className="d-flex flex-wrap gap-2" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              {filteredCourses.length > 0 ? (
+                filteredCourses.map(course => (
+                  <div key={course.id} className="form-check">
+                    <input
+                      type="checkbox"
+                      className="form-check-input"
+                      id={`course-${course.id}`}
+                      checked={selectedCourses.includes(course.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedCourses([...selectedCourses, course.id]);
+                        } else {
+                          setSelectedCourses(selectedCourses.filter(id => id !== course.id));
+                        }
+                      }}
+                    />
+                    <label className="form-check-label" htmlFor={`course-${course.id}`}>
+                      {course.code} - {course.name}
+                    </label>
+                  </div>
+                ))
+              ) : (
+                <p className="text-muted">No courses found matching your search.</p>
+              )}
             </div>
           </div>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowAssignModal(false)}>
+          <Button variant="secondary" onClick={() => {
+            setShowAssignModal(false);
+            setCourseSearchTerm('');
+          }}>
             Cancel
           </Button>
           <Button variant="primary" onClick={handleAssignCourses}>
             Assign Courses
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Bulk Course Assignment Modal */}
+      <Modal 
+        show={showBulkModal} 
+        onHide={() => {
+          setShowBulkModal(false);
+          setSelectedStudents([]);
+          setBulkSelectedCourses([]);
+          setBulkCourseSearchTerm('');
+          setBulkStudentSearchTerm('');
+        }}
+        size="xl"
+        backdrop="static"
+        style={{ 
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          backdropFilter: 'none'
+        }}
+        dialogClassName="modal-dialog-solid"
+      >
+        <Modal.Header closeButton style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e5e7eb', opacity: 1 }}>
+          <Modal.Title style={{ color: '#000000', opacity: 1 }}>
+            Bulk Course Assignment
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ backgroundColor: '#ffffff', maxHeight: '70vh', overflowY: 'auto', opacity: 1 }}>
+          <div className="row">
+            {/* Course Selection */}
+            <div className="col-md-6">
+              <div className="mb-3">
+                <label className="form-label fw-bold">Select Courses</label>
+                <input
+                  type="text"
+                  className="form-control mb-3"
+                  placeholder="Search courses..."
+                  value={bulkCourseSearchTerm}
+                  onChange={(e) => setBulkCourseSearchTerm(e.target.value)}
+                />
+                <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: '0.5rem', padding: '0.75rem' }}>
+                  {filteredBulkCourses.length > 0 ? (
+                    filteredBulkCourses.map(course => (
+                      <div key={course.id} className="form-check mb-2">
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          id={`bulk-course-${course.id}`}
+                          checked={bulkSelectedCourses.includes(course.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setBulkSelectedCourses([...bulkSelectedCourses, course.id]);
+                            } else {
+                              setBulkSelectedCourses(bulkSelectedCourses.filter(id => id !== course.id));
+                            }
+                          }}
+                        />
+                        <label className="form-check-label" htmlFor={`bulk-course-${course.id}`}>
+                          <strong>{course.code}</strong> - {course.name}
+                        </label>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-muted">No courses found</p>
+                  )}
+                </div>
+                <small className="text-muted">
+                  {bulkSelectedCourses.length} course(s) selected
+                </small>
+              </div>
+            </div>
+
+            {/* Student Selection */}
+            <div className="col-md-6">
+              <div className="mb-3">
+                <label className="form-label fw-bold">Select Students</label>
+                <input
+                  type="text"
+                  className="form-control mb-3"
+                  placeholder="Search students..."
+                  value={bulkStudentSearchTerm}
+                  onChange={(e) => setBulkStudentSearchTerm(e.target.value)}
+                />
+                
+                {/* Select All Checkbox */}
+                <div className="form-check mb-3" style={{ backgroundColor: '#f8f9fa', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid #e5e7eb' }}>
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    id="select-all-students"
+                    checked={filteredBulkStudents.length > 0 && selectedStudents.length === filteredBulkStudents.length}
+                    onChange={(e) => handleSelectAllStudents(e.target.checked)}
+                  />
+                  <label className="form-check-label fw-bold" htmlFor="select-all-students">
+                    Select All Students ({filteredBulkStudents.length} found)
+                  </label>
+                </div>
+
+                <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: '0.5rem', padding: '0.75rem' }}>
+                  {filteredBulkStudents.length > 0 ? (
+                    filteredBulkStudents.map(student => (
+                      <div key={student.id} className="form-check mb-2">
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          id={`bulk-student-${student.id}`}
+                          checked={selectedStudents.includes(student.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedStudents([...selectedStudents, student.id]);
+                            } else {
+                              setSelectedStudents(selectedStudents.filter(id => id !== student.id));
+                            }
+                          }}
+                        />
+                        <label className="form-check-label" htmlFor={`bulk-student-${student.id}`}>
+                          <strong>{student.first_name} {student.last_name}</strong>
+                          <br />
+                          <small className="text-muted">
+                            {student.email} | Year {student.class_year || 'N/A'}
+                          </small>
+                        </label>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-muted">No students found</p>
+                  )}
+                </div>
+                <small className="text-muted">
+                  {selectedStudents.length} student(s) selected
+                </small>
+              </div>
+            </div>
+          </div>
+        </Modal.Body>
+        <Modal.Footer style={{ backgroundColor: '#ffffff', borderTop: '1px solid #e5e7eb', opacity: 1 }}>
+          <Button 
+            variant="secondary" 
+            onClick={() => {
+              setShowBulkModal(false);
+              setSelectedStudents([]);
+              setBulkSelectedCourses([]);
+              setBulkCourseSearchTerm('');
+              setBulkStudentSearchTerm('');
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="primary" 
+            onClick={handleBulkAssignCourses}
+            disabled={!selectedStudents.length || !bulkSelectedCourses.length || loading}
+          >
+            {loading ? 'Assigning...' : `Assign ${bulkSelectedCourses.length} Course(s) to ${selectedStudents.length} Student(s)`}
           </Button>
         </Modal.Footer>
       </Modal>

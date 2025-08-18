@@ -18,6 +18,9 @@ const CourseAssignment = () => {
   const [selectedCourse, setSelectedCourse] = useState('')
   const [selectedStudents, setSelectedStudents] = useState([])
   const [showBulkModal, setShowBulkModal] = useState(false)
+  const [courseSearchTerm, setCourseSearchTerm] = useState('')
+  const [bulkCourseSearchTerm, setBulkCourseSearchTerm] = useState('')
+  const [bulkStudentSearchTerm, setBulkStudentSearchTerm] = useState('')
 
   // Class structure for filtering students
   const classStructure = [
@@ -252,7 +255,7 @@ const CourseAssignment = () => {
   const bulkAssignCourseToClass = async (className, courseId) => {
     try {
       const classStudents = students.filter(
-        student => student.students?.[0]?.class_year === className
+        student => student.students?.class_year === className || student.students?.[0]?.class_year === className
       )
 
       if (classStudents.length === 0) {
@@ -389,6 +392,11 @@ const CourseAssignment = () => {
       member.faculty?.[0]?.department?.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
+    const filteredCoursesForFaculty = courses.filter(course =>
+      course.name.toLowerCase().includes(courseSearchTerm.toLowerCase()) ||
+      course.code.toLowerCase().includes(courseSearchTerm.toLowerCase())
+    )
+
     return (
       <div className="faculty-assignment">
         <div className="assignment-header">
@@ -423,22 +431,35 @@ const CourseAssignment = () => {
                   
                   <div className="course-assignment">
                     <div className="assign-course">
-                      <select
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            assignCourseToFaculty(member.id, e.target.value)
-                            e.target.value = ''
-                          }
-                        }}
-                        className="course-select"
-                      >
-                        <option value="">Assign Course</option>
-                        {courses.map(course => (
-                          <option key={course.id} value={course.id}>
-                            {course.code} - {course.name}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="course-search-section">
+                        <div className="search-box">
+                          <FaSearch className="search-icon" />
+                          <input
+                            type="text"
+                            placeholder="Search courses to assign..."
+                            value={courseSearchTerm}
+                            onChange={(e) => setCourseSearchTerm(e.target.value)}
+                            className="course-search-input"
+                          />
+                        </div>
+                        <select
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              assignCourseToFaculty(member.id, e.target.value)
+                              e.target.value = ''
+                              setCourseSearchTerm('')
+                            }
+                          }}
+                          className="course-select"
+                        >
+                          <option value="">Select Course ({filteredCoursesForFaculty.length} found)</option>
+                          {filteredCoursesForFaculty.map(course => (
+                            <option key={course.id} value={course.id}>
+                              {course.code} - {course.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
 
                     {memberCourses.length > 0 && (
@@ -479,6 +500,11 @@ const CourseAssignment = () => {
           (student.students?.student_id || student.students?.[0]?.student_id)?.toLowerCase().includes(searchTerm.toLowerCase())
         )
 
+    const filteredCoursesForStudents = courses.filter(course =>
+      course.name.toLowerCase().includes(courseSearchTerm.toLowerCase()) ||
+      course.code.toLowerCase().includes(courseSearchTerm.toLowerCase())
+    )
+
     return (
       <div className="student-assignment">
         <div className="assignment-header">
@@ -502,6 +528,16 @@ const CourseAssignment = () => {
                 placeholder="Search students..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <div className="search-box">
+              <FaSearch className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search courses..."
+                value={courseSearchTerm}
+                onChange={(e) => setCourseSearchTerm(e.target.value)}
               />
             </div>
 
@@ -529,8 +565,8 @@ const CourseAssignment = () => {
                 }}
                 className="course-select"
               >
-                <option value="">Select Course to Assign to Class</option>
-                {courses.map(course => (
+                <option value="">Select Course to Assign to Class ({filteredCoursesForStudents.length} available)</option>
+                {filteredCoursesForStudents.map(course => (
                   <option key={course.id} value={course.id}>
                     {course.code} - {course.name}
                   </option>
@@ -597,8 +633,8 @@ const CourseAssignment = () => {
                         }}
                         className="course-select"
                       >
-                        <option value="">Assign Course</option>
-                        {courses.map(course => (
+                        <option value="">Assign Course ({filteredCoursesForStudents.length})</option>
+                        {filteredCoursesForStudents.map(course => (
                           <option key={course.id} value={course.id}>
                             {course.code} - {course.name}
                           </option>
@@ -618,6 +654,17 @@ const CourseAssignment = () => {
   const BulkAssignModal = () => {
     if (!showBulkModal) return null
 
+    const filteredBulkCourses = courses.filter(course =>
+      course.name.toLowerCase().includes(bulkCourseSearchTerm.toLowerCase()) ||
+      course.code.toLowerCase().includes(bulkCourseSearchTerm.toLowerCase())
+    )
+
+    const filteredBulkStudents = students.filter(student =>
+      `${student.first_name} ${student.last_name}`.toLowerCase().includes(bulkStudentSearchTerm.toLowerCase()) ||
+      (student.students?.student_id || student.students?.[0]?.student_id)?.toLowerCase().includes(bulkStudentSearchTerm.toLowerCase()) ||
+      (student.students?.class_year || student.students?.[0]?.class_year)?.toLowerCase().includes(bulkStudentSearchTerm.toLowerCase())
+    )
+
     return (
       <div className="modal-overlay">
         <div className="modal-content">
@@ -625,7 +672,11 @@ const CourseAssignment = () => {
             <h3>Bulk Course Assignment</h3>
             <button
               className="close-btn"
-              onClick={() => setShowBulkModal(false)}
+              onClick={() => {
+                setShowBulkModal(false)
+                setBulkCourseSearchTerm('')
+                setBulkStudentSearchTerm('')
+              }}
             >
               ×
             </button>
@@ -633,14 +684,24 @@ const CourseAssignment = () => {
           
           <div className="modal-body">
             <div className="form-group">
-              <label>Select Course:</label>
+              <label>Search and Select Course:</label>
+              <div className="search-box">
+                <FaSearch className="search-icon" />
+                <input
+                  type="text"
+                  placeholder="Search courses..."
+                  value={bulkCourseSearchTerm}
+                  onChange={(e) => setBulkCourseSearchTerm(e.target.value)}
+                  className="form-control"
+                />
+              </div>
               <select
                 value={selectedCourse}
                 onChange={(e) => setSelectedCourse(e.target.value)}
                 className="form-control"
               >
-                <option value="">Choose a course</option>
-                {courses.map(course => (
+                <option value="">Choose a course ({filteredBulkCourses.length} found)</option>
+                {filteredBulkCourses.map(course => (
                   <option key={course.id} value={course.id}>
                     {course.code} - {course.name}
                   </option>
@@ -649,9 +710,36 @@ const CourseAssignment = () => {
             </div>
 
             <div className="form-group">
-              <label>Select Students:</label>
-              <div className="student-selection">
-                {students.map(student => (
+              <label>Search and Select Students:</label>
+              <div className="search-box">
+                <FaSearch className="search-icon" />
+                <input
+                  type="text"
+                  placeholder="Search students by name, ID, or class..."
+                  value={bulkStudentSearchTerm}
+                  onChange={(e) => setBulkStudentSearchTerm(e.target.value)}
+                  className="form-control"
+                />
+              </div>
+              <div className="student-selection" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                <div className="selection-summary">
+                  {selectedStudents.length} of {filteredBulkStudents.length} students selected
+                  <button
+                    type="button"
+                    className="btn btn-link btn-sm"
+                    onClick={() => setSelectedStudents(filteredBulkStudents.map(s => s.id))}
+                  >
+                    Select All Filtered
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-link btn-sm"
+                    onClick={() => setSelectedStudents([])}
+                  >
+                    Clear All
+                  </button>
+                </div>
+                {filteredBulkStudents.map(student => (
                   <div key={student.id} className="student-checkbox">
                     <input
                       type="checkbox"
@@ -677,7 +765,11 @@ const CourseAssignment = () => {
           <div className="modal-footer">
             <button
               className="btn btn-secondary"
-              onClick={() => setShowBulkModal(false)}
+              onClick={() => {
+                setShowBulkModal(false)
+                setBulkCourseSearchTerm('')
+                setBulkStudentSearchTerm('')
+              }}
             >
               Cancel
             </button>
