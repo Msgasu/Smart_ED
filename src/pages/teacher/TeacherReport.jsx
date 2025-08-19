@@ -438,14 +438,15 @@ const TeacherReport = () => {
     const totalScore = parseFloat(score);
     if (isNaN(totalScore)) return 'F9';
 
-    if (totalScore >= 90) return 'A';
-    if (totalScore >= 80) return 'B2';
-    if (totalScore >= 70) return 'B3';
-    if (totalScore >= 65) return 'C4';
-    if (totalScore >= 60) return 'C5';
-    if (totalScore >= 55) return 'C6';
-    if (totalScore >= 50) return 'D7';
-    if (totalScore >= 40) return 'E8';
+    if (totalScore >= 90 && totalScore <= 100) return 'A1';
+    if (totalScore >= 80 && totalScore <= 89) return 'B2';
+    if (totalScore >= 70 && totalScore <= 79) return 'B3';
+    if (totalScore >= 65 && totalScore <= 69) return 'C4';
+    if (totalScore >= 60 && totalScore <= 64) return 'C5';
+    if (totalScore >= 55 && totalScore <= 59) return 'C6';
+    if (totalScore >= 50 && totalScore <= 54) return 'D7';
+    if (totalScore >= 40 && totalScore <= 49) return 'E8';
+    if (totalScore >= 0 && totalScore <= 39) return 'F9';
     return 'F9';
   };
 

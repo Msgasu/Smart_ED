@@ -114,11 +114,16 @@ const TeacherReportViewer = ({ user, profile }) => {
     const totalScore = report.student_grades.reduce((sum, grade) => sum + (grade.total_score || 0), 0)
     const averageScore = totalScore / report.student_grades.length
 
-    if (averageScore >= 90) return 'A'
-    if (averageScore >= 80) return 'B'
-    if (averageScore >= 70) return 'C'
-    if (averageScore >= 60) return 'D'
-    return 'F'
+    if (averageScore >= 90 && averageScore <= 100) return 'A1'
+    if (averageScore >= 80 && averageScore <= 89) return 'B2'
+    if (averageScore >= 70 && averageScore <= 79) return 'B3'
+    if (averageScore >= 65 && averageScore <= 69) return 'C4'
+    if (averageScore >= 60 && averageScore <= 64) return 'C5'
+    if (averageScore >= 55 && averageScore <= 59) return 'C6'
+    if (averageScore >= 50 && averageScore <= 54) return 'D7'
+    if (averageScore >= 40 && averageScore <= 49) return 'E8'
+    if (averageScore >= 0 && averageScore <= 39) return 'F9'
+    return 'F9'
   }
 
   if (loading) {

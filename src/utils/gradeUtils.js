@@ -5,14 +5,14 @@
  */
 export const calculateGrade = (score) => {
   if (score >= 90 && score <= 100) return 'A1';
-  if (score >= 80 && score < 90) return 'B2';
-  if (score >= 70 && score < 80) return 'B3';
-  if (score >= 65 && score < 70) return 'C4';
-  if (score >= 60 && score < 65) return 'C5';
-  if (score >= 55 && score < 60) return 'C6';
-  if (score >= 50 && score < 55) return 'D7';
-  if (score >= 40 && score < 50) return 'E8';
-  if (score >= 0 && score < 40) return 'F9';
+  if (score >= 80 && score <= 89) return 'B2';
+  if (score >= 70 && score <= 79) return 'B3';
+  if (score >= 65 && score <= 69) return 'C4';
+  if (score >= 60 && score <= 64) return 'C5';
+  if (score >= 55 && score <= 59) return 'C6';
+  if (score >= 50 && score <= 54) return 'D7';
+  if (score >= 40 && score <= 49) return 'E8';
+  if (score >= 0 && score <= 39) return 'F9';
   return 'N/A'; // Handle invalid scores
 };
 
