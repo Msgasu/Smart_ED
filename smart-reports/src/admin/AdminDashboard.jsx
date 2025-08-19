@@ -21,6 +21,7 @@ const AdminDashboard = ({ user, profile }) => {
   })
   const [recentActivity, setRecentActivity] = useState([])
   const [classStats, setClassStats] = useState([])
+  const [teacherPerformance, setTeacherPerformance] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -119,11 +120,177 @@ const AdminDashboard = ({ user, profile }) => {
         setRecentActivity([])
       }
 
+      // Fetch teacher performance data
+      await fetchTeacherPerformance()
+
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
       toast.error('Error loading dashboard data')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchTeacherPerformance = async () => {
+    try {
+      console.log('📊 Fetching teacher performance data...')
+      
+      // Get all faculty members with their course assignments
+      const { data: faculty, error: facultyError } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          faculty_courses!inner (
+            course_id,
+            status,
+            courses (
+              id,
+              code,
+              name
+            )
+          )
+        `)
+        .eq('role', 'faculty')
+        .eq('faculty_courses.status', 'active')
+
+      if (facultyError) throw facultyError
+
+      const teacherStats = await Promise.all(faculty.map(async (teacher) => {
+        const teacherCourses = teacher.faculty_courses
+        
+        // Calculate stats for each course this teacher teaches
+        const courseStats = await Promise.all(teacherCourses.map(async (fc) => {
+          const courseId = fc.course_id
+          const course = fc.courses
+
+          // Get total students in this course
+          const { data: enrollments, error: enrollmentError } = await supabase
+            .from('student_courses')
+            .select('student_id')
+            .eq('course_id', courseId)
+            .eq('status', 'enrolled')
+
+          if (enrollmentError) {
+            console.error('Error fetching enrollments for course', courseId, enrollmentError)
+            return {
+              course,
+              totalStudents: 0,
+              reportsWithGrades: 0,
+              percentage: 0
+            }
+          }
+
+          const totalStudents = enrollments?.length || 0
+          const studentIds = enrollments?.map(e => e.student_id) || []
+
+          // Get all grades this teacher has entered for students in this course
+          let reportsWithSomeGrades = 0
+          let reportsCompletelyFilled = 0
+          
+          if (studentIds.length > 0) {
+            const { data: grades, error: gradesError } = await supabase
+              .from('student_grades')
+              .select(`
+                report_id,
+                class_score,
+                exam_score,
+                total_score,
+                grade,
+                remark,
+                student_reports!inner (
+                  student_id,
+                  term,
+                  academic_year
+                )
+              `)
+              .eq('subject_id', courseId)
+              .in('student_reports.student_id', studentIds)
+
+            if (!gradesError && grades) {
+              // Group grades by report_id to analyze each report
+              const reportGrades = new Map()
+              grades.forEach(grade => {
+                reportGrades.set(grade.report_id, grade)
+              })
+
+              reportGrades.forEach(grade => {
+                // Check if this teacher has filled ANY fields for this report
+                const hasAnyGrades = (
+                  (grade.class_score !== null && grade.class_score > 0) ||
+                  (grade.exam_score !== null && grade.exam_score > 0) ||
+                  (grade.total_score !== null && grade.total_score > 0) ||
+                  (grade.grade !== null && grade.grade !== '') ||
+                  (grade.remark !== null && grade.remark !== '')
+                )
+
+                if (hasAnyGrades) {
+                  reportsWithSomeGrades++
+                }
+
+                // Check if ALL fields are completely filled
+                const isCompletelyFilled = (
+                  grade.class_score !== null && grade.class_score > 0 &&
+                  grade.exam_score !== null && grade.exam_score > 0 &&
+                  grade.total_score !== null && grade.total_score > 0 &&
+                  grade.grade !== null && grade.grade !== '' &&
+                  grade.remark !== null && grade.remark !== ''
+                )
+
+                if (isCompletelyFilled) {
+                  reportsCompletelyFilled++
+                }
+              })
+            }
+          }
+
+          const someGradesPercentage = totalStudents > 0 ? Math.round((reportsWithSomeGrades / totalStudents) * 100) : 0
+          const completePercentage = totalStudents > 0 ? Math.round((reportsCompletelyFilled / totalStudents) * 100) : 0
+
+          return {
+            course,
+            totalStudents,
+            reportsWithSomeGrades,
+            reportsCompletelyFilled,
+            someGradesPercentage,
+            completePercentage
+          }
+        }))
+
+        // Calculate overall stats for this teacher
+        const totalStudentsAllCourses = courseStats.reduce((sum, stat) => sum + stat.totalStudents, 0)
+        const totalReportsWithSomeGrades = courseStats.reduce((sum, stat) => sum + stat.reportsWithSomeGrades, 0)
+        const totalReportsCompletelyFilled = courseStats.reduce((sum, stat) => sum + stat.reportsCompletelyFilled, 0)
+        
+        const overallSomeGradesPercentage = totalStudentsAllCourses > 0 
+          ? Math.round((totalReportsWithSomeGrades / totalStudentsAllCourses) * 100) 
+          : 0
+        const overallCompletePercentage = totalStudentsAllCourses > 0 
+          ? Math.round((totalReportsCompletelyFilled / totalStudentsAllCourses) * 100) 
+          : 0
+
+        return {
+          id: teacher.id,
+          name: `${teacher.first_name} ${teacher.last_name}`,
+          totalStudents: totalStudentsAllCourses,
+          reportsWithSomeGrades: totalReportsWithSomeGrades,
+          reportsCompletelyFilled: totalReportsCompletelyFilled,
+          overallSomeGradesPercentage,
+          overallCompletePercentage,
+          courses: courseStats
+        }
+      }))
+
+      // Sort by overall complete percentage (highest first)
+      teacherStats.sort((a, b) => b.overallCompletePercentage - a.overallCompletePercentage)
+      
+      console.log('📊 Teacher performance data:', teacherStats)
+      setTeacherPerformance(teacherStats)
+
+    } catch (error) {
+      console.error('Error fetching teacher performance:', error)
+      toast.error('Failed to fetch teacher performance data')
     }
   }
 
@@ -203,6 +370,142 @@ const AdminDashboard = ({ user, profile }) => {
             number={stats.pendingReports} 
             label="Pending Reports" 
           />
+        </div>
+
+        {/* Teacher Performance Section */}
+        <div className="teacher-performance-section" style={{ marginBottom: '1.5rem' }}>
+          <div className="users-table-container">
+            <div className="table-header">
+              <h3>Teacher Performance Overview</h3>
+              <p style={{ color: 'var(--gray-600)', fontSize: '0.875rem', margin: '0.5rem 0 0 0' }}>
+                Reports filled by each teacher across their assigned courses
+              </p>
+            </div>
+            <div style={{ padding: '1.5rem' }}>
+              {teacherPerformance.length > 0 ? (
+                <div style={{ display: 'grid', gap: '1rem' }}>
+                  {teacherPerformance.map(teacher => (
+                    <div key={teacher.id} className="teacher-performance-card" style={{
+                      border: '1px solid var(--gray-200)',
+                      borderRadius: '8px',
+                      padding: '1.5rem',
+                      background: 'white'
+                    }}>
+                      {/* Teacher Header */}
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center',
+                        marginBottom: '1rem',
+                        paddingBottom: '1rem',
+                        borderBottom: '1px solid var(--gray-100)'
+                      }}>
+                        <div>
+                          <h4 style={{ margin: '0 0 0.25rem 0', color: 'var(--wine)', fontWeight: '600' }}>
+                            {teacher.name}
+                          </h4>
+                          <div style={{ display: 'flex', gap: '1rem', fontSize: '0.875rem', color: 'var(--gray-600)' }}>
+                            <span>{teacher.totalStudents} Total Students</span>
+                            <span>{teacher.reportsWithSomeGrades} Partial</span>
+                            <span>{teacher.reportsCompletelyFilled} Complete</span>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ 
+                              fontSize: '1.25rem', 
+                              fontWeight: '600',
+                              color: teacher.overallSomeGradesPercentage >= 80 ? 'var(--lime)' : teacher.overallSomeGradesPercentage >= 60 ? '#ffc107' : '#dc3545'
+                            }}>
+                              {teacher.overallSomeGradesPercentage}%
+                            </div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)' }}>
+                              Partial
+                            </div>
+                          </div>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ 
+                              fontSize: '1.5rem', 
+                              fontWeight: '700',
+                              color: teacher.overallCompletePercentage >= 80 ? 'var(--lime)' : teacher.overallCompletePercentage >= 60 ? '#ffc107' : '#dc3545'
+                            }}>
+                              {teacher.overallCompletePercentage}%
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>
+                              Complete
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Course Breakdown */}
+                      {teacher.courses.length > 1 ? (
+                        <div>
+                          <h5 style={{ margin: '0 0 0.75rem 0', fontSize: '0.875rem', color: 'var(--gray-700)' }}>
+                            Course Breakdown:
+                          </h5>
+                          <div style={{ display: 'grid', gap: '0.5rem' }}>
+                            {teacher.courses.map((courseData, idx) => (
+                              <div key={idx} style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: '0.75rem',
+                                background: 'var(--gray-50)',
+                                borderRadius: '4px',
+                                fontSize: '0.875rem'
+                              }}>
+                                <div>
+                                  <span style={{ fontWeight: '500', color: 'var(--wine)' }}>
+                                    {courseData.course.code}
+                                  </span>
+                                  <span style={{ color: 'var(--gray-600)', marginLeft: '0.5rem' }}>
+                                    {courseData.course.name}
+                                  </span>
+                                </div>
+                                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', fontSize: '0.8rem' }}>
+                                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                    <span style={{ color: 'var(--gray-600)' }}>
+                                      {courseData.reportsWithSomeGrades}/{courseData.totalStudents}
+                                    </span>
+                                    <span style={{ 
+                                      fontWeight: '600',
+                                      color: courseData.someGradesPercentage >= 80 ? 'var(--lime)' : courseData.someGradesPercentage >= 60 ? '#ffc107' : '#dc3545'
+                                    }}>
+                                      {courseData.someGradesPercentage}% Partial
+                                    </span>
+                                  </div>
+                                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                    <span style={{ color: 'var(--gray-600)' }}>
+                                      {courseData.reportsCompletelyFilled}/{courseData.totalStudents}
+                                    </span>
+                                    <span style={{ 
+                                      fontWeight: '600',
+                                      color: courseData.completePercentage >= 80 ? 'var(--lime)' : courseData.completePercentage >= 60 ? '#ffc107' : '#dc3545'
+                                    }}>
+                                      {courseData.completePercentage}% Complete
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: '0.875rem', color: 'var(--gray-600)' }}>
+                          <strong>{teacher.courses[0]?.course.code}:</strong> {teacher.courses[0]?.course.name}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--gray-500)' }}>
+                  <p>No teacher performance data available</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Main Content Grid */}
