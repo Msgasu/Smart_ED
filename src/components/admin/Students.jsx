@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import DataTable from 'react-data-table-component';
 import Modal from 'react-bootstrap/Modal';
 import Button from 'react-bootstrap/Button';
+import './styles/Students.css';
 
 const Students = () => {
   const [users, setUsers] = useState([]);
@@ -30,6 +31,11 @@ const Students = () => {
     faculty: 0,
     guardians: 0
   });
+
+  // Pagination and search states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   // Fetch all users data (excluding admins)
   const fetchUsers = async () => {
@@ -328,6 +334,128 @@ const Students = () => {
     }
   };
 
+  // Filter and paginate users
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = searchTerm === '' || 
+      `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.email || '').toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const roleMatch = roleFilter ? user.role === roleFilter : true;
+    const yearMatch = yearFilter && roleFilter === 'student' ? user.class_year === yearFilter : true;
+    
+    return matchesSearch && roleMatch && yearMatch;
+  });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentUsers = filteredUsers.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, roleFilter, yearFilter]);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+
+    const pages = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    // Previous button
+    pages.push(
+      <button
+        key="prev"
+        className={`btn btn-outline-primary ${currentPage === 1 ? 'disabled' : ''}`}
+        onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+      >
+        Previous
+      </button>
+    );
+
+    // First page + ellipsis
+    if (startPage > 1) {
+      pages.push(
+        <button
+          key={1}
+          className={`btn ${currentPage === 1 ? 'btn-primary' : 'btn-outline-primary'}`}
+          onClick={() => handlePageChange(1)}
+        >
+          1
+        </button>
+      );
+      
+      if (startPage > 2) {
+        pages.push(<span key="ellipsis1" className="pagination-ellipsis">...</span>);
+      }
+    }
+
+    // Page numbers
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <button
+          key={i}
+          className={`btn ${currentPage === i ? 'btn-primary' : 'btn-outline-primary'}`}
+          onClick={() => handlePageChange(i)}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    // Last page + ellipsis
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        pages.push(<span key="ellipsis2" className="pagination-ellipsis">...</span>);
+      }
+      
+      pages.push(
+        <button
+          key={totalPages}
+          className={`btn ${currentPage === totalPages ? 'btn-primary' : 'btn-outline-primary'}`}
+          onClick={() => handlePageChange(totalPages)}
+        >
+          {totalPages}
+        </button>
+      );
+    }
+
+    // Next button
+    pages.push(
+      <button
+        key="next"
+        className={`btn btn-outline-primary ${currentPage === totalPages ? 'disabled' : ''}`}
+        onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+      >
+        Next
+      </button>
+    );
+
+    return (
+      <div className="pagination-container">
+        <div className="pagination-info">
+          Showing {startIndex + 1}-{Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length} users
+        </div>
+        <div className="pagination-buttons">
+          {pages}
+        </div>
+      </div>
+    );
+  };
+
   const columns = [
     {
       name: 'Full Name',
@@ -430,9 +558,25 @@ const Students = () => {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Search and Filters */}
       <div className="card mb-4 shadow-sm">
         <div className="card-body">
+          <div className="row align-items-center mb-3">
+            <div className="col-md-12">
+              <div className="input-group">
+                <span className="input-group-text">
+                  <i className="fas fa-search"></i>
+                </span>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Search by name or email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
           <div className="row align-items-center">
             <div className="col-md-6">
               <div className="d-flex gap-3">
@@ -495,17 +639,13 @@ const Students = () => {
         <div className="card-body">
           <DataTable
             columns={columns}
-            data={users.filter(user => {
-              const roleMatch = roleFilter ? user.role === roleFilter : true;
-              const yearMatch = yearFilter && roleFilter === 'student' ? user.class_year === yearFilter : true;
-              return roleMatch && yearMatch;
-            })}
-            pagination
+            data={currentUsers}
             progressPending={loading}
             responsive
             highlightOnHover
             pointerOnHover
             theme="default"
+            pagination={false}
             customStyles={{
               header: {
                 style: {
@@ -528,6 +668,7 @@ const Students = () => {
               },
             }}
           />
+          {renderPagination()}
         </div>
       </div>
 

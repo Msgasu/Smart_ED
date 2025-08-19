@@ -22,6 +22,11 @@ const CourseAssignment = () => {
   const [bulkCourseSearchTerm, setBulkCourseSearchTerm] = useState('')
   const [bulkStudentSearchTerm, setBulkStudentSearchTerm] = useState('')
 
+  // Pagination states
+  const [facultyCurrentPage, setFacultyCurrentPage] = useState(1)
+  const [studentsCurrentPage, setStudentsCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
+
   // Class structure for filtering students
   const classStructure = [
     'Form 1 Loyalty', 'Form 1 Integrity', 'Form 1 Faith',
@@ -386,6 +391,124 @@ const CourseAssignment = () => {
     }
   }
 
+  // Pagination logic
+  const createPagination = (data, currentPage, setCurrentPage) => {
+    const totalPages = Math.ceil(data.length / itemsPerPage)
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    const currentItems = data.slice(startIndex, endIndex)
+
+    const handlePageChange = (pageNumber) => {
+      setCurrentPage(pageNumber)
+    }
+
+    const renderPagination = () => {
+      if (totalPages <= 1) return null
+
+      const pages = []
+      const maxVisiblePages = 5
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2))
+      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
+
+      if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1)
+      }
+
+      // Previous button
+      pages.push(
+        <button
+          key="prev"
+          className={`pagination-btn ${currentPage === 1 ? 'disabled' : ''}`}
+          onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
+          Previous
+        </button>
+      )
+
+      // First page + ellipsis
+      if (startPage > 1) {
+        pages.push(
+          <button
+            key={1}
+            className={`pagination-btn ${currentPage === 1 ? 'active' : ''}`}
+            onClick={() => handlePageChange(1)}
+          >
+            1
+          </button>
+        )
+        
+        if (startPage > 2) {
+          pages.push(<span key="ellipsis1" className="pagination-ellipsis">...</span>)
+        }
+      }
+
+      // Page numbers
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(
+          <button
+            key={i}
+            className={`pagination-btn ${currentPage === i ? 'active' : ''}`}
+            onClick={() => handlePageChange(i)}
+          >
+            {i}
+          </button>
+        )
+      }
+
+      // Last page + ellipsis
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          pages.push(<span key="ellipsis2" className="pagination-ellipsis">...</span>)
+        }
+        
+        pages.push(
+          <button
+            key={totalPages}
+            className={`pagination-btn ${currentPage === totalPages ? 'active' : ''}`}
+            onClick={() => handlePageChange(totalPages)}
+          >
+            {totalPages}
+          </button>
+        )
+      }
+
+      // Next button
+      pages.push(
+        <button
+          key="next"
+          className={`pagination-btn ${currentPage === totalPages ? 'disabled' : ''}`}
+          onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+        >
+          Next
+        </button>
+      )
+
+      return (
+        <div className="pagination-container">
+          <div className="pagination-info">
+            Showing {startIndex + 1}-{Math.min(endIndex, data.length)} of {data.length} items
+          </div>
+          <div className="pagination-buttons">
+            {pages}
+          </div>
+        </div>
+      )
+    }
+
+    return { currentItems, renderPagination }
+  }
+
+  // Reset pagination when search terms change
+  useEffect(() => {
+    setFacultyCurrentPage(1)
+  }, [searchTerm])
+
+  useEffect(() => {
+    setStudentsCurrentPage(1)
+  }, [searchTerm, selectedClass])
+
   const FacultyAssignmentTab = () => {
     const filteredFaculty = faculty.filter(member =>
       `${member.first_name} ${member.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -397,10 +520,13 @@ const CourseAssignment = () => {
       course.code.toLowerCase().includes(courseSearchTerm.toLowerCase())
     )
 
+    const { currentItems: currentFaculty, renderPagination: renderFacultyPagination } = 
+      createPagination(filteredFaculty, facultyCurrentPage, setFacultyCurrentPage)
+
     return (
       <div className="faculty-assignment">
         <div className="assignment-header">
-          <h2>Faculty Course Assignment</h2>
+          <h2>Faculty Course Assignment ({filteredFaculty.length} total)</h2>
           <div className="search-box">
             <FaSearch className="search-icon" />
             <input
@@ -414,7 +540,7 @@ const CourseAssignment = () => {
 
         <div className="assignment-content">
           <div className="faculty-grid">
-            {filteredFaculty.map(member => {
+            {currentFaculty.map(member => {
               const memberCourses = facultyCourses.filter(fc => fc.faculty_id === member.id)
               return (
                 <div key={member.id} className="faculty-card">
@@ -487,6 +613,8 @@ const CourseAssignment = () => {
               )
             })}
           </div>
+          
+          {renderFacultyPagination()}
         </div>
       </div>
     )
@@ -505,10 +633,13 @@ const CourseAssignment = () => {
       course.code.toLowerCase().includes(courseSearchTerm.toLowerCase())
     )
 
+    const { currentItems: currentStudents, renderPagination: renderStudentsPagination } = 
+      createPagination(filteredStudents, studentsCurrentPage, setStudentsCurrentPage)
+
     return (
       <div className="student-assignment">
         <div className="assignment-header">
-          <h2>Student Course Assignment</h2>
+          <h2>Student Course Assignment ({filteredStudents.length} total)</h2>
           <div className="header-controls">
             <select
               value={selectedClass}
@@ -591,7 +722,7 @@ const CourseAssignment = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredStudents.map(student => {
+              {currentStudents.map(student => {
                 const studentAssignments = studentCourses.filter(sc => sc.student_id === student.id)
                 return (
                   <tr key={student.id}>
@@ -646,6 +777,8 @@ const CourseAssignment = () => {
               })}
             </tbody>
           </table>
+          
+          {renderStudentsPagination()}
         </div>
       </div>
     )

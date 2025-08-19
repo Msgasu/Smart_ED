@@ -20,6 +20,10 @@ const UsersPage = () => {
     inactive: 0
   })
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
+
   // Add User Modal State
   const [showAddUserModal, setShowAddUserModal] = useState(false)
   const [addUserLoading, setAddUserLoading] = useState(false)
@@ -398,6 +402,116 @@ const UsersPage = () => {
     return matchesSearch && matchesRole && matchesStatus
   })
 
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const currentUsers = filteredUsers.slice(startIndex, endIndex)
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, roleFilter, statusFilter])
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber)
+  }
+
+  const renderPagination = () => {
+    if (totalPages <= 1) return null
+
+    const pages = []
+    const maxVisiblePages = 5
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2))
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1)
+    }
+
+    // Previous button
+    pages.push(
+      <button
+        key="prev"
+        className={`pagination-btn ${currentPage === 1 ? 'disabled' : ''}`}
+        onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+      >
+        Previous
+      </button>
+    )
+
+    // First page + ellipsis
+    if (startPage > 1) {
+      pages.push(
+        <button
+          key={1}
+          className={`pagination-btn ${currentPage === 1 ? 'active' : ''}`}
+          onClick={() => handlePageChange(1)}
+        >
+          1
+        </button>
+      )
+      
+      if (startPage > 2) {
+        pages.push(<span key="ellipsis1" className="pagination-ellipsis">...</span>)
+      }
+    }
+
+    // Page numbers
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <button
+          key={i}
+          className={`pagination-btn ${currentPage === i ? 'active' : ''}`}
+          onClick={() => handlePageChange(i)}
+        >
+          {i}
+        </button>
+      )
+    }
+
+    // Last page + ellipsis
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        pages.push(<span key="ellipsis2" className="pagination-ellipsis">...</span>)
+      }
+      
+      pages.push(
+        <button
+          key={totalPages}
+          className={`pagination-btn ${currentPage === totalPages ? 'active' : ''}`}
+          onClick={() => handlePageChange(totalPages)}
+        >
+          {totalPages}
+        </button>
+      )
+    }
+
+    // Next button
+    pages.push(
+      <button
+        key="next"
+        className={`pagination-btn ${currentPage === totalPages ? 'disabled' : ''}`}
+        onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+      >
+        Next
+      </button>
+    )
+
+    return (
+      <div className="pagination-container">
+        <div className="pagination-info">
+          Showing {startIndex + 1}-{Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length} users
+        </div>
+        <div className="pagination-buttons">
+          {pages}
+        </div>
+      </div>
+    )
+  }
+
   const getRoleColor = (role) => {
     switch (role) {
       case 'admin': return 'danger'
@@ -548,7 +662,7 @@ const UsersPage = () => {
             <div className="table-cell">Actions</div>
           </div>
           
-          {filteredUsers.map(user => (
+          {currentUsers.map(user => (
             <div key={user.id} className="table-row">
               <div className="table-cell user-cell">
                 <div className="user-avatar">
@@ -642,6 +756,8 @@ const UsersPage = () => {
             <p>Try adjusting your search or filter criteria</p>
           </div>
         )}
+        
+        {filteredUsers.length > 0 && renderPagination()}
       </div>
 
       {/* Add User Modal */}

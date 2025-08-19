@@ -59,6 +59,10 @@ const TeacherAssignments = () => {
   const [loadingTodos, setLoadingTodos] = useState(false);
   const [editingTodoId, setEditingTodoId] = useState(null);
   
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  
   // New state variables for collapsible widgets
   const [expandedWidgets, setExpandedWidgets] = useState(() => {
     // Load saved widget states from localStorage
@@ -467,6 +471,116 @@ const TeacherAssignments = () => {
     
     return sortDir === 'asc' ? comparison : -comparison;
   });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(sortedAssignments.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentAssignments = sortedAssignments.slice(startIndex, endIndex);
+
+  // Reset to first page when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+
+    const pages = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    // Previous button
+    pages.push(
+      <button
+        key="prev"
+        className={`pagination-btn ${currentPage === 1 ? 'disabled' : ''}`}
+        onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+      >
+        Previous
+      </button>
+    );
+
+    // First page + ellipsis
+    if (startPage > 1) {
+      pages.push(
+        <button
+          key={1}
+          className={`pagination-btn ${currentPage === 1 ? 'active' : ''}`}
+          onClick={() => handlePageChange(1)}
+        >
+          1
+        </button>
+      );
+      
+      if (startPage > 2) {
+        pages.push(<span key="ellipsis1" className="pagination-ellipsis">...</span>);
+      }
+    }
+
+    // Page numbers
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <button
+          key={i}
+          className={`pagination-btn ${currentPage === i ? 'active' : ''}`}
+          onClick={() => handlePageChange(i)}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    // Last page + ellipsis
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        pages.push(<span key="ellipsis2" className="pagination-ellipsis">...</span>);
+      }
+      
+      pages.push(
+        <button
+          key={totalPages}
+          className={`pagination-btn ${currentPage === totalPages ? 'active' : ''}`}
+          onClick={() => handlePageChange(totalPages)}
+        >
+          {totalPages}
+        </button>
+      );
+    }
+
+    // Next button
+    pages.push(
+      <button
+        key="next"
+        className={`pagination-btn ${currentPage === totalPages ? 'disabled' : ''}`}
+        onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+      >
+        Next
+      </button>
+    );
+
+    return (
+      <div className="pagination-container">
+        <div className="pagination-info">
+          Showing {startIndex + 1}-{Math.min(endIndex, sortedAssignments.length)} of {sortedAssignments.length} assignments
+        </div>
+        <div className="pagination-buttons">
+          {pages}
+        </div>
+      </div>
+    );
+  };
 
   const formatDate = (dateString) => {
     if (!dateString) return 'No due date';
@@ -1034,26 +1148,30 @@ const TeacherAssignments = () => {
               </div>
               <div className="card-body">
                 {sortedAssignments.length > 0 ? (
-                  <table className="assignments-table">
-                    <thead>
-                      <tr>
-                        <th onClick={() => handleSort('title')} className="sortable">
-                          Title {sortBy === 'title' && (sortDir === 'asc' ? '↑' : '↓')}
-                        </th>
-                        <th onClick={() => handleSort('type')} className="sortable">
-                          Type {sortBy === 'type' && (sortDir === 'asc' ? '↑' : '↓')}
-                        </th>
-                        <th onClick={() => handleSort('due_date')} className="sortable">
-                          Due Date {sortBy === 'due_date' && (sortDir === 'asc' ? '↑' : '↓')}
-                        </th>
-                        <th onClick={() => handleSort('max_score')} className="sortable">
-                          Max Score {sortBy === 'max_score' && (sortDir === 'asc' ? '↑' : '↓')}
-                        </th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sortedAssignments.map(assignment => (
+                  <>
+                    <div className="assignments-summary">
+                      <p>Total: {sortedAssignments.length} assignments</p>
+                    </div>
+                    <table className="assignments-table">
+                      <thead>
+                        <tr>
+                          <th onClick={() => handleSort('title')} className="sortable">
+                            Title {sortBy === 'title' && (sortDir === 'asc' ? '↑' : '↓')}
+                          </th>
+                          <th onClick={() => handleSort('type')} className="sortable">
+                            Type {sortBy === 'type' && (sortDir === 'asc' ? '↑' : '↓')}
+                          </th>
+                          <th onClick={() => handleSort('due_date')} className="sortable">
+                            Due Date {sortBy === 'due_date' && (sortDir === 'asc' ? '↑' : '↓')}
+                          </th>
+                          <th onClick={() => handleSort('max_score')} className="sortable">
+                            Max Score {sortBy === 'max_score' && (sortDir === 'asc' ? '↑' : '↓')}
+                          </th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {currentAssignments.map(assignment => (
                         <tr key={assignment.id}>
                           <td>{assignment.title}</td>
                           <td>
@@ -1097,6 +1215,8 @@ const TeacherAssignments = () => {
                       ))}
                     </tbody>
                   </table>
+                  {renderPagination()}
+                  </>
                 ) : (
                   <div className="empty-state">
                     <FaFileAlt className="empty-icon" />
