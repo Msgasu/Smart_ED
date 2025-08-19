@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FaPlus, FaSearch, FaTrashAlt, FaCalendarAlt, FaSave, FaPrint, FaFileExport, FaUsers, FaFileAlt, FaChartBar, FaHome, FaEye, FaEdit, FaLock, FaClock, FaFilter, FaUser } from 'react-icons/fa'
+import { FaPlus, FaSearch, FaTrashAlt, FaCalendarAlt, FaSave, FaPrint, FaFileExport, FaUsers, FaFileAlt, FaChartBar, FaHome, FaEye, FaEdit, FaLock, FaClock, FaFilter, FaUser, FaBook, FaExclamationTriangle } from 'react-icons/fa'
 import { supabase } from '../lib/supabase'
 import { studentReportsAPI, studentGradesAPI, studentsAPI, coursesAPI } from '../lib/api'
 import { getReportsByStatus, getReportById, REPORT_STATUS } from '../lib/reportApi'
@@ -64,11 +64,15 @@ const TeacherDashboard = ({ user, profile }) => {
   // Dashboard state
   const [courses, setCourses] = useState([])
   const [statistics, setStatistics] = useState({
-    totalStudents: 0,
-    totalCourses: 0,
-    draftReports: 0,
-    completedReports: 0
+    myStudents: 0,
+    myCourses: 0,
+    reportsIFilled: 0,
+    fieldsICompleted: 0
   })
+  const [courseBreakdown, setCourseBreakdown] = useState([])
+  const [studentsWithMissingGrades, setStudentsWithMissingGrades] = useState([])
+  const [missingGradesCurrentPage, setMissingGradesCurrentPage] = useState(1)
+  const [missingGradesItemsPerPage] = useState(10)
 
   // Reports Management state (for viewing complete report cards)
   const [allReports, setAllReports] = useState([])
@@ -104,6 +108,19 @@ const TeacherDashboard = ({ user, profile }) => {
     fetchDashboardStats()
     fetchAllTeacherReports()
   }, [])
+
+  // Reset missing grades pagination when data changes
+  useEffect(() => {
+    setMissingGradesCurrentPage(1)
+  }, [studentsWithMissingGrades.length])
+
+  // Refresh dashboard stats when switching back to dashboard tab
+  useEffect(() => {
+    if (activeTab === 'dashboard') {
+      console.log('🔄 Refreshing dashboard stats on tab switch...')
+      fetchDashboardStats()
+    }
+  }, [activeTab])
 
   // Memoized search handler for student search
   const handleStudentSearchChange = useCallback((e) => {
@@ -180,49 +197,327 @@ const TeacherDashboard = ({ user, profile }) => {
 
   const fetchDashboardStats = async () => {
     try {
-      // Get teacher's courses
+      console.log('🔍 Fetching dashboard stats for teacher:', user.id)
+      
+      // Get teacher's courses - based on your exact DB schema
       const { data: teacherCourses, error: coursesError } = await supabase
         .from('faculty_courses')
-        .select('course_id')
+        .select(`
+          id,
+          course_id,
+          faculty_id,
+          status,
+          courses (
+            id,
+            code,
+            name,
+            description
+          )
+        `)
         .eq('faculty_id', user.id)
+        .eq('status', 'active')
 
-      if (coursesError) throw coursesError
+      console.log('📚 Teacher courses query result:', { teacherCourses, coursesError })
 
-      const courseIds = teacherCourses.map(tc => tc.course_id)
+      if (coursesError) {
+        console.error('❌ Error fetching teacher courses:', coursesError)
+        throw coursesError
+      }
 
-      // Get students in teacher's courses
-      let totalStudents = 0
+      const courseIds = teacherCourses?.map(tc => tc.course_id) || []
+      const myCourses = courseIds.length
+      
+      console.log('📋 Found', myCourses, 'courses for teacher. Course IDs:', courseIds)
+
+      // Get all students in teacher's courses - based on your exact DB schema
+      let allStudentCourses = []
       if (courseIds.length > 0) {
+        console.log('👥 Fetching students for course IDs:', courseIds)
+        
+        // Let's try the query without the inner join first to see all enrollments
+        const { data: allEnrollments, error: allEnrollmentsError } = await supabase
+          .from('student_courses')
+          .select('*')
+          .in('course_id', courseIds)
+          .eq('status', 'enrolled')
+          
+        console.log('📋 All enrollments (no join):', { count: allEnrollments?.length, allEnrollments, allEnrollmentsError })
+
         const { data: studentCourses, error: studentsError } = await supabase
           .from('student_courses')
-          .select('student_id')
+          .select(`
+            id,
+            student_id,
+            course_id,
+            status,
+            profiles!inner (
+              id,
+              first_name,
+              last_name,
+              email,
+              students (
+                profile_id,
+                student_id,
+                class_year
+              )
+            )
+          `)
           .in('course_id', courseIds)
+          .eq('status', 'enrolled')
+
+        console.log('👥 Student courses with profile join:', { count: studentCourses?.length, studentCourses, studentsError })
+        
+        // Check if the join is causing the missing student
+        if (allEnrollments?.length !== studentCourses?.length) {
+          console.log('⚠️ FOUND THE ISSUE! Join is excluding students.')
+          console.log('Raw enrollments:', allEnrollments?.length, 'vs Joined data:', studentCourses?.length)
+          
+          // Find which student_ids are missing from the joined result
+          const allStudentIds = allEnrollments?.map(e => e.student_id) || []
+          const joinedStudentIds = studentCourses?.map(sc => sc.student_id) || []
+          const missingStudentIds = allStudentIds.filter(id => !joinedStudentIds.includes(id))
+          console.log('🔍 Missing student IDs from join:', missingStudentIds)
+        }
 
         if (!studentsError) {
-          const uniqueStudents = [...new Set(studentCourses.map(sc => sc.student_id))]
-          totalStudents = uniqueStudents.length
+          allStudentCourses = studentCourses || []
+          console.log('✅ Found', allStudentCourses.length, 'student-course enrollments')
+        } else {
+          console.error('❌ Error fetching student courses:', studentsError)
+          allStudentCourses = []
         }
+      } else {
+        console.log('⚠️ No course IDs found - teacher has no assigned courses')
       }
 
-      // Get reports count
-      const { data: reports, error: reportsError } = await supabase
-        .from('student_reports')
-        .select('status')
+      // Use the same method as dropdown to get accurate student count
+      console.log('👥 Getting accurate student count using dropdown method...')
+      
+      // Get all students using the same API as dropdown
+      const { data: allStudentsFromAPI, error: allStudentsError } = await studentsAPI.getStudents()
+      
+      if (allStudentsError) {
+        console.error('❌ Error fetching all students:', allStudentsError)
+        throw allStudentsError
+      }
+      
+      // Get student enrollments (same as dropdown method)
+      const { data: studentEnrollments, error: enrollmentError } = await supabase
+        .from('student_courses')
+        .select('student_id')
+        .in('course_id', courseIds)
+        .eq('status', 'enrolled')
+      
+      if (enrollmentError) {
+        console.error('❌ Error fetching enrollments:', enrollmentError)
+        throw enrollmentError
+      }
+      
+      // Filter students exactly like the dropdown does
+      const enrolledStudentIds = new Set(studentEnrollments.map(sc => sc.student_id))
+      const myStudentsFromAPI = allStudentsFromAPI.filter(student => 
+        enrolledStudentIds.has(student.id)
+      )
+      
+      const myStudents = myStudentsFromAPI.length
+      const myStudentIds = myStudentsFromAPI.map(s => s.id)
+      
+      console.log('✅ Accurate student count using dropdown method:', myStudents)
+      console.log('👥 Student IDs from API method:', myStudentIds)
+      
+      // Keep the old method for comparison
+      const oldMyStudentIds = [...new Set(allStudentCourses.map(sc => sc.student_id))]
+      const oldMyStudents = oldMyStudentIds.length
+      
+      console.log('📊 Comparison - API method:', myStudents, 'vs Old join method:', oldMyStudents)
 
-      if (!reportsError) {
-        const draftReports = reports.filter(r => r.status === 'draft').length
-        const completedReports = reports.filter(r => r.status === 'completed').length
+      // Get reports where this teacher has filled grades - based on your exact DB schema
+      let reportsIFilled = 0
+      let fieldsICompleted = 0
+      let courseBreakdownData = []
+      let studentsWithMissingGradesData = []
+      
+      if (courseIds.length > 0 && myStudentIds.length > 0) {
+        console.log('📊 Fetching grades for teacher courses and students...')
+        
+        // Get all grades this teacher has entered for their courses
+        const { data: myGrades, error: gradesError } = await supabase
+          .from('student_grades')
+          .select(`
+            id,
+            report_id,
+            subject_id,
+            class_score,
+            exam_score,
+            total_score,
+            grade,
+            remark,
+            student_reports!inner (
+              id,
+              student_id,
+              term,
+              academic_year,
+              status
+            )
+          `)
+          .in('subject_id', courseIds)
+          .in('student_reports.student_id', myStudentIds)
+
+        console.log('📊 Grades query result:', { myGrades, gradesError })
+
+        if (!gradesError && myGrades) {
+          // Count unique reports this teacher has contributed to
+          const uniqueReportIds = [...new Set(myGrades.map(grade => grade.report_id))]
+          reportsIFilled = uniqueReportIds.length
+
+          // Count fields (grades) this teacher has completed (where they have non-null scores)
+          fieldsICompleted = myGrades.filter(grade => 
+            (grade.class_score !== null && grade.class_score > 0) || 
+            (grade.exam_score !== null && grade.exam_score > 0) || 
+            (grade.total_score !== null && grade.total_score > 0)
+          ).length
+          
+          console.log('📈 Calculated stats - Reports filled:', reportsIFilled, 'Fields completed:', fieldsICompleted)
+        } else {
+          console.log('❌ Error fetching grades or no grades found:', gradesError)
+        }
+
+        // Calculate course-specific breakdown
+        courseBreakdownData = await Promise.all(teacherCourses.map(async (tc) => {
+          const courseId = tc.course_id
+          const course = tc.courses
+          
+          // Get actual enrollment count for this specific course directly from database
+          const { data: courseEnrollments, error: courseEnrollmentError } = await supabase
+            .from('student_courses')
+            .select('student_id')
+            .eq('course_id', courseId)
+            .eq('status', 'enrolled')
+          
+          const actualStudentCount = courseEnrollments?.length || 0
+          
+          console.log(`📚 ${course.code} - Direct DB query shows ${actualStudentCount} students`)
+          
+          // Students in this specific course from our joined data
+          const courseStudents = allStudentCourses.filter(sc => sc.course_id === courseId)
+          const joinedStudentCount = courseStudents.length
+          
+          console.log(`📚 ${course.code} - Joined data shows ${joinedStudentCount} students`)
+          
+          if (actualStudentCount !== joinedStudentCount) {
+            console.log(`⚠️ Discrepancy in ${course.code}: DB=${actualStudentCount}, Joined=${joinedStudentCount}`)
+          }
+          
+          // Grades filled for this course
+          const courseGrades = myGrades?.filter(grade => grade.subject_id === courseId) || []
+          const filledGradesCount = courseGrades.filter(grade => 
+            (grade.class_score !== null && grade.class_score > 0) || 
+            (grade.exam_score !== null && grade.exam_score > 0) || 
+            (grade.total_score !== null && grade.total_score > 0)
+          ).length
+          
+          // Reports for this course
+          const courseReports = [...new Set(courseGrades.map(grade => grade.report_id))].length
+          
+          return {
+            course,
+            studentCount: actualStudentCount, // Use the accurate count from direct DB query
+            reportsFilledCount: courseReports,
+            gradesFilledCount: filledGradesCount,
+            students: courseStudents // Keep the joined data for other purposes
+          }
+        }))
+
+                // Find students with missing grades - improved logic
+        console.log('🔍 Finding students with missing grades...')
+        
+        // Strategy: For each student in teacher's courses, check if they have grades for ALL of teacher's courses
+        studentsWithMissingGradesData = []
+        
+        // Get all students enrolled in teacher's courses
+        for (const courseId of courseIds) {
+          const course = teacherCourses.find(tc => tc.course_id === courseId)?.courses
+          
+          // Get all students in this specific course
+          const { data: courseStudents, error: courseStudentsError } = await supabase
+            .from('student_courses')
+            .select(`
+              student_id,
+              profiles!inner (
+                id,
+                first_name,
+                last_name,
+                students (class_year)
+              )
+            `)
+            .eq('course_id', courseId)
+            .eq('status', 'enrolled')
+            
+          if (courseStudentsError) continue
+          
+          console.log(`📚 Checking ${course?.code}: ${courseStudents?.length} enrolled students`)
+          
+          // For each student, check if they have grades for this course
+          for (const studentData of courseStudents || []) {
+            const studentId = studentData.student_id
+            
+            // Check if this teacher has entered grades for this student in this course
+            const hasGradesForCourse = myGrades?.some(grade => 
+              grade.subject_id === courseId && 
+              grade.student_reports?.student_id === studentId &&
+              ((grade.class_score !== null && grade.class_score > 0) || 
+               (grade.exam_score !== null && grade.exam_score > 0) || 
+               (grade.total_score !== null && grade.total_score > 0))
+            )
+            
+            if (!hasGradesForCourse) {
+              // This student is missing grades for this course
+              const existingEntry = studentsWithMissingGradesData.find(s => s.student_id === studentId)
+              
+              if (existingEntry) {
+                // Add this course to existing entry
+                existingEntry.courses.push(course)
+              } else {
+                // Create new entry for this student
+                studentsWithMissingGradesData.push({
+                  student_id: studentId,
+                  studentName: `${studentData.profiles.first_name} ${studentData.profiles.last_name}`,
+                  classYear: studentData.profiles.students?.class_year || 'Unknown',
+                  courses: [course],
+                  term: 'Term 3',
+                  academic_year: '2024'
+                })
+              }
+            }
+          }
+        }
+        
+        console.log(`⚠️ Found ${studentsWithMissingGradesData.length} students with missing grades:`, studentsWithMissingGradesData)
+      }
 
         setStatistics({
-          totalStudents,
-          totalCourses: courseIds.length,
-          draftReports,
-          completedReports
-        })
-      }
+        myStudents,
+        myCourses,
+        reportsIFilled,
+        fieldsICompleted
+      })
+
+      setCourseBreakdown(courseBreakdownData)
+      setStudentsWithMissingGrades(studentsWithMissingGradesData)
+
+      // Debug logging
+      console.log('📊 Dashboard Stats:', {
+        myStudents,
+        myCourses,
+        reportsIFilled,
+        fieldsICompleted,
+        courseBreakdownCount: courseBreakdownData.length,
+        studentsWithMissingGradesCount: studentsWithMissingGradesData.length
+      })
 
     } catch (error) {
-      console.error('Error fetching dashboard stats:', error)
+      console.error('Error fetching teacher dashboard stats:', error)
+      toast.error('Failed to load dashboard statistics')
     }
   }
 
@@ -976,6 +1271,10 @@ const TeacherDashboard = ({ user, profile }) => {
       
       // Refresh the report data to show updated values
       await handleViewFullReport(selectedReport.id)
+      
+      // Refresh dashboard statistics to update missing grades and counts
+      console.log('🔄 Refreshing dashboard stats after grade save...')
+      await fetchDashboardStats()
 
     } catch (error) {
       console.error('Error saving grade:', error)
@@ -1371,6 +1670,10 @@ const TeacherDashboard = ({ user, profile }) => {
       
       // Reload the report to reflect saved changes
       loadStudentReport()
+      
+      // Refresh dashboard statistics to update missing grades and counts
+      console.log('🔄 Refreshing dashboard stats after report save...')
+      await fetchDashboardStats()
     } catch (error) {
       toast.dismiss()
       console.error('Error saving report:', error)
@@ -1406,7 +1709,7 @@ const TeacherDashboard = ({ user, profile }) => {
         </div>
       </div>
 
-      {/* Statistics Cards */}
+      {/* Teacher-Specific Statistics Cards */}
       <div className="row g-3 mb-4">
         <div className="col-md-3">
           <div className="card bg-primary text-white">
@@ -1414,8 +1717,8 @@ const TeacherDashboard = ({ user, profile }) => {
               <div className="d-flex align-items-center">
                 <FaUsers className="fs-2 me-3" />
                 <div>
-                  <h3 className="mb-1">{statistics.totalStudents}</h3>
-                  <small>Total Students</small>
+                  <h3 className="mb-1">{statistics.myStudents}</h3>
+                  <small>My Students</small>
                 </div>
               </div>
             </div>
@@ -1427,21 +1730,8 @@ const TeacherDashboard = ({ user, profile }) => {
               <div className="d-flex align-items-center">
                 <FaChartBar className="fs-2 me-3" />
                 <div>
-                  <h3 className="mb-1">{statistics.totalCourses}</h3>
-                  <small>Your Courses</small>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-3">
-          <div className="card bg-warning text-white">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <FaFileAlt className="fs-2 me-3" />
-                <div>
-                  <h3 className="mb-1">{statistics.draftReports}</h3>
-                  <small>Draft Reports</small>
+                  <h3 className="mb-1">{statistics.myCourses}</h3>
+                  <small>My Courses</small>
                 </div>
               </div>
             </div>
@@ -1453,8 +1743,21 @@ const TeacherDashboard = ({ user, profile }) => {
               <div className="d-flex align-items-center">
                 <FaFileAlt className="fs-2 me-3" />
                 <div>
-                  <h3 className="mb-1">{statistics.completedReports}</h3>
-                  <small>Completed Reports</small>
+                  <h3 className="mb-1">{statistics.reportsIFilled}</h3>
+                  <small>Reports I've Filled</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-md-3">
+          <div className="card bg-warning text-white">
+            <div className="card-body">
+              <div className="d-flex align-items-center">
+                <FaEdit className="fs-2 me-3" />
+                <div>
+                  <h3 className="mb-1">{statistics.fieldsICompleted}</h3>
+                  <small>Grade Fields Completed</small>
                 </div>
               </div>
             </div>
@@ -1462,22 +1765,205 @@ const TeacherDashboard = ({ user, profile }) => {
         </div>
       </div>
 
-      {/* Your Courses */}
+      {/* Course-Specific Breakdown */}
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="card">
+            <div className="card-header">
+              <h5 className="mb-0">
+                <FaChartBar className="me-2" />
+                Course Breakdown
+              </h5>
+              <small className="text-muted">Detailed statistics for each of your courses</small>
+            </div>
+            <div className="card-body">
+              {courseBreakdown.length > 0 ? (
+                <div className="row">
+                  {courseBreakdown.map((courseData, index) => (
+                    <div key={courseData.course.id} className="col-md-6 col-lg-4 mb-3">
+                      <div className="card border-start border-4 border-info">
+                        <div className="card-body">
+                          <h6 className="card-title text-info">
+                            {courseData.course.code}
+                          </h6>
+                          <p className="card-text text-muted small">
+                            {courseData.course.name}
+                          </p>
+                          <div className="row text-center">
+                            <div className="col-4">
+                              <div className="h5 mb-0 text-primary">{courseData.studentCount}</div>
+                              <small className="text-muted">Students</small>
+                            </div>
+                            <div className="col-4">
+                              <div className="h5 mb-0 text-success">{courseData.reportsFilledCount}</div>
+                              <small className="text-muted">Reports</small>
+                            </div>
+                            <div className="col-4">
+                              <div className="h5 mb-0 text-warning">{courseData.gradesFilledCount}</div>
+                              <small className="text-muted">Grades</small>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <FaChartBar className="fs-1 text-muted mb-3" />
+                  <h6 className="text-muted">No course data available yet</h6>
+                  <p className="text-muted small">Course breakdown will appear once you have students and grades entered.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Students with Missing Grades */}
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="card border-start border-4 border-warning">
+            <div className="card-header bg-light">
+              <h5 className="mb-0 text-warning">
+                <FaExclamationTriangle className="me-2" />
+                Students Requiring Grade Entry
+              </h5>
+              <small className="text-muted">
+                {studentsWithMissingGrades.length > 0 
+                  ? `${studentsWithMissingGrades.length} student(s) have draft reports that need your grades`
+                  : "All students have their grades completed"
+                }
+              </small>
+            </div>
+            <div className="card-body">
+              {studentsWithMissingGrades.length > 0 ? (
+                <>
+                  {/* Pagination calculation */}
+                  {(() => {
+                    const totalPages = Math.ceil(studentsWithMissingGrades.length / missingGradesItemsPerPage)
+                    const startIndex = (missingGradesCurrentPage - 1) * missingGradesItemsPerPage
+                    const endIndex = startIndex + missingGradesItemsPerPage
+                    const currentStudents = studentsWithMissingGrades.slice(startIndex, endIndex)
+
+                    const handlePageChange = (pageNumber) => {
+                      setMissingGradesCurrentPage(pageNumber)
+                    }
+
+                    const renderPagination = () => {
+                      if (totalPages <= 1) return null
+
+                      return (
+                        <div className="pagination-container d-flex justify-content-between align-items-center mt-3">
+                          <div className="pagination-info">
+                            <small className="text-muted">
+                              Showing {startIndex + 1}-{Math.min(endIndex, studentsWithMissingGrades.length)} of {studentsWithMissingGrades.length} students
+                            </small>
+                          </div>
+                          <div className="pagination-buttons">
+                            <button 
+                              className="pagination-btn me-2"
+                              onClick={() => handlePageChange(missingGradesCurrentPage - 1)}
+                              disabled={missingGradesCurrentPage === 1}
+                            >
+                              Previous
+                            </button>
+                            
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
+                              <button
+                                key={pageNumber}
+                                className={`pagination-btn me-1 ${pageNumber === missingGradesCurrentPage ? 'active' : ''}`}
+                                onClick={() => handlePageChange(pageNumber)}
+                              >
+                                {pageNumber}
+                              </button>
+                            ))}
+                            
+                            <button 
+                              className="pagination-btn ms-2"
+                              onClick={() => handlePageChange(missingGradesCurrentPage + 1)}
+                              disabled={missingGradesCurrentPage === totalPages}
+                            >
+                              Next
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    }
+
+                    return (
+                      <>
+                        <div className="table-responsive">
+                          <table className="table table-hover">
+                            <thead>
+                              <tr>
+                                <th>Student Name</th>
+                                <th>Class</th>
+                                <th>Term</th>
+                                <th>Academic Year</th>
+                                <th>Your Course(s)</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {currentStudents.map((student, index) => (
+                                <tr key={`${student.student_id}-${startIndex + index}`}>
+                                  <td className="fw-medium">{student.studentName}</td>
+                                  <td>
+                                    <span className="badge bg-secondary">{student.classYear}</span>
+                                  </td>
+                                  <td>{student.term}</td>
+                                  <td>{student.academic_year}</td>
+                                  <td>
+                                    <div className="d-flex flex-wrap gap-1">
+                                      {student.courses.map((course, idx) => (
+                                        <span key={idx} className="badge bg-info text-white">
+                                          {course.code}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        {renderPagination()}
+                      </>
+                    )
+                  })()}
+                </>
+              ) : (
+                <div className="text-center py-4">
+                  <FaExclamationTriangle className="fs-1 text-success mb-3" />
+                  <h6 className="text-success">Great work! No missing grades</h6>
+                  <p className="text-muted small">All your students have their grades entered, or there are no draft reports requiring your input.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Your Courses Summary */}
       <div className="row">
         <div className="col-12">
           <div className="card">
             <div className="card-header">
-              <h5 className="mb-0">Your Courses</h5>
+              <h5 className="mb-0">
+                <FaBook className="me-2" />
+                Your Courses
+              </h5>
             </div>
             <div className="card-body">
               {courses.length > 0 ? (
                 <div className="row">
                   {courses.map(course => (
                     <div key={course.id} className="col-md-4 mb-3">
-                      <div className="card">
+                      <div className="card h-100">
                         <div className="card-body">
                           <h6 className="card-title">{course.code}</h6>
                           <p className="card-text">{course.name}</p>
+                          <small className="text-muted">{course.description}</small>
                         </div>
                       </div>
                     </div>
@@ -1530,23 +2016,23 @@ const TeacherDashboard = ({ user, profile }) => {
           </div>
           
           <div className="form-group select-group">
-            <label>Select Student:</label>
-            <select
-              className="form-control"
-              value={selectedStudent?.id || ''}
-              onChange={(e) => {
-                const student = students.find(s => s.id === e.target.value)
-                setSelectedStudent(student)
-              }}
-            >
+          <label>Select Student:</label>
+          <select
+            className="form-control"
+            value={selectedStudent?.id || ''}
+            onChange={(e) => {
+              const student = students.find(s => s.id === e.target.value)
+              setSelectedStudent(student)
+            }}
+          >
               <option value="">-- Select a student ({filteredStudents.length} found) --</option>
               {filteredStudents.map(student => (
-                <option key={student.id} value={student.id}>
-                  {student.first_name} {student.last_name} - {student.students?.class_year || 'No Class'}
-                </option>
-              ))}
-            </select>
-          </div>
+              <option key={student.id} value={student.id}>
+                {student.first_name} {student.last_name} - {student.students?.class_year || 'No Class'}
+              </option>
+            ))}
+          </select>
+        </div>
         </div>
         
         {studentSearchTerm && (
