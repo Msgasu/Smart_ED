@@ -32,6 +32,7 @@ const Reports = () => {
   const [loading, setLoading] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState(null)
   const [students, setStudents] = useState([])
+  const [studentSearchTerm, setStudentSearchTerm] = useState('')
   const [selectedTerm, setSelectedTerm] = useState('Term 1')
   const [selectedYear, setSelectedYear] = useState('2024-2025')
   const [reportLoading, setReportLoading] = useState(false)
@@ -59,6 +60,23 @@ const Reports = () => {
     fetchStudents()
     fetchCourses()
   }, [])
+
+  // Memoized search handler for student search
+  const handleStudentSearchChange = useCallback((e) => {
+    setStudentSearchTerm(e.target.value)
+  }, [])
+
+  // Filter students based on search term
+  const filteredStudents = students.filter(student => {
+    if (!studentSearchTerm) return true
+    const fullName = `${student.first_name} ${student.last_name}`.toLowerCase()
+    const className = student.students?.class_year || ''
+    const searchLower = studentSearchTerm.toLowerCase()
+    
+    return fullName.includes(searchLower) || 
+           className.toLowerCase().includes(searchLower) ||
+           student.email.toLowerCase().includes(searchLower)
+  })
 
   // Update report data when student changes
   useEffect(() => {
@@ -523,24 +541,48 @@ const Reports = () => {
 
       {/* Student Selection */}
       <div className="student-selection-section">
-        <div className="form-group">
-          <label>Select Student:</label>
-          <select
-            className="form-control"
-            value={selectedStudent?.id || ''}
-            onChange={(e) => {
-              const student = students.find(s => s.id === e.target.value)
-              setSelectedStudent(student)
-            }}
-          >
-            <option value="">-- Select a student --</option>
-            {students.map(student => (
-              <option key={student.id} value={student.id}>
-                {student.first_name} {student.last_name} - {student.students?.class_year || 'No Class'}
-              </option>
-            ))}
-          </select>
+        <div className="student-search-container">
+          <div className="form-group search-group">
+            <label>Search Students:</label>
+            <div className="search-input-container">
+              <FaSearch className="search-icon" />
+              <input
+                type="text"
+                className="form-control search-input"
+                placeholder="Search by name, class, or email..."
+                value={studentSearchTerm}
+                onChange={handleStudentSearchChange}
+              />
+            </div>
+          </div>
+          
+          <div className="form-group select-group">
+            <label>Select Student:</label>
+            <select
+              className="form-control"
+              value={selectedStudent?.id || ''}
+              onChange={(e) => {
+                const student = students.find(s => s.id === e.target.value)
+                setSelectedStudent(student)
+              }}
+            >
+              <option value="">-- Select a student ({filteredStudents.length} found) --</option>
+              {filteredStudents.map(student => (
+                <option key={student.id} value={student.id}>
+                  {student.first_name} {student.last_name} - {student.students?.class_year || 'No Class'}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
+        
+        {studentSearchTerm && (
+          <div className="search-results-info">
+            <small className="text-muted">
+              {filteredStudents.length} student(s) found for "{studentSearchTerm}"
+            </small>
+          </div>
+        )}
       </div>
 
       {selectedStudent && (
