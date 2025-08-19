@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
 import { FaUsers, FaGraduationCap, FaChalkboardTeacher, FaUserFriends, FaUserCheck, FaPlus, FaSearch, FaEdit, FaEllipsisV, FaTimes, FaSave, FaUser, FaIdCard, FaCode, FaVenusMars } from 'react-icons/fa'
@@ -413,6 +413,11 @@ const UsersPage = () => {
     setCurrentPage(1)
   }, [searchTerm, roleFilter, statusFilter])
 
+  // Memoized search handler to prevent re-renders
+  const handleSearchChange = useCallback((e) => {
+    setSearchTerm(e.target.value)
+  }, [])
+
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber)
   }
@@ -618,7 +623,7 @@ const UsersPage = () => {
             type="text"
             placeholder="Search users by name or email..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={handleSearchChange}
             className="search-input"
           />
         </div>

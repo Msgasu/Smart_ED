@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   FaPlus, FaTrash, FaEdit, FaCalendarAlt, FaClock, FaBook, 
@@ -483,6 +483,11 @@ const TeacherAssignments = () => {
     setCurrentPage(1);
   }, [searchTerm]);
 
+  // Memoized search handler to prevent re-renders
+  const handleSearchChange = useCallback((e) => {
+    setSearchTerm(e.target.value);
+  }, []);
+
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
@@ -637,7 +642,7 @@ const TeacherAssignments = () => {
                   type="text" 
                   placeholder="Search by title or type..." 
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={handleSearchChange}
                 />
               </div>
               

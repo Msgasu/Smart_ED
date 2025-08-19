@@ -1,5 +1,5 @@
 // src/components/admin/Students.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import DataTable from 'react-data-table-component';
@@ -357,6 +357,11 @@ const Students = () => {
     setCurrentPage(1);
   }, [searchTerm, roleFilter, yearFilter]);
 
+  // Memoized search handler to prevent re-renders
+  const handleSearchChange = useCallback((e) => {
+    setSearchTerm(e.target.value);
+  }, []);
+
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
@@ -572,7 +577,7 @@ const Students = () => {
                   className="form-control"
                   placeholder="Search by name or email..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={handleSearchChange}
                 />
               </div>
             </div>

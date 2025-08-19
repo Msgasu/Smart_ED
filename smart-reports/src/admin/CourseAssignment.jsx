@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { FaBook, FaChalkboardTeacher, FaGraduationCap, FaPlus, FaTrash, FaSearch, FaUserCheck, FaUsers, FaCalendarAlt } from 'react-icons/fa'
 import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
@@ -509,7 +509,24 @@ const CourseAssignment = () => {
     setStudentsCurrentPage(1)
   }, [searchTerm, selectedClass])
 
-  const FacultyAssignmentTab = () => {
+  // Memoized search handlers to prevent re-renders
+  const handleSearchChange = useCallback((e) => {
+    setSearchTerm(e.target.value)
+  }, [])
+
+  const handleCourseSearchChange = useCallback((e) => {
+    setCourseSearchTerm(e.target.value)
+  }, [])
+
+  const handleBulkCourseSearchChange = useCallback((e) => {
+    setBulkCourseSearchTerm(e.target.value)
+  }, [])
+
+  const handleBulkStudentSearchChange = useCallback((e) => {
+    setBulkStudentSearchTerm(e.target.value)
+  }, [])
+
+  const FacultyAssignmentTab = useMemo(() => {
     const filteredFaculty = faculty.filter(member =>
       `${member.first_name} ${member.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
       member.faculty?.[0]?.department?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -533,7 +550,7 @@ const CourseAssignment = () => {
               type="text"
               placeholder="Search faculty..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
             />
           </div>
         </div>
@@ -564,7 +581,7 @@ const CourseAssignment = () => {
                             type="text"
                             placeholder="Search courses to assign..."
                             value={courseSearchTerm}
-                            onChange={(e) => setCourseSearchTerm(e.target.value)}
+                            onChange={handleCourseSearchChange}
                             className="course-search-input"
                           />
                         </div>
@@ -618,9 +635,9 @@ const CourseAssignment = () => {
         </div>
       </div>
     )
-  }
+  }, [faculty, searchTerm, courses, courseSearchTerm, facultyCourses, facultyCurrentPage])
 
-  const StudentAssignmentTab = () => {
+  const StudentAssignmentTab = useMemo(() => {
     const filteredStudents = selectedClass
       ? students.filter(student => student.students?.class_year === selectedClass || student.students?.[0]?.class_year === selectedClass)
       : students.filter(student =>
@@ -658,7 +675,7 @@ const CourseAssignment = () => {
                 type="text"
                 placeholder="Search students..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearchChange}
               />
             </div>
 
@@ -668,7 +685,7 @@ const CourseAssignment = () => {
                 type="text"
                 placeholder="Search courses..."
                 value={courseSearchTerm}
-                onChange={(e) => setCourseSearchTerm(e.target.value)}
+                onChange={handleCourseSearchChange}
               />
             </div>
 
@@ -782,7 +799,7 @@ const CourseAssignment = () => {
         </div>
       </div>
     )
-  }
+  }, [students, selectedClass, searchTerm, courses, courseSearchTerm, studentCourses, studentsCurrentPage])
 
   const BulkAssignModal = () => {
     if (!showBulkModal) return null
@@ -824,7 +841,7 @@ const CourseAssignment = () => {
                   type="text"
                   placeholder="Search courses..."
                   value={bulkCourseSearchTerm}
-                  onChange={(e) => setBulkCourseSearchTerm(e.target.value)}
+                  onChange={handleBulkCourseSearchChange}
                   className="form-control"
                 />
               </div>
@@ -850,7 +867,7 @@ const CourseAssignment = () => {
                   type="text"
                   placeholder="Search students by name, ID, or class..."
                   value={bulkStudentSearchTerm}
-                  onChange={(e) => setBulkStudentSearchTerm(e.target.value)}
+                  onChange={handleBulkStudentSearchChange}
                   className="form-control"
                 />
               </div>
@@ -948,8 +965,8 @@ const CourseAssignment = () => {
           </div>
         ) : (
           <>
-            {activeTab === 'faculty' && <FacultyAssignmentTab />}
-            {activeTab === 'students' && <StudentAssignmentTab />}
+            {activeTab === 'faculty' && FacultyAssignmentTab}
+            {activeTab === 'students' && StudentAssignmentTab}
           </>
         )}
       </div>
