@@ -14,8 +14,8 @@ CREATE TABLE public.assignment_files (
   created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT assignment_files_pkey PRIMARY KEY (id),
-  CONSTRAINT assignment_files_student_assignment_id_fkey FOREIGN KEY (student_assignment_id) REFERENCES public.student_assignments(id),
   CONSTRAINT assignment_files_assignment_id_fkey FOREIGN KEY (assignment_id) REFERENCES public.assignments(id),
+  CONSTRAINT assignment_files_student_assignment_id_fkey FOREIGN KEY (student_assignment_id) REFERENCES public.student_assignments(id),
   CONSTRAINT assignment_files_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.profiles(id)
 );
 CREATE TABLE public.assignments (
@@ -89,8 +89,8 @@ CREATE TABLE public.faculty_courses (
   created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT faculty_courses_pkey PRIMARY KEY (id),
-  CONSTRAINT faculty_courses_faculty_id_fkey FOREIGN KEY (faculty_id) REFERENCES public.profiles(id),
-  CONSTRAINT faculty_courses_course_id_fkey FOREIGN KEY (course_id) REFERENCES public.courses(id)
+  CONSTRAINT faculty_courses_course_id_fkey FOREIGN KEY (course_id) REFERENCES public.courses(id),
+  CONSTRAINT faculty_courses_faculty_id_fkey FOREIGN KEY (faculty_id) REFERENCES public.profiles(id)
 );
 CREATE TABLE public.guardian_students (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -168,8 +168,8 @@ CREATE TABLE public.student_courses (
   created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT student_courses_pkey PRIMARY KEY (id),
-  CONSTRAINT student_courses_course_id_fkey FOREIGN KEY (course_id) REFERENCES public.courses(id),
-  CONSTRAINT student_courses_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.profiles(id)
+  CONSTRAINT student_courses_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.profiles(id),
+  CONSTRAINT student_courses_course_id_fkey FOREIGN KEY (course_id) REFERENCES public.courses(id)
 );
 CREATE TABLE public.student_grades (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -178,15 +178,15 @@ CREATE TABLE public.student_grades (
   class_score numeric,
   exam_score numeric,
   total_score numeric,
-  position integer,
+  position text,
   grade character,
   remark text,
   teacher_signature text,
   created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT student_grades_pkey PRIMARY KEY (id),
-  CONSTRAINT student_grades_subject_id_fkey FOREIGN KEY (subject_id) REFERENCES public.courses(id),
-  CONSTRAINT student_grades_report_id_fkey FOREIGN KEY (report_id) REFERENCES public.student_reports(id)
+  CONSTRAINT student_grades_report_id_fkey FOREIGN KEY (report_id) REFERENCES public.student_reports(id),
+  CONSTRAINT student_grades_subject_id_fkey FOREIGN KEY (subject_id) REFERENCES public.courses(id)
 );
 CREATE TABLE public.student_reports (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
