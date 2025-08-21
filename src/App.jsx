@@ -36,6 +36,7 @@ import TeacherReport from './pages/teacher/TeacherReport';
 import ReportsList from './pages/teacher/ReportsList';
 import ReportView from './pages/teacher/ReportView';
 
+
 function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -58,16 +59,20 @@ function App() {
     return <div>Loading...</div>
   }
 
+
+
   return (
     <Router>
       <Toaster position="top-right" />
       <Routes>
+
+        
         {/* Auth routes */}
         <Route path="/signin" element={<Signin />} />
         <Route path="/signup" element={<Signup />} />
         
         {/* Protected routes - only accessible when logged in */}
-        {session ? (
+        {session && (
           <>
             {/* Admin routes */}
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
@@ -100,14 +105,21 @@ function App() {
             
             {/* Notifications route */}
             <Route path="/notifications" element={<Notifications />} />
-            
-            {/* Default redirect when logged in */}
-            <Route path="/" element={<Navigate to="/signin" />} />
           </>
-        ) : (
-          /* If not logged in, redirect all routes to signin */
-          <Route path="*" element={<Navigate to="/signin" />} />
         )}
+        
+        {/* Redirect protected routes to signin if not logged in */}
+        {!session && (
+          <>
+            <Route path="/admin/*" element={<Navigate to="/signin" />} />
+            <Route path="/student/*" element={<Navigate to="/signin" />} />
+            <Route path="/teacher/*" element={<Navigate to="/signin" />} />
+            <Route path="/notifications" element={<Navigate to="/signin" />} />
+          </>
+        )}
+        
+        {/* Default redirect for root path */}
+        <Route path="/" element={<Navigate to="/signin" />} />
       </Routes>
     </Router>
   );
