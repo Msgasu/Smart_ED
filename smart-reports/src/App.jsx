@@ -8,6 +8,7 @@ import AdminDashboard from './admin/AdminDashboard'
 import TeacherDashboard from './teacher/TeacherDashboard'
 import StudentDashboard from './student/StudentDashboard'
 import GuardianDashboard from './guardian/GuardianDashboard'
+import GuardianPortalPublic from './guardian/GuardianPortalPublic'
 import Login from './shared/Login'
 import Signup from './shared/Signup'
 import ClassReportsPage from './admin/ClassReportsPage'
@@ -77,30 +78,9 @@ function App() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    )
-  }
-
-  if (!user || !userProfile) {
-    return (
-      <Routes>
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/register" element={<Signup />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="*" element={<Login />} />
-      </Routes>
-    )
-  }
-
   // Route based on user role
   const renderDashboard = () => {
-    switch (userProfile.role) {
+    switch (userProfile?.role) {
       case 'admin':
         return <AdminDashboard user={user} profile={userProfile} />
       case 'faculty':
@@ -114,39 +94,74 @@ function App() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center vh-100">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    )
+  }
+
+  // Always render the full routing structure
+  // This allows public routes to work without authentication
   return (
     <div className="App">
       <Routes>
-        <Route path="/" element={renderDashboard()} />
-        <Route path="/dashboard" element={renderDashboard()} />
+        {/* Public routes - accessible without login */}
+        <Route path="/guardian-portal" element={<GuardianPortalPublic />} />
         
-        {/* Admin-specific routes */}
-        {userProfile?.role === 'admin' && (
+        {/* Auth routes */}
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/register" element={<Signup />} />
+        <Route path="/login" element={<Login />} />
+
+        {/* Protected routes - only accessible when logged in */}
+        {user && userProfile ? (
           <>
-            <Route path="/admin/class-reports/:className" element={<ClassReportsPage />} />
-            <Route path="/admin/report-view/:reportId" element={<ReportViewer />} />
-            <Route path="/admin/report-print/:reportId" element={<ReportViewer />} />
+            <Route path="/" element={renderDashboard()} />
+            <Route path="/dashboard" element={renderDashboard()} />
+            
+            {/* Admin-specific routes */}
+            {userProfile.role === 'admin' && (
+              <>
+                <Route path="/admin/class-reports/:className" element={<ClassReportsPage />} />
+                <Route path="/admin/report-view/:reportId" element={<ReportViewer />} />
+                <Route path="/admin/report-print/:reportId" element={<ReportViewer />} />
+              </>
+            )}
+            
+            {/* Teacher-specific routes */}
+            {userProfile.role === 'faculty' && (
+              <>
+                <Route path="/teacher/report-view/:reportId" element={<TeacherReportViewer user={user} profile={userProfile} />} />
+                <Route path="/teacher/report-edit/:reportId" element={<TeacherReportEditor user={user} profile={userProfile} />} />
+                <Route path="/teacher/report-create" element={<TeacherReportEditor user={user} profile={userProfile} />} />
+                <Route path="/teacher/class-reports/:className" element={<TeacherClassReportsPage user={user} profile={userProfile} />} />
+              </>
+            )}
+            
+            {/* Guardian-specific routes */}
+            {userProfile.role === 'guardian' && (
+              <>
+                <Route path="/guardian/ward/:wardId" element={<GuardianDashboard user={user} profile={userProfile} />} />
+              </>
+            )}
+          </>
+        ) : (
+          /* If not logged in, redirect protected routes to login */
+          <>
+            <Route path="/" element={<Login />} />
+            <Route path="/dashboard" element={<Login />} />
+            <Route path="/admin/*" element={<Login />} />
+            <Route path="/teacher/*" element={<Login />} />
+            <Route path="/guardian/*" element={<Login />} />
           </>
         )}
         
-        {/* Teacher-specific routes */}
-        {userProfile?.role === 'faculty' && (
-          <>
-            <Route path="/teacher/report-view/:reportId" element={<TeacherReportViewer user={user} profile={userProfile} />} />
-            <Route path="/teacher/report-edit/:reportId" element={<TeacherReportEditor user={user} profile={userProfile} />} />
-            <Route path="/teacher/report-create" element={<TeacherReportEditor user={user} profile={userProfile} />} />
-            <Route path="/teacher/class-reports/:className" element={<TeacherClassReportsPage user={user} profile={userProfile} />} />
-          </>
-        )}
-        
-        {/* Guardian-specific routes */}
-        {userProfile?.role === 'guardian' && (
-          <>
-            <Route path="/guardian/ward/:wardId" element={<GuardianDashboard user={user} profile={userProfile} />} />
-          </>
-        )}
-        
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Catch all other routes */}
+        <Route path="*" element={<Login />} />
       </Routes>
     </div>
   )
