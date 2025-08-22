@@ -56,6 +56,13 @@ function App() {
           console.log('No session - clearing user profile and redirecting')
           setUserProfile(null)
           setLoading(false)
+          
+          // Force a small delay to ensure state updates before redirect
+          setTimeout(() => {
+            if (!session) {
+              window.location.href = '/login'
+            }
+          }, 100)
         }
       }
     )

@@ -23,13 +23,11 @@ const StudentDashboard = ({ user, profile }) => {
       }
       
       toast.success('Logged out successfully')
-      // Clear any local state and redirect
-      navigate('/login')
+      // Let the auth state change listener handle the redirect
     } catch (error) {
       console.error('Logout error:', error)
-      // Even if logout fails, clear local state and redirect
+      // Even if logout fails, show success and let auth state handle redirect
       toast.success('Logged out successfully')
-      navigate('/login')
     }
   }
 
