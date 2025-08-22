@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
 import logo from '../assets/logo_nbg.png'
@@ -8,20 +8,57 @@ const Login = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
   const handleLogin = async (e) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       })
 
       if (error) throw error
 
-      toast.success('Welcome to Life International College Reports!')
+      console.log('Login successful:', data)
+
+      // Fetch user profile to determine role
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single()
+
+      if (profileError) {
+        console.error('Profile fetch error:', profileError)
+        toast.error('Error loading user profile')
+        return
+      }
+
+      console.log('User profile:', profileData)
+
+      toast.success(`Welcome to Life International College Reports, ${profileData.first_name}!`)
+
+      // Redirect based on role with a small delay to ensure auth state is updated
+      setTimeout(() => {
+        const role = profileData.role
+        console.log('Redirecting user with role:', role)
+        if (role === 'admin') {
+          navigate('/')
+        } else if (role === 'faculty') {
+          navigate('/')
+        } else if (role === 'student') {
+          navigate('/')
+        } else if (role === 'guardian') {
+          navigate('/')
+        } else {
+          // Default fallback
+          navigate('/')
+        }
+      }, 500)
+
     } catch (error) {
       console.error('Login error:', error)
       toast.error(error.message || 'Login failed')
