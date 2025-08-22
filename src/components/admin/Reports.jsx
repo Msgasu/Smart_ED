@@ -1522,6 +1522,55 @@ const Reports = ({
             />
           </div>
         </div>
+
+        {/* New Report Fields */}
+        <div className="new-fields-section">
+          <div className="remarks-container">
+            <label htmlFor="headmasterRemarks" className="form-label">Principal's Remarks</label>
+            <textarea 
+              className="form-control" 
+              id="headmasterRemarks" 
+              rows="3" 
+              placeholder="Enter principal's remarks"
+              defaultValue={reportData?.headmaster_remarks || ''}
+            ></textarea>
+          </div>
+          
+          <div className="remarks-container">
+            <label htmlFor="houseReport" className="form-label">House Report</label>
+            <textarea 
+              className="form-control" 
+              id="houseReport" 
+              rows="3" 
+              placeholder="Enter house report"
+              defaultValue={reportData?.house_report || ''}
+            ></textarea>
+          </div>
+          
+          <div className="assessment-grid">
+            <div className="info-item">
+              <label htmlFor="positionHeld" className="form-label">Position Held</label>
+              <input 
+                type="text" 
+                className="form-control" 
+                id="positionHeld" 
+                placeholder="Enter position held" 
+                defaultValue={reportData?.position_held || ''}
+              />
+            </div>
+            
+            <div className="info-item">
+              <label htmlFor="interest" className="form-label">Interest</label>
+              <textarea 
+                className="form-control" 
+                id="interest" 
+                rows="3" 
+                placeholder="Enter student interests"
+                defaultValue={reportData?.interest || ''}
+              ></textarea>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
