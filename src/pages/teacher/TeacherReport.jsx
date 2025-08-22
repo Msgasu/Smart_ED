@@ -467,7 +467,11 @@ const TeacherReport = () => {
         reopening_date: document.getElementById('reopeningDate')?.value,
         teacher_remarks: document.getElementById('teacherRemarks')?.value,
         principal_signature: document.getElementById('principalSignature')?.value,
-        attendance: document.getElementById('attendance')?.value
+        attendance: document.getElementById('attendance')?.value,
+        headmaster_remarks: document.getElementById('headmasterRemarks')?.value,
+        house_report: document.getElementById('houseReport')?.value,
+        position_held: document.getElementById('positionHeld')?.value,
+        interest: document.getElementById('interest')?.value
       };
       
       const { data, error } = await saveReportDetails(reportData);
@@ -753,6 +757,10 @@ const TeacherReport = () => {
         document.getElementById('teacherRemarks').value = existingReport.teacher_remarks || '';
         document.getElementById('principalSignature').value = existingReport.principal_signature || '';
         document.getElementById('attendance').value = existingReport.attendance || '';
+        document.getElementById('headmasterRemarks').value = existingReport.headmaster_remarks || '';
+        document.getElementById('houseReport').value = existingReport.house_report || '';
+        document.getElementById('positionHeld').value = existingReport.position_held || '';
+        document.getElementById('interest').value = existingReport.interest || '';
         
         // Get saved grades for this report
         const { data: grades, error: gradesError } = await supabase
