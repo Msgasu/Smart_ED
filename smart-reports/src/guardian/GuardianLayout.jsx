@@ -13,14 +13,22 @@ const GuardianLayout = ({ children, activeTab, setActiveTab, user, profile }) =>
 
   const handleLogout = async () => {
     try {
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
+      // Check if there's an active session before trying to sign out
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (session) {
+        const { error } = await supabase.auth.signOut()
+        if (error) throw error
+      }
       
       toast.success('Logged out successfully')
-      // Don't manually navigate - let the auth state change handle the redirect
+      // Clear any local state and redirect
+      navigate('/login')
     } catch (error) {
       console.error('Logout error:', error)
-      toast.error('Error logging out')
+      // Even if logout fails, clear local state and redirect
+      toast.success('Logged out successfully')
+      navigate('/login')
     }
   }
 
