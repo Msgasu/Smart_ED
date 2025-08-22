@@ -51,14 +51,17 @@ const TeacherDashboard = ({ user, profile }) => {
   const [reportData, setReportData] = useState({
     studentName: '',
     studentClass: '',
-    studentAge: '',
     studentGender: '',
     attendance: '',
     conduct: '',
     nextClass: '',
     teacherRemarks: '',
     principalSignature: '',
-    reopeningDate: ''
+    reopeningDate: '',
+    headmasterRemarks: '',
+    houseReport: '',
+    positionHeld: '',
+    interest: ''
   })
 
   // Dashboard state
@@ -161,14 +164,17 @@ const TeacherDashboard = ({ user, profile }) => {
       setReportData({
         studentName: `${selectedStudent.first_name} ${selectedStudent.last_name}`,
         studentClass: selectedStudent.students?.class_year || '',
-        studentAge: calculateAge(selectedStudent.date_of_birth) || '',
-        studentGender: '',
+        studentGender: selectedStudent.sex ? selectedStudent.sex.charAt(0).toUpperCase() + selectedStudent.sex.slice(1) : '',
         attendance: '',
         conduct: '',
         nextClass: '',
         teacherRemarks: '',
         principalSignature: '',
-        reopeningDate: ''
+        reopeningDate: '',
+        headmasterRemarks: '',
+        houseReport: '',
+        positionHeld: '',
+        interest: ''
       })
       
       console.log(`🔄 Loading data for NEW STUDENT: ${selectedStudent.first_name} ${selectedStudent.last_name} (ID: ${selectedStudent.id})`)
@@ -182,14 +188,17 @@ const TeacherDashboard = ({ user, profile }) => {
       setReportData({
         studentName: '',
         studentClass: '',
-        studentAge: '',
         studentGender: '',
         attendance: '',
         conduct: '',
         nextClass: '',
         teacherRemarks: '',
         principalSignature: '',
-        reopeningDate: ''
+        reopeningDate: '',
+        headmasterRemarks: '',
+        houseReport: '',
+        positionHeld: '',
+        interest: ''
       })
       console.log('🔄 Cleared all data - no student selected')
     }
@@ -1343,7 +1352,11 @@ const TeacherDashboard = ({ user, profile }) => {
           nextClass: existingReport.next_class || '',
           teacherRemarks: existingReport.teacher_remarks || '',
           principalSignature: existingReport.principal_signature || '',
-          reopeningDate: existingReport.reopening_date || ''
+          reopeningDate: existingReport.reopening_date || '',
+          headmasterRemarks: existingReport.headmaster_remarks || '',
+          houseReport: existingReport.house_report || '',
+          positionHeld: existingReport.position_held || '',
+          interest: existingReport.interest || ''
         }))
 
         // Load grades for this specific report only (using exact same API as admin)
@@ -1463,22 +1476,7 @@ const TeacherDashboard = ({ user, profile }) => {
     }
   }
 
-  // Exact replica of admin calculation functions
-  const calculateAge = (dateOfBirth) => {
-    if (!dateOfBirth) return ''
-    
-    const dob = new Date(dateOfBirth)
-    const today = new Date()
-    
-    let age = today.getFullYear() - dob.getFullYear()
-    const monthDiff = today.getMonth() - dob.getMonth()
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-      age--
-    }
-    
-    return age
-  }
+
 
   const calculateGrade = (total) => {
     if (!total || isNaN(total)) return 'F9'
@@ -1641,7 +1639,11 @@ const TeacherDashboard = ({ user, profile }) => {
         next_class: reportData.nextClass,
         teacher_remarks: reportData.teacherRemarks,
         principal_signature: reportData.principalSignature,
-        reopening_date: reportData.reopeningDate
+        reopening_date: reportData.reopeningDate,
+        headmaster_remarks: reportData.headmasterRemarks,
+        house_report: reportData.houseReport,
+        position_held: reportData.positionHeld,
+        interest: reportData.interest
       }
 
       const { data: savedReport, error: reportError } = await studentReportsAPI.upsertReport(reportPayload)
@@ -2086,27 +2088,15 @@ const TeacherDashboard = ({ user, profile }) => {
                   onChange={(e) => setReportData(prev => ({ ...prev, studentClass: e.target.value }))}
                 />
               </div>
+
               <div className="info-item">
-                <label>Age:</label>
+                <label>Gender:</label>
                 <input
                   type="text"
                   className="form-control"
-                  value={reportData.studentAge}
+                  value={reportData.studentGender}
                   readOnly
                 />
-              </div>
-              <div className="info-item">
-                <label>Gender:</label>
-                <select
-                  className="form-control"
-                  value={reportData.studentGender}
-                  onChange={(e) => setReportData(prev => ({ ...prev, studentGender: e.target.value }))}
-                >
-                  <option value="">Select Gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
               </div>
               <div className="info-item">
                 <label>Term:</label>
@@ -2410,6 +2400,46 @@ const TeacherDashboard = ({ user, profile }) => {
                   className="form-control"
                   value={reportData.reopeningDate}
                   onChange={(e) => setReportData(prev => ({ ...prev, reopeningDate: e.target.value }))}
+                />
+              </div>
+              <div className="info-item">
+                <label>Principal's Remarks:</label>
+                <textarea
+                  className="form-control"
+                  value={reportData.headmasterRemarks}
+                  onChange={(e) => setReportData(prev => ({ ...prev, headmasterRemarks: e.target.value }))}
+                  placeholder="Enter principal's remarks"
+                  rows="3"
+                />
+              </div>
+              <div className="info-item">
+                <label>House Report:</label>
+                <textarea
+                  className="form-control"
+                  value={reportData.houseReport}
+                  onChange={(e) => setReportData(prev => ({ ...prev, houseReport: e.target.value }))}
+                  placeholder="Enter house report"
+                  rows="3"
+                />
+              </div>
+              <div className="info-item">
+                <label>Position Held:</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={reportData.positionHeld}
+                  onChange={(e) => setReportData(prev => ({ ...prev, positionHeld: e.target.value }))}
+                  placeholder="Enter position held"
+                />
+              </div>
+              <div className="info-item">
+                <label>Interest:</label>
+                <textarea
+                  className="form-control"
+                  value={reportData.interest}
+                  onChange={(e) => setReportData(prev => ({ ...prev, interest: e.target.value }))}
+                  placeholder="Enter student interests"
+                  rows="3"
                 />
               </div>
             </div>
