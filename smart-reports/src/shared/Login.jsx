@@ -22,8 +22,6 @@ const Login = () => {
 
       if (error) throw error
 
-      console.log('Login successful:', data)
-
       // Fetch user profile to determine role
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -37,14 +35,11 @@ const Login = () => {
         return
       }
 
-      console.log('User profile:', profileData)
-
       toast.success(`Welcome to Life International College Reports, ${profileData.first_name}!`)
 
       // Redirect based on role with a small delay to ensure auth state is updated
       setTimeout(() => {
         const role = profileData.role
-        console.log('Redirecting user with role:', role)
         if (role === 'admin') {
           navigate('/')
         } else if (role === 'faculty') {

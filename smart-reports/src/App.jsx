@@ -41,7 +41,7 @@ function App() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change event:', event, 'Session:', session)
+        console.log('Auth state change:', event, 'Session:', session ? 'exists' : 'null')
         
         // Skip auth state changes during user creation to prevent redirects
         if (isCreatingUser) {
@@ -51,10 +51,9 @@ function App() {
         
         setUser(session?.user ?? null)
         if (session?.user) {
-          console.log('User authenticated, fetching profile for:', session.user.id)
           fetchUserProfile(session.user.id)
         } else {
-          console.log('No session, clearing user profile')
+          console.log('No session - clearing user profile and redirecting')
           setUserProfile(null)
           setLoading(false)
         }
@@ -66,7 +65,6 @@ function App() {
 
   const fetchUserProfile = async (userId) => {
     try {
-      console.log('Fetching profile for user:', userId)
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -75,7 +73,6 @@ function App() {
 
       if (error) throw error
       
-      console.log('Profile fetched successfully:', data)
       setUserProfile(data)
     } catch (error) {
       console.error('Error fetching profile:', error)

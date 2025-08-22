@@ -120,7 +120,6 @@ const TeacherDashboard = ({ user, profile }) => {
   // Refresh dashboard stats when switching back to dashboard tab
   useEffect(() => {
     if (activeTab === 'dashboard') {
-      console.log('🔄 Refreshing dashboard stats on tab switch...')
       fetchDashboardStats()
     }
   }, [activeTab])
@@ -177,9 +176,6 @@ const TeacherDashboard = ({ user, profile }) => {
         interest: ''
       })
       
-      console.log(`🔄 Loading data for NEW STUDENT: ${selectedStudent.first_name} ${selectedStudent.last_name} (ID: ${selectedStudent.id})`)
-      console.log(`📅 Term: ${selectedTerm}, Year: ${selectedYear}`)
-      
       // Load data specific to this student only
       loadStudentReport()
     } else {
@@ -200,14 +196,11 @@ const TeacherDashboard = ({ user, profile }) => {
         positionHeld: '',
         interest: ''
       })
-      console.log('🔄 Cleared all data - no student selected')
     }
   }, [selectedStudent, selectedTerm, selectedYear])
 
   const fetchDashboardStats = async () => {
     try {
-      console.log('🔍 Fetching dashboard stats for teacher:', user.id)
-      
       // Get teacher's courses - based on your exact DB schema
       const { data: teacherCourses, error: coursesError } = await supabase
         .from('faculty_courses')
@@ -226,8 +219,6 @@ const TeacherDashboard = ({ user, profile }) => {
         .eq('faculty_id', user.id)
         .eq('status', 'active')
 
-      console.log('📚 Teacher courses query result:', { teacherCourses, coursesError })
-
       if (coursesError) {
         console.error('❌ Error fetching teacher courses:', coursesError)
         throw coursesError
@@ -235,22 +226,16 @@ const TeacherDashboard = ({ user, profile }) => {
 
       const courseIds = teacherCourses?.map(tc => tc.course_id) || []
       const myCourses = courseIds.length
-      
-      console.log('📋 Found', myCourses, 'courses for teacher. Course IDs:', courseIds)
 
       // Get all students in teacher's courses - based on your exact DB schema
       let allStudentCourses = []
       if (courseIds.length > 0) {
-        console.log('👥 Fetching students for course IDs:', courseIds)
-        
         // Let's try the query without the inner join first to see all enrollments
         const { data: allEnrollments, error: allEnrollmentsError } = await supabase
           .from('student_courses')
           .select('*')
           .in('course_id', courseIds)
           .eq('status', 'enrolled')
-          
-        console.log('📋 All enrollments (no join):', { count: allEnrollments?.length, allEnrollments, allEnrollmentsError })
 
         const { data: studentCourses, error: studentsError } = await supabase
           .from('student_courses')
@@ -274,33 +259,13 @@ const TeacherDashboard = ({ user, profile }) => {
           .in('course_id', courseIds)
           .eq('status', 'enrolled')
 
-        console.log('👥 Student courses with profile join:', { count: studentCourses?.length, studentCourses, studentsError })
-        
-        // Check if the join is causing the missing student
-        if (allEnrollments?.length !== studentCourses?.length) {
-          console.log('⚠️ FOUND THE ISSUE! Join is excluding students.')
-          console.log('Raw enrollments:', allEnrollments?.length, 'vs Joined data:', studentCourses?.length)
-          
-          // Find which student_ids are missing from the joined result
-          const allStudentIds = allEnrollments?.map(e => e.student_id) || []
-          const joinedStudentIds = studentCourses?.map(sc => sc.student_id) || []
-          const missingStudentIds = allStudentIds.filter(id => !joinedStudentIds.includes(id))
-          console.log('🔍 Missing student IDs from join:', missingStudentIds)
-        }
-
         if (!studentsError) {
           allStudentCourses = studentCourses || []
-          console.log('✅ Found', allStudentCourses.length, 'student-course enrollments')
         } else {
           console.error('❌ Error fetching student courses:', studentsError)
           allStudentCourses = []
         }
-      } else {
-        console.log('⚠️ No course IDs found - teacher has no assigned courses')
       }
-
-      // Use the same method as dropdown to get accurate student count
-      console.log('👥 Getting accurate student count using dropdown method...')
       
       // Get all students using the same API as dropdown
       const { data: allStudentsFromAPI, error: allStudentsError } = await studentsAPI.getStudents()
@@ -331,14 +296,9 @@ const TeacherDashboard = ({ user, profile }) => {
       const myStudents = myStudentsFromAPI.length
       const myStudentIds = myStudentsFromAPI.map(s => s.id)
       
-      console.log('✅ Accurate student count using dropdown method:', myStudents)
-      console.log('👥 Student IDs from API method:', myStudentIds)
-      
       // Keep the old method for comparison
       const oldMyStudentIds = [...new Set(allStudentCourses.map(sc => sc.student_id))]
       const oldMyStudents = oldMyStudentIds.length
-      
-      console.log('📊 Comparison - API method:', myStudents, 'vs Old join method:', oldMyStudents)
 
       // Get reports where this teacher has filled grades - based on your exact DB schema
       let reportsIFilled = 0
@@ -347,7 +307,6 @@ const TeacherDashboard = ({ user, profile }) => {
       let studentsWithMissingGradesData = []
       
       if (courseIds.length > 0 && myStudentIds.length > 0) {
-        console.log('📊 Fetching grades for teacher courses and students...')
         
         // Get all grades this teacher has entered for their courses
         const { data: myGrades, error: gradesError } = await supabase
@@ -372,8 +331,6 @@ const TeacherDashboard = ({ user, profile }) => {
           .in('subject_id', courseIds)
           .in('student_reports.student_id', myStudentIds)
 
-        console.log('📊 Grades query result:', { myGrades, gradesError })
-
         if (!gradesError && myGrades) {
           // Count unique reports this teacher has contributed to
           const uniqueReportIds = [...new Set(myGrades.map(grade => grade.report_id))]
@@ -385,10 +342,6 @@ const TeacherDashboard = ({ user, profile }) => {
             (grade.exam_score !== null && grade.exam_score > 0) || 
             (grade.total_score !== null && grade.total_score > 0)
           ).length
-          
-          console.log('📈 Calculated stats - Reports filled:', reportsIFilled, 'Fields completed:', fieldsICompleted)
-        } else {
-          console.log('❌ Error fetching grades or no grades found:', gradesError)
         }
 
         // Calculate course-specific breakdown
@@ -405,17 +358,9 @@ const TeacherDashboard = ({ user, profile }) => {
           
           const actualStudentCount = courseEnrollments?.length || 0
           
-          console.log(`📚 ${course.code} - Direct DB query shows ${actualStudentCount} students`)
-          
           // Students in this specific course from our joined data
           const courseStudents = allStudentCourses.filter(sc => sc.course_id === courseId)
           const joinedStudentCount = courseStudents.length
-          
-          console.log(`📚 ${course.code} - Joined data shows ${joinedStudentCount} students`)
-          
-          if (actualStudentCount !== joinedStudentCount) {
-            console.log(`⚠️ Discrepancy in ${course.code}: DB=${actualStudentCount}, Joined=${joinedStudentCount}`)
-          }
           
           // Grades filled for this course
           const courseGrades = myGrades?.filter(grade => grade.subject_id === courseId) || []
@@ -438,7 +383,6 @@ const TeacherDashboard = ({ user, profile }) => {
         }))
 
                 // Find students with missing grades - improved logic
-        console.log('🔍 Finding students with missing grades...')
         
         // Strategy: For each student in teacher's courses, check if they have grades for ALL of teacher's courses
         studentsWithMissingGradesData = []
@@ -464,7 +408,7 @@ const TeacherDashboard = ({ user, profile }) => {
             
           if (courseStudentsError) continue
           
-          console.log(`📚 Checking ${course?.code}: ${courseStudents?.length} enrolled students`)
+
           
           // For each student, check if they have grades for this course
           for (const studentData of courseStudents || []) {
@@ -501,7 +445,7 @@ const TeacherDashboard = ({ user, profile }) => {
           }
         }
         
-        console.log(`⚠️ Found ${studentsWithMissingGradesData.length} students with missing grades:`, studentsWithMissingGradesData)
+
       }
 
         setStatistics({
@@ -514,15 +458,7 @@ const TeacherDashboard = ({ user, profile }) => {
       setCourseBreakdown(courseBreakdownData)
       setStudentsWithMissingGrades(studentsWithMissingGradesData)
 
-      // Debug logging
-      console.log('📊 Dashboard Stats:', {
-        myStudents,
-        myCourses,
-        reportsIFilled,
-        fieldsICompleted,
-        courseBreakdownCount: courseBreakdownData.length,
-        studentsWithMissingGradesCount: studentsWithMissingGradesData.length
-      })
+
 
     } catch (error) {
       console.error('Error fetching teacher dashboard stats:', error)
@@ -567,7 +503,7 @@ const TeacherDashboard = ({ user, profile }) => {
         enrolledStudentIds.has(student.id)
       )
 
-      console.log('Students in teacher courses:', filteredStudents)
+
       setStudents(filteredStudents || [])
       
     } catch (error) {
@@ -761,7 +697,7 @@ const TeacherDashboard = ({ user, profile }) => {
   // Fetch all reports for teacher's students (fresh data from database)
   const fetchAllTeacherReports = async () => {
     try {
-      console.log('🔄 Fetching all reports for teacher\'s students...')
+
       
       // Get teacher's courses first
       const { data: teacherCourses, error: coursesError } = await supabase
@@ -796,7 +732,7 @@ const TeacherDashboard = ({ user, profile }) => {
       }
 
       // Fetch reports first (basic report info)
-      console.log('📊 Fetching reports for students:', enrolledStudentIds)
+      
       
       const { data: reports, error: reportsError } = await supabase
         .from('student_reports')
@@ -834,7 +770,7 @@ const TeacherDashboard = ({ user, profile }) => {
         }
       })
 
-      console.log(`✅ Found ${reportsWithStudents.length} reports for teacher's students`)
+      
       setAllReports(reportsWithStudents || [])
       applyReportFilters(reportsWithStudents || [])
 
@@ -894,7 +830,7 @@ const TeacherDashboard = ({ user, profile }) => {
       setReportViewerLoading(true)
       setShowReportViewer(true)
       
-      console.log(`🔍 Fetching complete report card with ALL subjects for report ID: ${reportId}`)
+      
       
       // First, fetch the basic report data
       const { data: reportData, error: reportError } = await supabase
@@ -938,7 +874,7 @@ const TeacherDashboard = ({ user, profile }) => {
       }
 
       const teacherCourseIds = teacherCourses.map(tc => tc.course_id)
-      console.log(`👨‍🏫 Teacher's course IDs:`, teacherCourseIds)
+      
 
       // Fetch student profile
       const { data: studentProfile, error: studentError } = await supabase
@@ -964,7 +900,7 @@ const TeacherDashboard = ({ user, profile }) => {
       }
 
               // Fetch ALL grades for this report (ALL subjects from ALL teachers)
-        console.log(`📊 Fetching ALL grades for report ID: ${reportId} (including other teachers' subjects)`)
+
         const { data: gradesData, error: gradesError } = await supabase
           .from('student_grades')
           .select('*')
@@ -977,7 +913,7 @@ const TeacherDashboard = ({ user, profile }) => {
           return
         }
 
-        console.log(`✅ Found ${gradesData?.length || 0} existing grades in database for this report (ALL teachers)`)
+
 
         // For each grade, fetch the course information (ALL subjects, not filtered)
         const gradesWithCourses = await Promise.all(
@@ -1023,8 +959,7 @@ const TeacherDashboard = ({ user, profile }) => {
         student_grades: gradesWithCourses
       }
 
-      console.log(`✅ Loaded complete report card with ${fullReport.student_grades?.length || 0} subjects (ALL subjects):`, fullReport)
-      console.log(`📊 Final grade count: ${fullReport.student_grades?.length || 0} total grades in report`)
+      
       setSelectedReport(fullReport)
 
     } catch (error) {
@@ -1255,7 +1190,7 @@ const TeacherDashboard = ({ user, profile }) => {
         return
       }
 
-      console.log(`💾 Saving grade ${gradeId} for subject: ${grade.courses?.name}`)
+      
 
       const { error } = await supabase
         .from('student_grades')
@@ -1282,7 +1217,7 @@ const TeacherDashboard = ({ user, profile }) => {
       await handleViewFullReport(selectedReport.id)
       
       // Refresh dashboard statistics to update missing grades and counts
-      console.log('🔄 Refreshing dashboard stats after grade save...')
+      
       await fetchDashboardStats()
 
     } catch (error) {
@@ -1294,13 +1229,13 @@ const TeacherDashboard = ({ user, profile }) => {
   // Exact replica of admin loadStudentReport logic
   const loadStudentReport = async () => {
     if (!selectedStudent) {
-      console.log('❌ No student selected - cannot load report')
+
       return
     }
     
     try {
       setReportLoading(true)
-      console.log(`📚 Loading courses for student: ${selectedStudent.first_name} ${selectedStudent.last_name} (ID: ${selectedStudent.id})`)
+
       
       // First, always load the student's enrolled courses that are taught by this teacher (using exact same API as admin)
       const { data: teacherCourses, error: teacherCoursesError } = await supabase
@@ -1324,14 +1259,10 @@ const TeacherDashboard = ({ user, profile }) => {
       
       const teacherEditableCourses = allEnrolledCourses.filter(c => c.canEdit)
       
-      console.log(`✅ Found ${allEnrolledCourses?.length || 0} total enrolled courses for this student`)
-      console.log(`🎯 Teacher can edit ${teacherEditableCourses?.length || 0} of these courses`)
-      if (allEnrolledCourses?.length > 0) {
-        console.log('📋 All enrolled courses:', allEnrolledCourses.map(c => `${c.courses.name} ${c.canEdit ? '(editable)' : '(view-only)'}`))
-      }
+
 
       // Get existing report - STUDENT SPECIFIC (exact replica of admin logic)
-      console.log(`🔍 Looking for existing report for student ${selectedStudent.id}, term: ${selectedTerm}, year: ${selectedYear}`)
+
       
       const { data: existingReport, error: reportError } = await studentReportsAPI.getReport(
         selectedStudent.id, 
@@ -1344,7 +1275,7 @@ const TeacherDashboard = ({ user, profile }) => {
       }
 
       if (existingReport) {
-        console.log(`📄 Found existing report (ID: ${existingReport.id}) for this specific student + term + year`);
+
         setReportData(prev => ({
           ...prev,
           attendance: existingReport.attendance || '',
@@ -1360,21 +1291,15 @@ const TeacherDashboard = ({ user, profile }) => {
         }))
 
         // Load grades for this specific report only (using exact same API as admin)
-        console.log(`📊 Loading grades for report ID: ${existingReport.id} (specific to this student + term + year)`)
+
         const { data: grades, error: gradesError } = await studentGradesAPI.getGradesByReport(existingReport.id)
 
         if (gradesError) throw gradesError
-        
-        console.log(`✅ Found ${grades?.length || 0} total grade records for this specific report (ALL subjects)`)
         
         // Filter grades to only include teacher's courses (for grade entry - teachers only edit their own subjects)
         const teacherGrades = grades.filter(grade => 
           teacherCourseIds.includes(grade.subject_id)
         )
-        
-        console.log(`🎯 Teacher can edit ${teacherGrades?.length || 0} out of ${grades?.length || 0} total grades`)
-        console.log(`📝 All grades found:`, grades.map(g => g.courses?.name || 'Unknown'))
-        console.log(`✏️ Teacher's editable grades:`, teacherGrades.map(g => g.courses?.name || 'Unknown'))
 
         // Create a map of existing grades by course ID
         const existingGradesMap = new Map(
@@ -1439,7 +1364,7 @@ const TeacherDashboard = ({ user, profile }) => {
         }
       } else {
         // No existing report, create default subjects from enrolled courses
-        console.log(`📝 No existing report found. Creating new template with ${allEnrolledCourses.length} enrolled courses for ${selectedStudent.first_name}`)
+
         const defaultSubjects = allEnrolledCourses.map(enrollment => ({
           id: crypto.randomUUID(),
           courseId: enrollment.course_id,
@@ -1622,9 +1547,7 @@ const TeacherDashboard = ({ user, profile }) => {
       setReportLoading(true)
       toast.loading('Saving report...')
       
-      console.log('Saving report for student:', selectedStudent.id)
-      console.log('Term:', selectedTerm, 'Year:', selectedYear)
-      console.log('Subjects:', subjects.length)
+
 
       // Create or update student report (exact replica of admin logic using same API)
       const reportPayload = {
