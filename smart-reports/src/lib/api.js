@@ -34,6 +34,10 @@ export const studentReportsAPI = {
             teacher_remarks: reportData.teacher_remarks,
             principal_signature: reportData.principal_signature,
             reopening_date: reportData.reopening_date,
+            headmaster_remarks: reportData.headmaster_remarks,
+            house_report: reportData.house_report,
+            position_held: reportData.position_held,
+            interest: reportData.interest,
             updated_at: new Date().toISOString()
           })
           .eq('id', existingReport.id)
@@ -57,7 +61,11 @@ export const studentReportsAPI = {
             next_class: reportData.next_class,
             teacher_remarks: reportData.teacher_remarks,
             principal_signature: reportData.principal_signature,
-            reopening_date: reportData.reopening_date
+            reopening_date: reportData.reopening_date,
+            headmaster_remarks: reportData.headmaster_remarks,
+            house_report: reportData.house_report,
+            position_held: reportData.position_held,
+            interest: reportData.interest
           })
           .select()
           .single()
