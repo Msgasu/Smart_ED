@@ -23,6 +23,16 @@ export const saveStudentReport = async (reportData, gradesData) => {
           academic_year: reportData.academic_year,
           total_score: reportData.total_score || 0,
           overall_grade: reportData.overall_grade || 'N/A',
+          attendance: reportData.attendance,
+          conduct: reportData.conduct,
+          next_class: reportData.next_class,
+          teacher_remarks: reportData.teacher_remarks,
+          principal_signature: reportData.principal_signature,
+          reopening_date: reportData.reopening_date,
+          headmaster_remarks: reportData.headmaster_remarks,
+          house_report: reportData.house_report,
+          position_held: reportData.position_held,
+          interest: reportData.interest,
           // Use the existing timestamps for created_at if it's an update operation
           updated_at: new Date().toISOString()
         },
@@ -598,7 +608,11 @@ export const saveReportDetails = async (reportData) => {
       reopening_date,
       teacher_remarks,
       principal_signature,
-      attendance
+      attendance,
+      headmaster_remarks,
+      house_report,
+      position_held,
+      interest
     } = reportData;
 
     // Start a transaction
@@ -617,6 +631,10 @@ export const saveReportDetails = async (reportData) => {
         teacher_remarks,
         principal_signature,
         attendance,
+        headmaster_remarks,
+        house_report,
+        position_held,
+        interest,
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'student_id,term,academic_year'
