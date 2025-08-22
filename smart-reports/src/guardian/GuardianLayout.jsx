@@ -12,22 +12,8 @@ const GuardianLayout = ({ children, activeTab, setActiveTab, user, profile }) =>
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = async () => {
-    try {
-      // Check if there's an active session before trying to sign out
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (session) {
-        const { error } = await supabase.auth.signOut()
-        if (error) throw error
-      }
-      
-      toast.success('Logged out successfully')
-      // Let the auth state change listener handle the redirect
-    } catch (error) {
-      console.error('Logout error:', error)
-      // Even if logout fails, show success and let auth state handle redirect
-      toast.success('Logged out successfully')
-    }
+    const success = await window.handleGlobalLogout()
+    toast.success('Logged out successfully')
   }
 
   const menuItems = [

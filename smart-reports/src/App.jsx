@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import toast from 'react-hot-toast'
 
@@ -23,9 +23,42 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [isCreatingUser, setIsCreatingUser] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
 
   // Make the flag available globally
   window.setIsCreatingUser = setIsCreatingUser
+  
+  // Global logout function
+  const handleGlobalLogout = async () => {
+    try {
+      // Check if there's an active session before trying to sign out
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (session) {
+        const { error } = await supabase.auth.signOut()
+        if (error) throw error
+      }
+      
+      // Clear local state immediately
+      setUser(null)
+      setUserProfile(null)
+      
+      // Navigate to login
+      navigate('/login', { replace: true })
+      
+      return true
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Even if logout fails, clear local state and redirect
+      setUser(null)
+      setUserProfile(null)
+      navigate('/login', { replace: true })
+      return false
+    }
+  }
+  
+  // Make logout function available globally
+  window.handleGlobalLogout = handleGlobalLogout
 
   useEffect(() => {
     // Get initial session
@@ -57,11 +90,9 @@ function App() {
           setUserProfile(null)
           setLoading(false)
           
-          // Force a small delay to ensure state updates before redirect
+          // Use React Router navigate instead of window.location
           setTimeout(() => {
-            if (!session) {
-              window.location.href = '/login'
-            }
+            navigate('/login', { replace: true })
           }, 100)
         }
       }
