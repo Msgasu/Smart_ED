@@ -41,6 +41,8 @@ function App() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change event:', event, 'Session:', session)
+        
         // Skip auth state changes during user creation to prevent redirects
         if (isCreatingUser) {
           console.log('Skipping auth state change during user creation')
@@ -49,8 +51,10 @@ function App() {
         
         setUser(session?.user ?? null)
         if (session?.user) {
+          console.log('User authenticated, fetching profile for:', session.user.id)
           fetchUserProfile(session.user.id)
         } else {
+          console.log('No session, clearing user profile')
           setUserProfile(null)
           setLoading(false)
         }
@@ -62,6 +66,7 @@ function App() {
 
   const fetchUserProfile = async (userId) => {
     try {
+      console.log('Fetching profile for user:', userId)
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -69,6 +74,8 @@ function App() {
         .single()
 
       if (error) throw error
+      
+      console.log('Profile fetched successfully:', data)
       setUserProfile(data)
     } catch (error) {
       console.error('Error fetching profile:', error)
@@ -112,10 +119,10 @@ function App() {
         {/* Public routes - accessible without login */}
         <Route path="/guardian-portal" element={<GuardianPortalPublic />} />
         
-        {/* Auth routes */}
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/register" element={<Signup />} />
-        <Route path="/login" element={<Login />} />
+        {/* Auth routes - redirect to dashboard if already logged in */}
+        <Route path="/signup" element={user && userProfile ? <Navigate to="/" /> : <Signup />} />
+        <Route path="/register" element={user && userProfile ? <Navigate to="/" /> : <Signup />} />
+        <Route path="/login" element={user && userProfile ? <Navigate to="/" /> : <Login />} />
 
         {/* Protected routes - only accessible when logged in */}
         {user && userProfile ? (
