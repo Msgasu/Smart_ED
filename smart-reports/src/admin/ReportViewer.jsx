@@ -516,6 +516,15 @@ const ReportViewer = () => {
     classComparisonData: !!classComparisonData,
     subjectPerformanceData: !!subjectPerformanceData
   })
+  
+  // Debug student ID data
+  if (report) {
+    console.log('Student data structure:', {
+      student: report.student,
+      students: report.student?.students,
+      studentId: report.student?.students?.student_id
+    })
+  }
 
   return (
     <AdminLayout user={null} profile={userProfile}>
@@ -571,6 +580,8 @@ const ReportViewer = () => {
             </div>
           </div>
 
+
+
           {/* Student Information */}
           <div className="student-info-section">
             <div className="section-header">
@@ -581,10 +592,10 @@ const ReportViewer = () => {
                 <span className="label">Name:</span>
                 <span className="value">{report.student.first_name} {report.student.last_name}</span>
               </div>
-              <div className="info-item">
-                <span className="label">Student ID:</span>
-                <span className="value">{report.student?.students?.student_id || report.student?.student_id || 'N/A'}</span>
-              </div>
+                             <div className="info-item">
+                 <span className="label">Student ID:</span>
+                 <span className="value">{report.student?.students?.student_id || 'N/A'}</span>
+               </div>
               <div className="info-item">
                 <span className="label">Gender:</span>
                 <span className="value">{report.student.sex ? report.student.sex.charAt(0).toUpperCase() + report.student.sex.slice(1) : 'N/A'}</span>
@@ -601,14 +612,14 @@ const ReportViewer = () => {
                 <span className="label">Academic Year:</span>
                 <span className="value">{report.academic_year}</span>
               </div>
-              <div className="info-item">
-                <span className="label">Attendance:</span>
-                <span className="value">{report.attendance || 'N/A'}</span>
-              </div>
-              <div className="info-item">
-                <span className="label">Interest:</span>
-                <span className="value">{report.interest || 'N/A'}</span>
-              </div>
+                             <div className="info-item">
+                 <span className="label">Attendance:</span>
+                 <span className="value">{report.attendance || 'N/A'}</span>
+               </div>
+               <div className="info-item">
+                 <span className="label">Overall Average:</span>
+                 <span className="value">{report.total_score || 0}%</span>
+               </div>
             </div>
           </div>
 
@@ -666,10 +677,6 @@ const ReportViewer = () => {
                 <span className="value">{stats.total}</span>
               </div>
               <div className="performance-item">
-                <span className="label">Overall Average:</span>
-                <span className="value">{report.total_score || 0}%</span>
-              </div>
-              <div className="performance-item">
                 <span className="label">Overall Grade:</span>
                 <span className="value">
                   <span className={`grade-badge ${getGradeBadgeClass(report.overall_grade)}`}>
@@ -706,10 +713,14 @@ const ReportViewer = () => {
                 <span className="label">Next Class:</span>
                 <span className="value">{report.next_class || 'Not specified'}</span>
               </div>
-              <div className="info-item">
-                <span className="label">Reopening Date:</span>
-                <span className="value">{report.reopening_date || 'Not specified'}</span>
-              </div>
+                             <div className="info-item">
+                 <span className="label">Reopening Date:</span>
+                 <span className="value">{report.reopening_date || 'Not specified'}</span>
+               </div>
+               <div className="info-item">
+                 <span className="label">Interest:</span>
+                 <span className="value">{report.interest || 'N/A'}</span>
+               </div>
             </div>
           </div>
 
@@ -892,42 +903,31 @@ const ReportViewer = () => {
             <div className="section-header">
               <h4>Signatures</h4>
             </div>
-            <div className="signatures-grid">
-              <div className="signature-item">
-                <div className="signature-content">
-                  <div className="signature-line">
-                    <span className="signature-value">
-                      {/* Class teacher signature would come from grade entries */}
-                      ___________________________
-                    </span>
-                  </div>
-                  <span className="signature-label">Class Teacher</span>
-                  <span className="signature-date">Date: ________________</span>
-                </div>
-              </div>
-              <div className="signature-item">
-                <div className="signature-content">
-                  <div className="signature-line">
-                    <span className="signature-value">
-                      {report.principal_signature || '___________________________'}
-                    </span>
-                  </div>
-                  <span className="signature-label">Principal</span>
-                  <span className="signature-date">Date: ________________</span>
-                </div>
-              </div>
-              <div className="signature-item">
-                <div className="signature-content">
-                  <div className="signature-line">
-                    <span className="signature-value">
-                      ___________________________
-                    </span>
-                  </div>
-                  <span className="signature-label">Parent/Guardian</span>
-                  <span className="signature-date">Date: ________________</span>
-                </div>
-              </div>
-            </div>
+                         <div className="signatures-grid">
+               <div className="signature-item">
+                 <div className="signature-content">
+                   <div className="signature-line">
+                     <span className="signature-value">
+                       {/* Class teacher signature would come from grade entries */}
+                       ___________________________
+                     </span>
+                   </div>
+                   <span className="signature-label">Class Teacher</span>
+                   <span className="signature-date">Date: ________________</span>
+                 </div>
+               </div>
+               <div className="signature-item">
+                 <div className="signature-content">
+                   <div className="signature-line">
+                     <span className="signature-value">
+                       {report.principal_signature || '___________________________'}
+                     </span>
+                   </div>
+                   <span className="signature-label">Principal</span>
+                   <span className="signature-date">Date: ________________</span>
+                 </div>
+               </div>
+             </div>
           </div>
 
           {/* Footer */}

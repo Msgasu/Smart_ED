@@ -38,6 +38,7 @@ const Reports = () => {
   const [reportLoading, setReportLoading] = useState(false)
   const [reportData, setReportData] = useState({
     studentName: '',
+    studentId: '',
     studentClass: '',
     studentGender: '',
     attendance: '',
@@ -88,6 +89,7 @@ const Reports = () => {
       setSubjects([])
       setReportData({
         studentName: `${selectedStudent.first_name} ${selectedStudent.last_name}`,
+        studentId: selectedStudent.students?.student_id || '',
         studentClass: selectedStudent.students?.class_year || '',
         studentGender: selectedStudent.sex ? selectedStudent.sex.charAt(0).toUpperCase() + selectedStudent.sex.slice(1) : '',
         attendance: '',
@@ -112,6 +114,7 @@ const Reports = () => {
       setSubjects([])
       setReportData({
         studentName: '',
+        studentId: '',
         studentClass: '',
         studentGender: '',
         attendance: '',
@@ -193,6 +196,7 @@ const Reports = () => {
         console.log(`📄 Found existing report (ID: ${existingReport.id}) for this specific student + term + year`);
         setReportData(prev => ({
           ...prev,
+          studentId: selectedStudent.students?.student_id || '',
           attendance: existingReport.attendance || '',
           conduct: existingReport.conduct || '',
           nextClass: existingReport.next_class || '',
@@ -619,6 +623,16 @@ const Reports = () => {
                   value={reportData.studentName}
                   onChange={(e) => setReportData(prev => ({ ...prev, studentName: e.target.value }))}
                   ref={studentNameRef}
+                />
+              </div>
+              <div className="info-item">
+                <label>Student ID:</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={reportData.studentId}
+                  readOnly
+                  placeholder="Auto-populated"
                 />
               </div>
               <div className="info-item">

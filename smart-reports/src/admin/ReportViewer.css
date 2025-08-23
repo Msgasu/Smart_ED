@@ -254,6 +254,8 @@
   letter-spacing: 1px;
 }
 
+
+
 /* Section Headers */
 .section-header {
   margin-bottom: 1rem;
@@ -278,7 +280,7 @@
 
 .student-info-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
   padding: 1rem;
   background: #f9fafb;
@@ -406,6 +408,8 @@
   background: #f3f4f6;
   color: #6b7280;
 }
+
+
 
 .position {
   text-align: center;
@@ -686,6 +690,8 @@
   .school-info h3 {
     font-size: 1rem;
   }
+  
+
 }
 
 /* Print Styles */
@@ -711,6 +717,8 @@
     padding-bottom: 1rem;
   }
   
+
+  
   .grades-table {
     font-size: 0.75rem;
   }
@@ -724,7 +732,10 @@
     font-size: 0.875rem;
   }
   
-  .student-info-grid,
+  .student-info-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
   .performance-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -735,7 +746,7 @@
   }
   
   .signatures-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
   }
   

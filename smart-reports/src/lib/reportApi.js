@@ -190,12 +190,12 @@ export const getReportById = async (reportId, includeIncomplete = false) => {
       }
     }
 
-    // Get student information
+    // Get student information with proper join
     const { data: student, error: studentError } = await supabase
       .from('profiles')
       .select(`
         *,
-        students (
+        students!students_profile_id_fkey (
           profile_id,
           student_id,
           class_year
@@ -204,14 +204,34 @@ export const getReportById = async (reportId, includeIncomplete = false) => {
       .eq('id', report.student_id)
       .single()
 
-    if (studentError) throw studentError
+    if (studentError) {
+      console.error('Error fetching student data:', studentError)
+      throw studentError
+    }
+
+    // Debug the student data structure
+    console.log('Student data from API:', {
+      student,
+      studentsArray: student?.students,
+      firstStudent: student?.students?.[0],
+      reportStudentId: report.student_id
+    })
+
+    // Alternative approach: fetch student data directly from students table
+    const { data: studentRecord, error: studentRecordError } = await supabase
+      .from('students')
+      .select('*')
+      .eq('profile_id', report.student_id)
+      .single()
+
+    console.log('Direct student record:', studentRecord)
 
     return { 
       data: {
         ...report,
         student: {
           ...student,
-          students: student.students[0] || null
+          students: studentRecord || student?.students?.[0] || null
         }
       }, 
       error: null 
