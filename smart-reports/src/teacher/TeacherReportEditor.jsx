@@ -5,6 +5,22 @@ import { supabase } from '../lib/supabase'
 import { getReportById, saveReport, canEditReport, REPORT_STATUS } from '../lib/reportApi'
 import toast from 'react-hot-toast'
 
+// Helper function to get max values for input validation
+const getMaxValues = (classYear) => {
+  if (!classYear) return { classMax: 40, examMax: 60 }; // Default fallback
+  
+  const classYearStr = classYear.toString().toLowerCase();
+  
+  if (classYearStr.includes('form1') || classYearStr.includes('form 1')) {
+    return { classMax: 30, examMax: 70 };
+  } else if (classYearStr.includes('form2') || classYearStr.includes('form 2')) {
+    return { classMax: 40, examMax: 60 };
+  }
+  
+  // Default for other forms/grades
+  return { classMax: 40, examMax: 60 };
+};
+
 const TeacherReportEditor = ({ user, profile }) => {
   const { reportId } = useParams()
   const navigate = useNavigate()
@@ -540,20 +556,42 @@ const TeacherReportEditor = ({ user, profile }) => {
                                 <input
                                   type="number"
                                   className="form-control"
-                                  max="40"
+                                  max={getMaxValues(reportData.class_year).classMax}
                                   min="0"
                                   value={grade.class_score}
-                                  onChange={(e) => handleGradeChange(index, 'class_score', e.target.value)}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    const max = getMaxValues(reportData.class_year).classMax;
+                                    // Prevent negative values and values exceeding max
+                                    if (value === '' || (parseFloat(value) >= 0 && parseFloat(value) <= max)) {
+                                      handleGradeChange(index, 'class_score', value);
+                                    } else if (parseFloat(value) > max) {
+                                      toast.error(`Class score cannot exceed ${max} (${max}% of total)`);
+                                    } else if (parseFloat(value) < 0) {
+                                      toast.error('Class score cannot be negative');
+                                    }
+                                  }}
                                 />
                               </td>
                               <td>
                                 <input
                                   type="number"
                                   className="form-control"
-                                  max="60"
+                                  max={getMaxValues(reportData.class_year).examMax}
                                   min="0"
                                   value={grade.exam_score}
-                                  onChange={(e) => handleGradeChange(index, 'exam_score', e.target.value)}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    const max = getMaxValues(reportData.class_year).examMax;
+                                    // Prevent negative values and values exceeding max
+                                    if (value === '' || (parseFloat(value) >= 0 && parseFloat(value) <= max)) {
+                                      handleGradeChange(index, 'exam_score', value);
+                                    } else if (parseFloat(value) > max) {
+                                      toast.error(`Exam score cannot exceed ${max} (${max}% of total)`);
+                                    } else if (parseFloat(value) < 0) {
+                                      toast.error('Exam score cannot be negative');
+                                    }
+                                  }}
                                 />
                               </td>
                               <td className="fw-bold text-center">

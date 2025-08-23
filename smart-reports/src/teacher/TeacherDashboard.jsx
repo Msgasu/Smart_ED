@@ -35,6 +35,22 @@ const TeacherDashboard = ({ user, profile }) => {
     // Default for other forms/grades
     return { classText: '40%', examText: '60%' };
   };
+
+  // Helper function to get max values for input validation
+  const getMaxValues = (classYear) => {
+    if (!classYear) return { classMax: 40, examMax: 60 }; // Default fallback
+    
+    const classYearStr = classYear.toString().toLowerCase();
+    
+    if (classYearStr.includes('form1') || classYearStr.includes('form 1')) {
+      return { classMax: 30, examMax: 70 };
+    } else if (classYearStr.includes('form2') || classYearStr.includes('form 2')) {
+      return { classMax: 40, examMax: 60 };
+    }
+    
+    // Default for other forms/grades
+    return { classMax: 40, examMax: 60 };
+  };
   
   // Reports Tab State (exact replica of admin Reports.jsx)
   const [subjects, setSubjects] = useState([])
@@ -2179,8 +2195,19 @@ const TeacherDashboard = ({ user, profile }) => {
                               placeholder="Score"
                               value={subject.classScore}
                               min="0"
-                              max="60"
-                              onChange={(e) => handleSubjectChange(subject.id, 'classScore', e.target.value)}
+                              max={getMaxValues(reportData.studentClass).classMax}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                const max = getMaxValues(reportData.studentClass).classMax;
+                                // Prevent negative values and values exceeding max
+                                if (value === '' || (parseFloat(value) >= 0 && parseFloat(value) <= max)) {
+                                  handleSubjectChange(subject.id, 'classScore', value);
+                                } else if (parseFloat(value) > max) {
+                                  toast.error(`Class score cannot exceed ${max} (${getDisplayPercentages(reportData.studentClass).classText})`);
+                                } else if (parseFloat(value) < 0) {
+                                  toast.error('Class score cannot be negative');
+                                }
+                              }}
                             />
                           ) : (
                             <span className="text-muted">{subject.classScore || '-'}</span>
@@ -2194,8 +2221,19 @@ const TeacherDashboard = ({ user, profile }) => {
                               placeholder="Score"
                               value={subject.examScore}
                               min="0"
-                              max="40"
-                              onChange={(e) => handleSubjectChange(subject.id, 'examScore', e.target.value)}
+                              max={getMaxValues(reportData.studentClass).examMax}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                const max = getMaxValues(reportData.studentClass).examMax;
+                                // Prevent negative values and values exceeding max
+                                if (value === '' || (parseFloat(value) >= 0 && parseFloat(value) <= max)) {
+                                  handleSubjectChange(subject.id, 'examScore', value);
+                                } else if (parseFloat(value) > max) {
+                                  toast.error(`Exam score cannot exceed ${max} (${getDisplayPercentages(reportData.studentClass).examText})`);
+                                } else if (parseFloat(value) < 0) {
+                                  toast.error('Exam score cannot be negative');
+                                }
+                              }}
                             />
                           ) : (
                             <span className="text-muted">{subject.examScore || '-'}</span>
@@ -3112,10 +3150,21 @@ const TeacherDashboard = ({ user, profile }) => {
                             type="number"
                             className="form-control form-control-sm text-center"
                             value={grade.class_score || ''}
-                            onChange={(e) => handleGradeEdit(grade.id, 'class_score', e.target.value)}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              const max = getMaxValues(report.class_year).classMax;
+                              // Prevent negative values and values exceeding max
+                              if (value === '' || (parseFloat(value) >= 0 && parseFloat(value) <= max)) {
+                                handleGradeEdit(grade.id, 'class_score', value);
+                              } else if (parseFloat(value) > max) {
+                                toast.error(`Class score cannot exceed ${max} (${getDisplayPercentages(report.class_year).classText})`);
+                              } else if (parseFloat(value) < 0) {
+                                toast.error('Class score cannot be negative');
+                              }
+                            }}
                             min="0"
-                            max="60"
-                            placeholder="0-60"
+                            max={getMaxValues(report.class_year).classMax}
+                            placeholder={`0-${getMaxValues(report.class_year).classMax}`}
                           />
                         ) : (
                           <span>{grade.class_score !== null && grade.class_score !== undefined ? grade.class_score : '-'}</span>
@@ -3127,10 +3176,21 @@ const TeacherDashboard = ({ user, profile }) => {
                             type="number"
                             className="form-control form-control-sm text-center"
                             value={grade.exam_score || ''}
-                            onChange={(e) => handleGradeEdit(grade.id, 'exam_score', e.target.value)}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              const max = getMaxValues(report.class_year).examMax;
+                              // Prevent negative values and values exceeding max
+                              if (value === '' || (parseFloat(value) >= 0 && parseFloat(value) <= max)) {
+                                handleGradeEdit(grade.id, 'exam_score', value);
+                              } else if (parseFloat(value) > max) {
+                                toast.error(`Exam score cannot exceed ${max} (${getDisplayPercentages(report.class_year).examText})`);
+                              } else if (parseFloat(value) < 0) {
+                                toast.error('Exam score cannot be negative');
+                              }
+                            }}
                             min="0"
-                            max="40"
-                            placeholder="0-40"
+                            max={getMaxValues(report.class_year).examMax}
+                            placeholder={`0-${getMaxValues(report.class_year).examMax}`}
                           />
                         ) : (
                           <span>{grade.exam_score !== null && grade.exam_score !== undefined ? grade.exam_score : '-'}</span>

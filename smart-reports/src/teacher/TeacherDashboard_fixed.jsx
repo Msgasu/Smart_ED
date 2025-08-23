@@ -6,6 +6,22 @@ import { getReportsByStatus, saveReport, REPORT_STATUS } from '../lib/reportApi'
 import toast from 'react-hot-toast'
 import TeacherLayout from './TeacherLayout'
 
+// Helper function to get max values for input validation
+const getMaxValues = (classYear) => {
+  if (!classYear) return { classMax: 40, examMax: 60 }; // Default fallback
+  
+  const classYearStr = classYear.toString().toLowerCase();
+  
+  if (classYearStr.includes('form1') || classYearStr.includes('form 1')) {
+    return { classMax: 30, examMax: 70 };
+  } else if (classYearStr.includes('form2') || classYearStr.includes('form 2')) {
+    return { classMax: 40, examMax: 60 };
+  }
+  
+  // Default for other forms/grades
+  return { classMax: 40, examMax: 60 };
+};
+
 const TeacherDashboard = ({ user, profile }) => {
   const navigate = useNavigate()
   const [courses, setCourses] = useState([])
@@ -903,20 +919,42 @@ const TeacherDashboard = ({ user, profile }) => {
                                 <input
                                   type="number"
                                   className="form-control"
-                                  max="40"
+                                  max={getMaxValues(student.students?.class_year).classMax}
                                   min="0"
                                   value={entryData.class_score || currentGrade?.class_score || ''}
-                                  onChange={(e) => updateGrade(student.id, 'class_score', e.target.value)}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    const max = getMaxValues(student.students?.class_year).classMax;
+                                    // Prevent negative values and values exceeding max
+                                    if (value === '' || (parseFloat(value) >= 0 && parseFloat(value) <= max)) {
+                                      updateGrade(student.id, 'class_score', value);
+                                    } else if (parseFloat(value) > max) {
+                                      toast.error(`Class score cannot exceed ${max} (${max}% of total)`);
+                                    } else if (parseFloat(value) < 0) {
+                                      toast.error('Class score cannot be negative');
+                                    }
+                                  }}
                                 />
                               </td>
                               <td>
                                 <input
                                   type="number"
                                   className="form-control"
-                                  max="60"
+                                  max={getMaxValues(student.students?.class_year).examMax}
                                   min="0"
                                   value={entryData.exam_score || currentGrade?.exam_score || ''}
-                                  onChange={(e) => updateGrade(student.id, 'exam_score', e.target.value)}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    const max = getMaxValues(student.students?.class_year).examMax;
+                                    // Prevent negative values and values exceeding max
+                                    if (value === '' || (parseFloat(value) >= 0 && parseFloat(value) <= max)) {
+                                      updateGrade(student.id, 'exam_score', value);
+                                    } else if (parseFloat(value) > max) {
+                                      toast.error(`Exam score cannot exceed ${max} (${max}% of total)`);
+                                    } else if (parseFloat(value) < 0) {
+                                      toast.error('Exam score cannot be negative');
+                                    }
+                                  }}
                                 />
                               </td>
                               <td className="fw-bold">{total.toFixed(1)}</td>

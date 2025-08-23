@@ -156,6 +156,22 @@ const Reports = ({
     return { classText: '40%', examText: '60%' };
   };
 
+  // Helper function to get max values for input validation
+  const getMaxValues = (classYear) => {
+    if (!classYear) return { classMax: 40, examMax: 60 }; // Default fallback
+    
+    const classYearStr = classYear.toString().toLowerCase();
+    
+    if (classYearStr.includes('form1') || classYearStr.includes('form 1')) {
+      return { classMax: 30, examMax: 70 };
+    } else if (classYearStr.includes('form2') || classYearStr.includes('form 2')) {
+      return { classMax: 40, examMax: 60 };
+    }
+    
+    // Default for other forms/grades
+    return { classMax: 40, examMax: 60 };
+  };
+
   // Helper function to calculate grade
   const calculateGrade = (total) => {
     if (!total || isNaN(total)) return 'F9';
@@ -1388,8 +1404,19 @@ const Reports = ({
                         placeholder="Score" 
                         value={subject.classScore}
                         min="0"
-                        max="60"
-                        onChange={(e) => handleClassScoreChange(subject.id, e.target.value)}
+                        max={getMaxValues(studentData.class_year).classMax}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          const max = getMaxValues(studentData.class_year).classMax;
+                          // Prevent negative values and values exceeding max
+                          if (value === '' || (parseFloat(value) >= 0 && parseFloat(value) <= max)) {
+                            handleClassScoreChange(subject.id, value);
+                          } else if (parseFloat(value) > max) {
+                            toast.error(`Class score cannot exceed ${max} (${getDisplayPercentages(studentData.class_year).classText})`);
+                          } else if (parseFloat(value) < 0) {
+                            toast.error('Class score cannot be negative');
+                          }
+                        }}
                       />
                     </td>
                     <td>
@@ -1399,8 +1426,19 @@ const Reports = ({
                         placeholder="Score" 
                         value={subject.examScore}
                         min="0"
-                        max="40"
-                        onChange={(e) => handleExamScoreChange(subject.id, e.target.value)}
+                        max={getMaxValues(studentData.class_year).examMax}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          const max = getMaxValues(studentData.class_year).examMax;
+                          // Prevent negative values and values exceeding max
+                          if (value === '' || (parseFloat(value) >= 0 && parseFloat(value) <= max)) {
+                            handleExamScoreChange(subject.id, value);
+                          } else if (parseFloat(value) > max) {
+                            toast.error(`Exam score cannot exceed ${max} (${getDisplayPercentages(studentData.class_year).examText})`);
+                          } else if (parseFloat(value) < 0) {
+                            toast.error('Exam score cannot be negative');
+                          }
+                        }}
                       />
                     </td>
                     <td className="total-score">
