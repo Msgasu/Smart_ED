@@ -2,6 +2,75 @@ import { supabase } from './supabase'
 import toast from 'react-hot-toast'
 
 /**
+ * Add a course to a student's course list in the database
+ * @param {string} studentId - The student ID
+ * @param {string} courseId - The course ID
+ * @returns {Promise<Object>} - Object containing success status and any errors
+ */
+export const addCourseToStudent = async (studentId, courseId) => {
+  try {
+    // First check if the course is already assigned to this student
+    const { data: existingAssignment, error: checkError } = await supabase
+      .from('student_courses')
+      .select('id')
+      .eq('student_id', studentId)
+      .eq('course_id', courseId)
+      .single()
+
+    if (checkError && checkError.code !== 'PGRST116') {
+      console.error('Error checking existing assignment:', checkError)
+      return {
+        success: false,
+        errors: [checkError.message],
+        message: `Error checking existing assignment: ${checkError.message}`
+      }
+    }
+
+    if (existingAssignment) {
+      return {
+        success: true,
+        errors: [],
+        message: 'Course is already assigned to this student',
+        alreadyExists: true
+      }
+    }
+
+    // Add the course to the student's course list
+    const { error: insertError } = await supabase
+      .from('student_courses')
+      .insert([{
+        student_id: studentId,
+        course_id: courseId,
+        status: 'enrolled'
+      }])
+
+    if (insertError) {
+      console.error('Error adding course to student:', insertError)
+      return {
+        success: false,
+        errors: [insertError.message],
+        message: `Error adding course to student: ${insertError.message}`
+      }
+    }
+
+    return {
+      success: true,
+      errors: [],
+      message: 'Course successfully added to student',
+      alreadyExists: false
+    }
+
+  } catch (error) {
+    console.error('Error in addCourseToStudent:', error)
+    return {
+      success: false,
+      errors: [error.message],
+      message: `Error adding course to student: ${error.message}`
+    }
+  }
+}
+
+/**
  * Delete a course assignment and all related data from the database
  * @param {string} studentId - The student ID
  * @param {string} courseId - The course ID

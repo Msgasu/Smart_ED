@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { FaPlus, FaSearch, FaTrashAlt, FaCalendarAlt } from 'react-icons/fa';
 import { supabase } from '../../lib/supabase';
+import { addCourseToStudent } from '../../lib/courseManagement';
 import './styles/AdminLayout.css';
 import './styles/Reports.css';
 // Using native crypto.randomUUID() instead of uuid package
@@ -909,12 +910,13 @@ const Reports = ({
   };
 
   // Add a new subject
-  const addSubject = (course) => {
+  const addSubject = async (course) => {
     // Check if course is already added using courseId
     if (subjects.some(subject => subject.courseId === course.id)) {
       return; // Course already exists
     }
     
+    // Add to UI first for immediate feedback
     const newSubject = {
       id: Date.now(),
       courseId: course.id,
@@ -932,6 +934,37 @@ const Reports = ({
     setSubjects(updatedSubjects);
     if (onSubjectsChange) {
       onSubjectsChange(updatedSubjects);
+    }
+
+    // Also add the course to the student's course list in the database
+    if (studentId) {
+      try {
+        const result = await addCourseToStudent(studentId, course.id)
+        
+        if (result.success) {
+          if (result.alreadyExists) {
+            console.log(`${course.name} added to report (already enrolled)`)
+          } else {
+            console.log(`${course.name} added to report and student's course list`)
+          }
+        } else {
+          console.error('Errors during course addition:', result.errors)
+          // Remove from UI if database addition failed
+          const filteredSubjects = updatedSubjects.filter(s => s.courseId !== course.id)
+          setSubjects(filteredSubjects)
+          if (onSubjectsChange) {
+            onSubjectsChange(filteredSubjects)
+          }
+        }
+      } catch (error) {
+        console.error('Error adding course to student:', error)
+        // Remove from UI if database addition failed
+        const filteredSubjects = updatedSubjects.filter(s => s.courseId !== course.id)
+        setSubjects(filteredSubjects)
+        if (onSubjectsChange) {
+          onSubjectsChange(filteredSubjects)
+        }
+      }
     }
   };
 

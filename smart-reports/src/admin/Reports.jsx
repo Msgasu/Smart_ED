@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { FaPlus, FaSearch, FaTrashAlt, FaCalendarAlt, FaSave, FaPrint, FaFileExport } from 'react-icons/fa'
 import { supabase } from '../lib/supabase'
 import { studentReportsAPI, studentGradesAPI, studentsAPI, coursesAPI } from '../lib/api'
-import { deleteCourseAssignment } from '../lib/courseManagement'
+import { deleteCourseAssignment, addCourseToStudent } from '../lib/courseManagement'
 import toast from 'react-hot-toast'
 // Using native crypto.randomUUID() instead of uuid package
 import './Reports.css'
@@ -380,13 +380,14 @@ const Reports = () => {
     }
   }
 
-  const addSubject = (course) => {
+  const addSubject = async (course) => {
     const existingSubject = subjects.find(s => s.courseId === course.id)
     if (existingSubject) {
       toast.error(`${course.name} is already in the report`)
       return
     }
 
+    // Add to UI first for immediate feedback
     const newSubject = {
       id: crypto.randomUUID(),
       courseId: course.id,
@@ -402,7 +403,33 @@ const Reports = () => {
     }
 
     setSubjects([...subjects, newSubject])
-    toast.success(`${course.name} added to report`)
+
+    // Also add the course to the student's course list in the database
+    if (selectedStudent) {
+      try {
+        const result = await addCourseToStudent(selectedStudent.id, course.id)
+        
+        if (result.success) {
+          if (result.alreadyExists) {
+            toast.success(`${course.name} added to report (already enrolled)`)
+          } else {
+            toast.success(`${course.name} added to report and student's course list`)
+          }
+        } else {
+          toast.error(result.message)
+          console.error('Errors during course addition:', result.errors)
+          // Remove from UI if database addition failed
+          setSubjects(prev => prev.filter(s => s.courseId !== course.id))
+        }
+      } catch (error) {
+        console.error('Error adding course to student:', error)
+        toast.error('Error adding course to student')
+        // Remove from UI if database addition failed
+        setSubjects(prev => prev.filter(s => s.courseId !== course.id))
+      }
+    } else {
+      toast.success(`${course.name} added to report`)
+    }
   }
 
   const removeSubject = async (id) => {
