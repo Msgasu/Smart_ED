@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { FaPlus, FaSearch, FaTrashAlt, FaCalendarAlt, FaSave, FaPrint, FaFileExport } from 'react-icons/fa'
 import { supabase } from '../lib/supabase'
 import { studentReportsAPI, studentGradesAPI, studentsAPI, coursesAPI } from '../lib/api'
+import { deleteCourseAssignment } from '../lib/courseManagement'
 import toast from 'react-hot-toast'
 // Using native crypto.randomUUID() instead of uuid package
 import './Reports.css'
@@ -404,9 +405,35 @@ const Reports = () => {
     toast.success(`${course.name} added to report`)
   }
 
-  const removeSubject = (id) => {
-    setSubjects(subjects.filter(subject => subject.id !== id))
-    toast.success('Subject removed successfully')
+  const removeSubject = async (id) => {
+    try {
+      const subjectToRemove = subjects.find(subject => subject.id === id)
+      
+      if (!subjectToRemove) {
+        toast.error('Subject not found')
+        return
+      }
+
+      // Remove from UI first
+      setSubjects(subjects.filter(subject => subject.id !== id))
+
+      // If this is an existing grade (has a real ID from database), delete it from database
+      if (subjectToRemove.courseId && selectedStudent) {
+        const result = await deleteCourseAssignment(selectedStudent.id, subjectToRemove.courseId)
+        
+        if (result.success) {
+          toast.success('Subject removed from report and database')
+        } else {
+          toast.error(result.message)
+          console.error('Errors during deletion:', result.errors)
+        }
+      } else {
+        toast.success('Subject removed from report')
+      }
+    } catch (error) {
+      console.error('Error removing subject:', error)
+      toast.error('Error removing subject')
+    }
   }
 
   const handleSubjectChange = (id, field, value) => {

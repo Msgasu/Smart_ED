@@ -17,6 +17,7 @@ import {
   calculateClassScoreFromAssignments,
   getStudentReports
 } from '../../backend/teachers';
+import { deleteCourseAssignment } from '../../lib/courseManagement';
 import './styles/TeacherReport.css';
 import { supabase } from '../../lib/supabase';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, RadialLinearScale, ArcElement, Title, Tooltip, Legend } from 'chart.js';
@@ -604,12 +605,23 @@ const TeacherReport = () => {
 
   const handleDeleteSubjectGrade = async (row) => {
     try {
-      const { error } = await deleteSubjectGrade(reportData.id, row.dataset.subjectId);
+      const subjectId = row.dataset.subjectId;
+      
+      // Delete the grade from student_grades table
+      const { error } = await deleteSubjectGrade(reportData.id, subjectId);
       
       if (error) throw error;
       
+      // Also remove the course assignment and all related data
+      const result = await deleteCourseAssignment(studentId, subjectId);
+      
+      if (!result.success) {
+        console.error('Errors during course deletion:', result.errors);
+        // Continue with UI removal even if course deletion fails
+      }
+      
       row.remove();
-      toast.success('Grade removed successfully');
+      toast.success('Grade and course assignment removed from database');
       
     } catch (error) {
       console.error('Error deleting grade:', error);

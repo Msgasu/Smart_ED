@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { FaBook, FaChalkboardTeacher, FaGraduationCap, FaPlus, FaTrash, FaSearch, FaUserCheck, FaUsers, FaCalendarAlt } from 'react-icons/fa'
 import { supabase } from '../lib/supabase'
+import { deleteCourseAssignmentById } from '../lib/courseManagement'
 import toast from 'react-hot-toast'
 import './CourseAssignment.css'
 
@@ -376,15 +377,15 @@ const CourseAssignment = () => {
 
   const removeStudentCourse = async (assignmentId) => {
     try {
-      const { error } = await supabase
-        .from('student_courses')
-        .update({ status: 'dropped' })
-        .eq('id', assignmentId)
-
-      if (error) throw error
-
-      toast.success('Course assignment removed')
-      fetchStudentCourses()
+      const result = await deleteCourseAssignmentById(assignmentId)
+      
+      if (result.success) {
+        toast.success(result.message)
+        fetchStudentCourses()
+      } else {
+        toast.error(result.message)
+        console.error('Errors during deletion:', result.errors)
+      }
     } catch (error) {
       console.error('Error removing student course:', error)
       toast.error('Error removing course assignment')
