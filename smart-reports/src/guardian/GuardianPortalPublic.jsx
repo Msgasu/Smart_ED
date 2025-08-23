@@ -129,6 +129,8 @@ const GuardianPortalPublic = () => {
         teacher_remarks: reportData.teacher_remarks || 'No remarks available.',
         headmaster_remarks: reportData.headmaster_remarks || 'No remarks available.',
         house_report: reportData.house_report || 'No house report available.',
+        class_teacher_signature: reportData.class_teacher_signature || 'N/A',
+        house_master_signature: reportData.house_master_signature || 'N/A',
         
         // Student grades with proper structure
         student_grades: gradesData.map(grade => ({

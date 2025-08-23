@@ -58,6 +58,8 @@ const TeacherDashboard = ({ user, profile }) => {
     nextClass: '',
     teacherRemarks: '',
     principalSignature: '',
+    classTeacherSignature: '',
+    houseMasterSignature: '',
     reopeningDate: '',
     headmasterRemarks: '',
     houseReport: '',
@@ -1590,6 +1592,8 @@ const TeacherDashboard = ({ user, profile }) => {
         next_class: reportData.nextClass,
         teacher_remarks: reportData.teacherRemarks,
         principal_signature: reportData.principalSignature,
+        class_teacher_signature: reportData.classTeacherSignature,
+        house_master_signature: reportData.houseMasterSignature,
         reopening_date: reportData.reopeningDate,
         headmaster_remarks: reportData.headmasterRemarks,
         house_report: reportData.houseReport,
@@ -2342,6 +2346,26 @@ const TeacherDashboard = ({ user, profile }) => {
                   value={reportData.principalSignature}
                   onChange={(e) => setReportData(prev => ({ ...prev, principalSignature: e.target.value }))}
                   placeholder="Enter principal's signature"
+                />
+              </div>
+              <div className="info-item">
+                <label>Class Teacher's Signature:</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={reportData.classTeacherSignature}
+                  onChange={(e) => setReportData(prev => ({ ...prev, classTeacherSignature: e.target.value }))}
+                  placeholder="Enter class teacher's signature"
+                />
+              </div>
+              <div className="info-item">
+                <label>House Master/Mistress Signature:</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={reportData.houseMasterSignature}
+                  onChange={(e) => setReportData(prev => ({ ...prev, houseMasterSignature: e.target.value }))}
+                  placeholder="Enter house master/mistress signature"
                 />
               </div>
               <div className="info-item">

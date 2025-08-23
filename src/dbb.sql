@@ -201,6 +201,8 @@ CREATE TABLE public.student_reports (
   reopening_date date,
   teacher_remarks text,
   principal_signature text,
+  class_teacher_signature text,
+  house_master_signature text,
   attendance text,
   created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,

@@ -468,6 +468,8 @@ const TeacherReport = () => {
         reopening_date: document.getElementById('reopeningDate')?.value,
         teacher_remarks: document.getElementById('teacherRemarks')?.value,
         principal_signature: document.getElementById('principalSignature')?.value,
+        class_teacher_signature: document.getElementById('classTeacherSignature')?.value,
+        house_master_signature: document.getElementById('houseMasterSignature')?.value,
         attendance: document.getElementById('attendance')?.value,
         headmaster_remarks: document.getElementById('headmasterRemarks')?.value,
         house_report: document.getElementById('houseReport')?.value,
@@ -768,6 +770,8 @@ const TeacherReport = () => {
         document.getElementById('reopeningDate').value = existingReport.reopening_date || '';
         document.getElementById('teacherRemarks').value = existingReport.teacher_remarks || '';
         document.getElementById('principalSignature').value = existingReport.principal_signature || '';
+        document.getElementById('classTeacherSignature').value = existingReport.class_teacher_signature || '';
+        document.getElementById('houseMasterSignature').value = existingReport.house_master_signature || '';
         document.getElementById('attendance').value = existingReport.attendance || '';
         document.getElementById('headmasterRemarks').value = existingReport.headmaster_remarks || '';
         document.getElementById('houseReport').value = existingReport.house_report || '';
@@ -1025,6 +1029,8 @@ const TeacherReport = () => {
         next_class: document.getElementById('nextClass')?.value || '',
         reopening_date: document.getElementById('reopeningDate')?.value || null,
         principal_signature: document.getElementById('principalSignature')?.value || '',
+        class_teacher_signature: document.getElementById('classTeacherSignature')?.value || '',
+        house_master_signature: document.getElementById('houseMasterSignature')?.value || '',
         attendance: document.getElementById('attendance')?.value || ''
       };
 

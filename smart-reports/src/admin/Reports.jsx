@@ -47,6 +47,8 @@ const Reports = () => {
     nextClass: '',
     teacherRemarks: '',
     principalSignature: '',
+    classTeacherSignature: '',
+    houseMasterSignature: '',
     reopeningDate: '',
     headmasterRemarks: '',
     houseReport: '',
@@ -88,22 +90,24 @@ const Reports = () => {
     if (selectedStudent) {
       // CLEAR ALL PREVIOUS DATA FIRST to ensure no data leakage
       setSubjects([])
-      setReportData({
-        studentName: `${selectedStudent.first_name} ${selectedStudent.last_name}`,
-        studentId: selectedStudent.students?.student_id || '',
-        studentClass: selectedStudent.students?.class_year || '',
-        studentGender: selectedStudent.sex ? selectedStudent.sex.charAt(0).toUpperCase() + selectedStudent.sex.slice(1) : '',
-        attendance: '',
-        conduct: '',
-        nextClass: '',
-        teacherRemarks: '',
-        principalSignature: '',
-        reopeningDate: '',
-        headmasterRemarks: '',
-        houseReport: '',
-        positionHeld: '',
-        interest: ''
-      })
+             setReportData({
+         studentName: `${selectedStudent.first_name} ${selectedStudent.last_name}`,
+         studentId: selectedStudent.students?.student_id || '',
+         studentClass: selectedStudent.students?.class_year || '',
+         studentGender: selectedStudent.sex ? selectedStudent.sex.charAt(0).toUpperCase() + selectedStudent.sex.slice(1) : '',
+         attendance: '',
+         conduct: '',
+         nextClass: '',
+         teacherRemarks: '',
+         principalSignature: '',
+         classTeacherSignature: '',
+         houseMasterSignature: '',
+         reopeningDate: '',
+         headmasterRemarks: '',
+         houseReport: '',
+         positionHeld: '',
+         interest: ''
+       })
       
       console.log(`🔄 Loading data for NEW STUDENT: ${selectedStudent.first_name} ${selectedStudent.last_name} (ID: ${selectedStudent.id})`)
       console.log(`📅 Term: ${selectedTerm}, Year: ${selectedYear}`)
@@ -113,22 +117,24 @@ const Reports = () => {
     } else {
       // Clear all data when no student is selected
       setSubjects([])
-      setReportData({
-        studentName: '',
-        studentId: '',
-        studentClass: '',
-        studentGender: '',
-        attendance: '',
-        conduct: '',
-        nextClass: '',
-        teacherRemarks: '',
-        principalSignature: '',
-        reopeningDate: '',
-        headmasterRemarks: '',
-        houseReport: '',
-        positionHeld: '',
-        interest: ''
-      })
+             setReportData({
+         studentName: '',
+         studentId: '',
+         studentClass: '',
+         studentGender: '',
+         attendance: '',
+         conduct: '',
+         nextClass: '',
+         teacherRemarks: '',
+         principalSignature: '',
+         classTeacherSignature: '',
+         houseMasterSignature: '',
+         reopeningDate: '',
+         headmasterRemarks: '',
+         houseReport: '',
+         positionHeld: '',
+         interest: ''
+       })
       console.log('🔄 Cleared all data - no student selected')
     }
   }, [selectedStudent, selectedTerm, selectedYear])
@@ -195,20 +201,22 @@ const Reports = () => {
 
       if (existingReport) {
         console.log(`📄 Found existing report (ID: ${existingReport.id}) for this specific student + term + year`);
-        setReportData(prev => ({
-          ...prev,
-          studentId: selectedStudent.students?.student_id || '',
-          attendance: existingReport.attendance || '',
-          conduct: existingReport.conduct || '',
-          nextClass: existingReport.next_class || '',
-          teacherRemarks: existingReport.teacher_remarks || '',
-          principalSignature: existingReport.principal_signature || '',
-          reopeningDate: existingReport.reopening_date || '',
-          headmasterRemarks: existingReport.headmaster_remarks || '',
-          houseReport: existingReport.house_report || '',
-          positionHeld: existingReport.position_held || '',
-          interest: existingReport.interest || ''
-        }))
+                 setReportData(prev => ({
+           ...prev,
+           studentId: selectedStudent.students?.student_id || '',
+           attendance: existingReport.attendance || '',
+           conduct: existingReport.conduct || '',
+           nextClass: existingReport.next_class || '',
+           teacherRemarks: existingReport.teacher_remarks || '',
+           principalSignature: existingReport.principal_signature || '',
+           classTeacherSignature: existingReport.class_teacher_signature || '',
+           houseMasterSignature: existingReport.house_master_signature || '',
+           reopeningDate: existingReport.reopening_date || '',
+           headmasterRemarks: existingReport.headmaster_remarks || '',
+           houseReport: existingReport.house_report || '',
+           positionHeld: existingReport.position_held || '',
+           interest: existingReport.interest || ''
+         }))
 
         // Load grades for this specific report only
         console.log(`📊 Loading grades for report ID: ${existingReport.id} (specific to this student + term + year)`)
@@ -511,25 +519,27 @@ const Reports = () => {
       console.log('Term:', selectedTerm, 'Year:', selectedYear)
       console.log('Subjects:', subjects.length)
 
-      // Create or update student report
-      const reportPayload = {
-        student_id: selectedStudent.id,
-        term: selectedTerm,
-        academic_year: selectedYear,
-        class_year: reportData.studentClass,
-        total_score: parseFloat(calculateAverage()),
-        overall_grade: calculateGrade(parseFloat(calculateAverage())),
-        attendance: reportData.attendance,
-        conduct: reportData.conduct,
-        next_class: reportData.nextClass,
-        teacher_remarks: reportData.teacherRemarks,
-        principal_signature: reportData.principalSignature,
-        reopening_date: reportData.reopeningDate,
-        headmaster_remarks: reportData.headmasterRemarks,
-        house_report: reportData.houseReport,
-        position_held: reportData.positionHeld,
-        interest: reportData.interest
-      }
+             // Create or update student report
+       const reportPayload = {
+         student_id: selectedStudent.id,
+         term: selectedTerm,
+         academic_year: selectedYear,
+         class_year: reportData.studentClass,
+         total_score: parseFloat(calculateAverage()),
+         overall_grade: calculateGrade(parseFloat(calculateAverage())),
+         attendance: reportData.attendance,
+         conduct: reportData.conduct,
+         next_class: reportData.nextClass,
+         teacher_remarks: reportData.teacherRemarks,
+         principal_signature: reportData.principalSignature,
+         class_teacher_signature: reportData.classTeacherSignature,
+         house_master_signature: reportData.houseMasterSignature,
+         reopening_date: reportData.reopeningDate,
+         headmaster_remarks: reportData.headmasterRemarks,
+         house_report: reportData.houseReport,
+         position_held: reportData.positionHeld,
+         interest: reportData.interest
+       }
 
       const { data: savedReport, error: reportError } = await studentReportsAPI.upsertReport(reportPayload)
 
@@ -961,6 +971,26 @@ const Reports = () => {
                   value={reportData.principalSignature}
                   onChange={(e) => setReportData(prev => ({ ...prev, principalSignature: e.target.value }))}
                   placeholder="Enter principal's signature"
+                />
+              </div>
+              <div className="info-item">
+                <label>Class Teacher's Signature:</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={reportData.classTeacherSignature}
+                  onChange={(e) => setReportData(prev => ({ ...prev, classTeacherSignature: e.target.value }))}
+                  placeholder="Enter class teacher's signature"
+                />
+              </div>
+              <div className="info-item">
+                <label>House Master/Mistress Signature:</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={reportData.houseMasterSignature}
+                  onChange={(e) => setReportData(prev => ({ ...prev, houseMasterSignature: e.target.value }))}
+                  placeholder="Enter house master/mistress signature"
                 />
               </div>
               <div className="info-item">

@@ -1546,6 +1546,28 @@ const Reports = ({
           </div>
           
           <div className="signature-item">
+            <label htmlFor="classTeacherSignature" className="form-label">Class Teacher's Signature</label>
+            <input 
+              type="text" 
+              className="form-control" 
+              id="classTeacherSignature" 
+              placeholder="Class teacher's signature" 
+              defaultValue={reportData?.class_teacher_signature || ''}
+            />
+          </div>
+          
+          <div className="signature-item">
+            <label htmlFor="houseMasterSignature" className="form-label">House Master/Mistress Signature</label>
+            <input 
+              type="text" 
+              className="form-control" 
+              id="houseMasterSignature" 
+              placeholder="House master/mistress signature" 
+              defaultValue={reportData?.house_master_signature || ''}
+            />
+          </div>
+          
+          <div className="signature-item">
             <label htmlFor="date" className="form-label">Date</label>
             <input 
               type="date" 

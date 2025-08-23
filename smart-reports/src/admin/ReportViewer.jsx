@@ -903,31 +903,41 @@ const ReportViewer = () => {
             <div className="section-header">
               <h4>Signatures</h4>
             </div>
-                         <div className="signatures-grid">
-               <div className="signature-item">
-                 <div className="signature-content">
-                   <div className="signature-line">
-                     <span className="signature-value">
-                       {/* Class teacher signature would come from grade entries */}
-                       ___________________________
-                     </span>
-                   </div>
-                   <span className="signature-label">Class Teacher</span>
-                   <span className="signature-date">Date: ________________</span>
-                 </div>
-               </div>
-               <div className="signature-item">
-                 <div className="signature-content">
-                   <div className="signature-line">
-                     <span className="signature-value">
-                       {report.principal_signature || '___________________________'}
-                     </span>
-                   </div>
-                   <span className="signature-label">Principal</span>
-                   <span className="signature-date">Date: ________________</span>
-                 </div>
-               </div>
-             </div>
+            <div className="signatures-grid">
+              <div className="signature-item">
+                <div className="signature-content">
+                  <div className="signature-line">
+                    <span className="signature-value">
+                      {report.class_teacher_signature || '___________________________'}
+                    </span>
+                  </div>
+                  <span className="signature-label">Class Teacher</span>
+                  <span className="signature-date">Date: ________________</span>
+                </div>
+              </div>
+              <div className="signature-item">
+                <div className="signature-content">
+                  <div className="signature-line">
+                    <span className="signature-value">
+                      {report.house_master_signature || '___________________________'}
+                    </span>
+                  </div>
+                  <span className="signature-label">House Master/Mistress</span>
+                  <span className="signature-date">Date: ________________</span>
+                </div>
+              </div>
+              <div className="signature-item">
+                <div className="signature-content">
+                  <div className="signature-line">
+                    <span className="signature-value">
+                      {report.principal_signature || '___________________________'}
+                    </span>
+                  </div>
+                  <span className="signature-label">Principal</span>
+                  <span className="signature-date">Date: ________________</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Footer */}

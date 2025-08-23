@@ -467,22 +467,83 @@ const GuardianReportViewer = ({ report, student, onBack }) => {
         {/* Signatures */}
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: 'repeat(3, 1fr)', 
-          gap: '2rem', 
+          gridTemplateColumns: 'repeat(4, 1fr)', 
+          gap: '1.5rem', 
           marginTop: '3rem',
           paddingTop: '2rem',
           borderTop: '1px solid var(--gray-200)'
         }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ borderBottom: '1px solid var(--gray-400)', height: '40px', marginBottom: '0.5rem' }}></div>
+            <div style={{ 
+              borderBottom: '1px solid var(--gray-400)', 
+              height: '40px', 
+              marginBottom: '0.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.75rem',
+              color: 'var(--gray-600)',
+              fontStyle: 'italic'
+            }}>
+              {report.class_teacher_signature && report.class_teacher_signature !== 'N/A' 
+                ? report.class_teacher_signature 
+                : '_________________'
+              }
+            </div>
             <div style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--gray-900)' }}>CLASS TEACHER</div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ borderBottom: '1px solid var(--gray-400)', height: '40px', marginBottom: '0.5rem' }}></div>
+            <div style={{ 
+              borderBottom: '1px solid var(--gray-400)', 
+              height: '40px', 
+              marginBottom: '0.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.75rem',
+              color: 'var(--gray-600)',
+              fontStyle: 'italic'
+            }}>
+              {report.house_master_signature && report.house_master_signature !== 'N/A' 
+                ? report.house_master_signature 
+                : '_________________'
+              }
+            </div>
+            <div style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--gray-900)' }}>HOUSE MASTER/MISTRESS</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ 
+              borderBottom: '1px solid var(--gray-400)', 
+              height: '40px', 
+              marginBottom: '0.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.75rem',
+              color: 'var(--gray-600)',
+              fontStyle: 'italic'
+            }}>
+              {report.principal_signature && report.principal_signature !== 'N/A' 
+                ? report.principal_signature 
+                : '_________________'
+              }
+            </div>
             <div style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--gray-900)' }}>PRINCIPAL</div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ borderBottom: '1px solid var(--gray-400)', height: '40px', marginBottom: '0.5rem' }}></div>
+            <div style={{ 
+              borderBottom: '1px solid var(--gray-400)', 
+              height: '40px', 
+              marginBottom: '0.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.75rem',
+              color: 'var(--gray-600)',
+              fontStyle: 'italic'
+            }}>
+              _________________
+            </div>
             <div style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--gray-900)' }}>PARENT/GUARDIAN</div>
           </div>
         </div>
