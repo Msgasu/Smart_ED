@@ -201,6 +201,14 @@ const GuardianReportViewer = ({ report, student, onBack }) => {
             </div>
             <div>
               <div style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--gray-500)', marginBottom: '0.25rem' }}>
+                GENDER:
+              </div>
+              <div style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--gray-900)' }}>
+                {student?.sex ? student.sex.charAt(0).toUpperCase() + student.sex.slice(1) : 'N/A'}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--gray-500)', marginBottom: '0.25rem' }}>
                 CLASS:
               </div>
               <div style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--gray-900)' }}>
@@ -229,6 +237,22 @@ const GuardianReportViewer = ({ report, student, onBack }) => {
               </div>
               <div style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--gray-900)' }}>
                 {report.attendance || 'N/A'}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--gray-500)', marginBottom: '0.25rem' }}>
+                POSITION HELD:
+              </div>
+              <div style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--gray-900)' }}>
+                {report.position_held || 'N/A'}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--gray-500)', marginBottom: '0.25rem' }}>
+                INTEREST:
+              </div>
+              <div style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--gray-900)' }}>
+                {report.interest || 'N/A'}
               </div>
             </div>
           </div>
@@ -277,6 +301,9 @@ const GuardianReportViewer = ({ report, student, onBack }) => {
                   <th style={{ padding: '0.875rem 1rem', textAlign: 'left', borderBottom: '1px solid var(--gray-200)', fontWeight: '600', color: 'var(--gray-900)' }}>
                     REMARK
                   </th>
+                  <th style={{ padding: '0.875rem 1rem', textAlign: 'center', borderBottom: '1px solid var(--gray-200)', fontWeight: '600', color: 'var(--gray-900)' }}>
+                    TEACHER SIGNATURE
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -302,6 +329,9 @@ const GuardianReportViewer = ({ report, student, onBack }) => {
                     </td>
                     <td style={{ padding: '0.875rem 1rem', fontStyle: 'italic', color: 'var(--gray-700)' }}>
                       {grade.remark || getGradeRemark(grade.total_score || 0)}
+                    </td>
+                    <td style={{ padding: '0.875rem 1rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--gray-600)' }}>
+                      {grade.teacher_signature || '-'}
                     </td>
                   </tr>
                 ))}
@@ -404,6 +434,20 @@ const GuardianReportViewer = ({ report, student, onBack }) => {
             </div>
             
             <div style={{ marginBottom: '1rem' }}>
+              <strong style={{ color: 'var(--gray-900)', fontSize: '0.875rem' }}>Headmaster's Remarks:</strong>
+              <p style={{ margin: '0.5rem 0 0 0', color: 'var(--gray-700)', fontSize: '0.875rem', lineHeight: '1.5' }}>
+                {report.headmaster_remarks || 'No remarks provided'}
+              </p>
+            </div>
+            
+            <div style={{ marginBottom: '1rem' }}>
+              <strong style={{ color: 'var(--gray-900)', fontSize: '0.875rem' }}>House Report:</strong>
+              <p style={{ margin: '0.5rem 0 0 0', color: 'var(--gray-700)', fontSize: '0.875rem', lineHeight: '1.5' }}>
+                {report.house_report || 'No house report provided'}
+              </p>
+            </div>
+            
+            <div style={{ marginBottom: '1rem' }}>
               <strong style={{ color: 'var(--gray-900)', fontSize: '0.875rem' }}>Next Class:</strong>
               <p style={{ margin: '0.5rem 0 0 0', color: 'var(--gray-700)', fontSize: '0.875rem' }}>
                 {report.next_class || 'Not specified'}
@@ -413,7 +457,7 @@ const GuardianReportViewer = ({ report, student, onBack }) => {
             <div>
               <strong style={{ color: 'var(--gray-900)', fontSize: '0.875rem' }}>Reopening Date:</strong>
               <p style={{ margin: '0.5rem 0 0 0', color: 'var(--gray-700)', fontSize: '0.875rem' }}>
-                {report.reopening_date || '2025-07-17'}
+                {report.reopening_date || 'Not specified'}
               </p>
             </div>
           </div>

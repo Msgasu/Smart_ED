@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { FaArrowLeft, FaPrint, FaDownload, FaFileAlt, FaClock, FaExclamationTriangle } from 'react-icons/fa'
 import { supabase } from '../lib/supabase'
@@ -6,6 +6,11 @@ import { getReportById, REPORT_STATUS } from '../lib/reportApi'
 import toast from 'react-hot-toast'
 import AdminLayout from './AdminLayout'
 import './ReportViewer.css'
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend } from 'chart.js'
+import { Bar } from 'react-chartjs-2'
+
+// Register ChartJS components
+ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend)
 
 const ReportViewer = () => {
   const { reportId } = useParams()
@@ -32,13 +37,24 @@ const ReportViewer = () => {
   const [printing, setPrinting] = useState(false)
   const [userProfile, setUserProfile] = useState(null)
   const [isIncomplete, setIsIncomplete] = useState(false)
+  const [classComparisonData, setClassComparisonData] = useState(null)
+  const [subjectPerformanceData, setSubjectPerformanceData] = useState(null)
 
   useEffect(() => {
-    fetchUserProfile()
-    if (reportId) {
+    const init = async () => {
+      await fetchUserProfile()
+      if (reportId) {
+        fetchReport()
+      }
+    }
+    init()
+  }, [reportId])
+  
+  useEffect(() => {
+    if (userProfile && reportId) {
       fetchReport()
     }
-  }, [reportId])
+  }, [userProfile])
 
   const fetchUserProfile = async () => {
     try {
@@ -74,8 +90,8 @@ const ReportViewer = () => {
         return
       }
 
-      // Check if report is incomplete
-      if (reportData.incomplete) {
+      // Check if report is incomplete - admins can view draft reports
+      if (reportData.incomplete && userProfile?.role !== 'admin') {
         setIsIncomplete(true)
         setReport(reportData)
         return
@@ -84,12 +100,262 @@ const ReportViewer = () => {
       setReport(reportData)
       setIsIncomplete(false)
       
+      // Fetch chart data after report is loaded
+      if (reportData && !reportData.incomplete) {
+
+        await fetchChartData(reportData)
+      } else {
+        console.log('Report incomplete or missing, skipping chart data')
+      }
+      
     } catch (error) {
       console.error('Error fetching report:', error)
       toast.error('Error loading report')
     } finally {
       setLoading(false)
     }
+  }
+
+  // Fetch data for charts
+  const fetchChartData = async (reportData) => {
+    try {
+      // Get all students in the same class and term/year for comparison
+      let classReports = []
+      let classError = null
+      
+             // First try exact match
+       const { data: exactMatch, error: exactError } = await supabase
+         .from('student_reports')
+         .select(`
+           student_id,
+           total_score,
+           status,
+           class_year,
+           term,
+           academic_year,
+           student:students!student_reports_student_id_fkey (
+             profile_id,
+             profile:profiles!students_profile_id_fkey (
+               id,
+               first_name,
+               last_name
+             )
+           )
+         `)
+         .eq('class_year', reportData.class_year)
+         .eq('term', reportData.term)
+         .eq('academic_year', reportData.academic_year)
+         .not('total_score', 'is', null)
+         .gt('total_score', 0)
+
+      if (exactMatch && exactMatch.length > 0) {
+        classReports = exactMatch
+        console.log('Found exact class match:', reportData.class_year)
+      } else {
+        // Try partial match (in case there are formatting differences)
+        const classYearParts = reportData.class_year.split(' ')
+        if (classYearParts.length >= 2) {
+          const formPart = classYearParts[0] + ' ' + classYearParts[1] // "Form 2"
+          const housePart = classYearParts[2] // "Loyalty"
+          
+                     const { data: partialMatch, error: partialError } = await supabase
+             .from('student_reports')
+             .select(`
+               student_id,
+               total_score,
+               status,
+               class_year,
+               term,
+               academic_year,
+               student:students!student_reports_student_id_fkey (
+                 profile_id,
+                 profile:profiles!students_profile_id_fkey (
+                   id,
+                   first_name,
+                   last_name
+                 )
+               )
+             `)
+             .ilike('class_year', `%${formPart}%${housePart}%`)
+             .eq('term', reportData.term)
+             .eq('academic_year', reportData.academic_year)
+             .not('total_score', 'is', null)
+             .gt('total_score', 0)
+          
+          if (partialMatch && partialMatch.length > 0) {
+            classReports = partialMatch
+            console.log('Found partial class match using:', formPart, housePart)
+          } else {
+            classError = partialError
+            console.log('No partial match found either')
+          }
+        } else {
+          classError = exactError
+        }
+      }
+
+      if (classError) {
+        console.error('Error fetching class reports:', classError)
+        throw classError
+      }
+
+      console.log('Class reports fetched:', classReports?.length || 0, 'reports')
+      console.log('Current report data:', {
+        class_year: reportData.class_year,
+        term: reportData.term,
+        academic_year: reportData.academic_year,
+        student_id: reportData.student_id,
+        total_score: reportData.total_score
+      })
+      console.log('Sample class report data:', classReports?.[0])
+      
+      // Debug: Check what class_year values exist in the database
+      const { data: allClasses, error: classError2 } = await supabase
+        .from('student_reports')
+        .select('class_year, term, academic_year')
+        .eq('term', reportData.term)
+        .eq('academic_year', reportData.academic_year)
+        .not('class_year', 'is', null)
+      
+      if (!classError2 && allClasses) {
+        const uniqueClasses = [...new Set(allClasses.map(r => r.class_year))]
+        console.log('Available class_year values in database:', uniqueClasses)
+        console.log('Looking for class_year:', reportData.class_year)
+      }
+
+      // Generate class comparison data
+      generateClassComparisonChart(reportData, classReports || [])
+      
+      // Generate subject performance data
+      await generateSubjectPerformanceChart(reportData)
+
+    } catch (error) {
+      console.error('Error fetching chart data:', error)
+    }
+  }
+
+    // Generate class average comparison chart
+  const generateClassComparisonChart = (currentReport, classReports) => {
+    try {
+      console.log('Generating class comparison chart...')
+      const currentStudentAverage = currentReport.total_score || 0
+      const currentStudentId = currentReport.student_id
+      
+      console.log('Current student ID:', currentStudentId)
+      console.log('Class reports received:', classReports?.length || 0)
+      
+      // Get all valid class averages including the current student
+      const allStudentAverages = classReports
+        .filter(r => r.total_score && r.total_score > 0 && r.student?.profile)
+        .map(r => ({
+          average: r.total_score,
+          isCurrentStudent: r.student_id === currentStudentId,
+          studentName: r.student?.profile ? `${r.student.profile.first_name} ${r.student.profile.last_name}` : 'Unknown Student',
+          firstName: r.student?.profile ? r.student.profile.first_name : 'Unknown'
+        }))
+
+      console.log('All student averages:', allStudentAverages.length)
+
+      if (allStudentAverages.length === 0) {
+        console.log('No class comparison data available')
+        setClassComparisonData(null)
+        return
+      }
+
+      // Sort by average for better visualization (highest to lowest)
+      allStudentAverages.sort((a, b) => b.average - a.average)
+
+      // Create labels - show actual name for selected student, generic names for others
+      const labels = allStudentAverages.map((student, index) => {
+        if (student.isCurrentStudent) {
+          return student.firstName // Show actual name for selected student
+        }
+        return `Student ${index + 1}` // Generic names for other students
+      })
+      const scores = allStudentAverages.map(student => student.average)
+      
+      // Color coding: Highlight current student in red, others in blue
+      const backgroundColors = allStudentAverages.map(student => {
+        if (student.isCurrentStudent) {
+          return 'rgba(255, 99, 132, 0.8)' // Bright red for current student
+        }
+        return 'rgba(54, 162, 235, 0.6)' // Blue for other students
+      })
+
+      const borderColors = allStudentAverages.map(student => {
+        if (student.isCurrentStudent) {
+          return 'rgba(255, 99, 132, 1)'
+        }
+        return 'rgba(54, 162, 235, 1)'
+      })
+
+      const chartData = {
+        labels,
+        datasets: [
+          {
+            label: 'Term Average (%)',
+            data: scores,
+            backgroundColor: backgroundColors,
+            borderColor: borderColors,
+            borderWidth: 2
+          }
+        ]
+      }
+
+      console.log('Class comparison chart data generated with', allStudentAverages.length, 'students')
+      setClassComparisonData(chartData)
+    } catch (error) {
+      console.error('Error generating class comparison chart:', error)
+      setClassComparisonData(null)
+    }
+  }
+
+  // Generate subject performance breakdown chart (student's individual scores only)
+  const generateSubjectPerformanceChart = async (reportData) => {
+    const subjects = reportData.student_grades || []
+    
+    if (subjects.length === 0) {
+      console.log('No subject grades found')
+      setSubjectPerformanceData(null)
+      return
+    }
+
+    // Create chart data showing only the student's individual subject scores
+    const labels = subjects.map(grade => grade.courses?.name || 'Unknown Subject')
+    const studentScores = subjects.map(grade => grade.total_score || 0)
+
+    // Color coding based on individual performance levels - Very distinct colors
+    const backgroundColors = studentScores.map(score => {
+      if (score >= 80) return 'rgba(16, 185, 129, 0.8)' // Emerald Green for excellent (A)
+      if (score >= 70) return 'rgba(59, 130, 246, 0.8)' // Bright Blue for good (B)
+      if (score >= 60) return 'rgba(245, 158, 11, 0.8)' // Amber Orange for average (C)
+      if (score >= 50) return 'rgba(139, 69, 19, 0.8)' // Brown for below average (D)
+      return 'rgba(220, 38, 127, 0.8)' // Hot Pink for poor (F)
+    })
+
+    const borderColors = studentScores.map(score => {
+      if (score >= 80) return 'rgba(16, 185, 129, 1)' // Emerald Green
+      if (score >= 70) return 'rgba(59, 130, 246, 1)' // Bright Blue  
+      if (score >= 60) return 'rgba(245, 158, 11, 1)' // Amber Orange
+      if (score >= 50) return 'rgba(139, 69, 19, 1)' // Brown
+      return 'rgba(220, 38, 127, 1)' // Hot Pink
+    })
+
+    const chartData = {
+      labels,
+      datasets: [
+        {
+          label: 'Subject Score (%)',
+          data: studentScores,
+          backgroundColor: backgroundColors,
+          borderColor: borderColors,
+          borderWidth: 2
+        }
+      ]
+    }
+
+    console.log('Subject performance chart generated with', subjects.length, 'subjects')
+    setSubjectPerformanceData(chartData)
   }
 
   const handlePrint = () => {
@@ -146,6 +412,28 @@ const ReportViewer = () => {
           <div className="loading-container">
             <div className="spinner"></div>
             <p>Loading report...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    )
+  }
+
+  // Add error boundary for debugging
+  if (!report && !loading) {
+    console.error('Report is null but not loading')
+    return (
+      <AdminLayout user={null} profile={userProfile}>
+        <div className="report-viewer">
+          <div className="error-container">
+            <FaFileAlt className="error-icon" />
+            <h2>Error Loading Report</h2>
+            <p>There was an error loading the report. Please check the console for details.</p>
+            <button 
+              className="btn btn-primary"
+              onClick={() => navigate('/admin/classes')}
+            >
+              Back to Classes
+            </button>
           </div>
         </div>
       </AdminLayout>
@@ -221,6 +509,14 @@ const ReportViewer = () => {
 
   const stats = calculateGradeStats()
 
+  console.log('Rendering ReportViewer:', {
+    report: !!report,
+    loading,
+    userProfile: !!userProfile,
+    classComparisonData: !!classComparisonData,
+    subjectPerformanceData: !!subjectPerformanceData
+  })
+
   return (
     <AdminLayout user={null} profile={userProfile}>
       <div className="report-viewer">
@@ -233,7 +529,7 @@ const ReportViewer = () => {
             <FaArrowLeft /> Back
           </button>
           <div className="header-content">
-            <h1>Student Report</h1>
+            <h1>Student Report {report.status === 'draft' && <span className="badge bg-warning ms-2">DRAFT</span>}</h1>
             <p className="page-description">
               {report.student.first_name} {report.student.last_name} - {report.term} {report.academic_year}
             </p>
@@ -287,7 +583,11 @@ const ReportViewer = () => {
               </div>
               <div className="info-item">
                 <span className="label">Student ID:</span>
-                <span className="value">{report.student.students?.student_id || 'N/A'}</span>
+                <span className="value">{report.student?.students?.student_id || report.student?.student_id || 'N/A'}</span>
+              </div>
+              <div className="info-item">
+                <span className="label">Gender:</span>
+                <span className="value">{report.student.sex ? report.student.sex.charAt(0).toUpperCase() + report.student.sex.slice(1) : 'N/A'}</span>
               </div>
               <div className="info-item">
                 <span className="label">Class:</span>
@@ -304,6 +604,10 @@ const ReportViewer = () => {
               <div className="info-item">
                 <span className="label">Attendance:</span>
                 <span className="value">{report.attendance || 'N/A'}</span>
+              </div>
+              <div className="info-item">
+                <span className="label">Interest:</span>
+                <span className="value">{report.interest || 'N/A'}</span>
               </div>
             </div>
           </div>
@@ -324,6 +628,7 @@ const ReportViewer = () => {
                     <th>Grade</th>
                     <th>Position</th>
                     <th>Remark</th>
+                    <th>Teacher Signature</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -342,6 +647,7 @@ const ReportViewer = () => {
                       </td>
                       <td className="position">{grade.position || '-'}</td>
                       <td className="remark">{grade.remark || '-'}</td>
+                      <td className="teacher-signature">{grade.teacher_signature || '-'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -379,9 +685,183 @@ const ReportViewer = () => {
                 <span className="label">Lowest Score:</span>
                 <span className="value">{stats.lowest || 0}%</span>
               </div>
-              <div className="performance-item">
+            </div>
+          </div>
+
+          {/* Additional Information */}
+          <div className="additional-info-section">
+            <div className="section-header">
+              <h4>Additional Information</h4>
+            </div>
+            <div className="additional-info-grid">
+              <div className="info-item">
+                <span className="label">Position Held:</span>
+                <span className="value">{report.position_held || 'N/A'}</span>
+              </div>
+              <div className="info-item">
                 <span className="label">Conduct:</span>
                 <span className="value">{report.conduct || 'N/A'}</span>
+              </div>
+              <div className="info-item">
+                <span className="label">Next Class:</span>
+                <span className="value">{report.next_class || 'Not specified'}</span>
+              </div>
+              <div className="info-item">
+                <span className="label">Reopening Date:</span>
+                <span className="value">{report.reopening_date || 'Not specified'}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Performance Comparison Charts */}
+          <div className="performance-charts-section">
+            <div className="section-header">
+              <h4>Performance Analysis</h4>
+            </div>
+            <div className="charts-grid">
+              <div className="chart-container">
+                <h5>Term Averages - All Students in Class</h5>
+                <div className="chart-wrapper">
+                  {classComparisonData ? (
+                    <Bar
+                      data={classComparisonData}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          title: {
+                            display: true,
+                            text: 'Term Averages Comparison'
+                          },
+                          legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: {
+                                                             generateLabels: function(chart) {
+                                 return [
+                                   {
+                                     text: 'Selected Student',
+                                     fillStyle: 'rgba(255, 99, 132, 0.8)',
+                                     strokeStyle: 'rgba(255, 99, 132, 1)',
+                                     lineWidth: 2
+                                   },
+                                   {
+                                     text: 'Classmates',
+                                     fillStyle: 'rgba(54, 162, 235, 0.6)',
+                                     strokeStyle: 'rgba(54, 162, 235, 1)',
+                                     lineWidth: 1
+                                   }
+                                 ];
+                               }
+                            }
+                          }
+                        },
+                        scales: {
+                          y: {
+                            beginAtZero: true,
+                            suggestedMax: 100,
+                            title: {
+                              display: true,
+                              text: 'Term Average (%)'
+                            }
+                          },
+                          x: {
+                            title: {
+                              display: true,
+                              text: 'Students in Class'
+                            }
+                          }
+                        }
+                      }}
+                      height={400}
+                    />
+                  ) : (
+                    <div className="no-chart-data">
+                      <p>No class comparison data available</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="chart-container">
+                <h5>Individual Subject Performance</h5>
+                <div className="chart-wrapper">
+                  {subjectPerformanceData ? (
+                    <Bar
+                      data={subjectPerformanceData}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          title: {
+                            display: true,
+                            text: 'Subject Performance Breakdown'
+                          },
+                          legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: {
+                              generateLabels: function(chart) {
+                                return [
+                                  {
+                                    text: 'Excellent (80-100%)',
+                                    fillStyle: 'rgba(16, 185, 129, 0.8)',
+                                    strokeStyle: 'rgba(16, 185, 129, 1)',
+                                    lineWidth: 1
+                                  },
+                                  {
+                                    text: 'Good (70-79%)',
+                                    fillStyle: 'rgba(59, 130, 246, 0.8)',
+                                    strokeStyle: 'rgba(59, 130, 246, 1)',
+                                    lineWidth: 1
+                                  },
+                                  {
+                                    text: 'Average (60-69%)',
+                                    fillStyle: 'rgba(245, 158, 11, 0.8)',
+                                    strokeStyle: 'rgba(245, 158, 11, 1)',
+                                    lineWidth: 1
+                                  },
+                                  {
+                                    text: 'Below Average (50-59%)',
+                                    fillStyle: 'rgba(139, 69, 19, 0.8)',
+                                    strokeStyle: 'rgba(139, 69, 19, 1)',
+                                    lineWidth: 1
+                                  },
+                                  {
+                                    text: 'Poor (<50%)',
+                                    fillStyle: 'rgba(220, 38, 127, 0.8)',
+                                    strokeStyle: 'rgba(220, 38, 127, 1)',
+                                    lineWidth: 1
+                                  }
+                                ];
+                              }
+                            }
+                          }
+                        },
+                        scales: {
+                          y: {
+                            beginAtZero: true,
+                            suggestedMax: 100,
+                            title: {
+                              display: true,
+                              text: 'Subject Score (%)'
+                            }
+                          },
+                          x: {
+                            title: {
+                              display: true,
+                              text: 'Subjects'
+                            }
+                          }
+                        }
+                      }}
+                      height={400}
+                    />
+                  ) : (
+                    <div className="no-chart-data">
+                      <p>No subject performance data available</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -389,7 +869,7 @@ const ReportViewer = () => {
           {/* Remarks Section */}
           <div className="remarks-section">
             <div className="section-header">
-              <h4>Remarks</h4>
+              <h4>Remarks & Comments</h4>
             </div>
             <div className="remarks-content">
               <div className="remark-item">
@@ -397,29 +877,56 @@ const ReportViewer = () => {
                 <p className="remark-text">{report.teacher_remarks || 'No remarks provided'}</p>
               </div>
               <div className="remark-item">
-                <span className="label">Next Class:</span>
-                <p className="remark-text">{report.next_class || 'Not specified'}</p>
+                <span className="label">Headmaster's Remarks:</span>
+                <p className="remark-text">{report.headmaster_remarks || 'No remarks provided'}</p>
               </div>
               <div className="remark-item">
-                <span className="label">Reopening Date:</span>
-                <p className="remark-text">{report.reopening_date || 'Not specified'}</p>
+                <span className="label">House Report:</span>
+                <p className="remark-text">{report.house_report || 'No house report provided'}</p>
               </div>
             </div>
           </div>
 
           {/* Signature Section */}
           <div className="signature-section">
-            <div className="signature-item">
-              <div className="signature-line"></div>
-              <span className="signature-label">Class Teacher</span>
+            <div className="section-header">
+              <h4>Signatures</h4>
             </div>
-            <div className="signature-item">
-              <div className="signature-line"></div>
-              <span className="signature-label">Principal</span>
-            </div>
-            <div className="signature-item">
-              <div className="signature-line"></div>
-              <span className="signature-label">Parent/Guardian</span>
+            <div className="signatures-grid">
+              <div className="signature-item">
+                <div className="signature-content">
+                  <div className="signature-line">
+                    <span className="signature-value">
+                      {/* Class teacher signature would come from grade entries */}
+                      ___________________________
+                    </span>
+                  </div>
+                  <span className="signature-label">Class Teacher</span>
+                  <span className="signature-date">Date: ________________</span>
+                </div>
+              </div>
+              <div className="signature-item">
+                <div className="signature-content">
+                  <div className="signature-line">
+                    <span className="signature-value">
+                      {report.principal_signature || '___________________________'}
+                    </span>
+                  </div>
+                  <span className="signature-label">Principal</span>
+                  <span className="signature-date">Date: ________________</span>
+                </div>
+              </div>
+              <div className="signature-item">
+                <div className="signature-content">
+                  <div className="signature-line">
+                    <span className="signature-value">
+                      ___________________________
+                    </span>
+                  </div>
+                  <span className="signature-label">Parent/Guardian</span>
+                  <span className="signature-date">Date: ________________</span>
+                </div>
+              </div>
             </div>
           </div>
 

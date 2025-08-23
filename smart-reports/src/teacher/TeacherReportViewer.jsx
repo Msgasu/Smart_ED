@@ -226,6 +226,10 @@ const TeacherReportViewer = ({ user, profile }) => {
                         <td>{report.student?.students?.student_id || 'N/A'}</td>
                       </tr>
                       <tr>
+                        <td><strong>Gender:</strong></td>
+                        <td>{report.student?.sex ? report.student.sex.charAt(0).toUpperCase() + report.student.sex.slice(1) : 'N/A'}</td>
+                      </tr>
+                      <tr>
                         <td><strong>Class:</strong></td>
                         <td>{report.class_year}</td>
                       </tr>
@@ -236,6 +240,14 @@ const TeacherReportViewer = ({ user, profile }) => {
                       <tr>
                         <td><strong>Academic Year:</strong></td>
                         <td>{report.academic_year}</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Position Held:</strong></td>
+                        <td>{report.position_held || 'N/A'}</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Interest:</strong></td>
+                        <td>{report.interest || 'N/A'}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -289,7 +301,9 @@ const TeacherReportViewer = ({ user, profile }) => {
                             <th>Exam Score (60)</th>
                             <th>Total Score (100)</th>
                             <th>Grade</th>
+                            <th>Position</th>
                             <th>Remark</th>
+                            <th>Teacher Signature</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -309,7 +323,9 @@ const TeacherReportViewer = ({ user, profile }) => {
                                   {grade.grade || 'N/A'}
                                 </span>
                               </td>
+                              <td>{grade.position || '-'}</td>
                               <td>{grade.remark || '-'}</td>
+                              <td><small>{grade.teacher_signature || '-'}</small></td>
                             </tr>
                           ))}
                         </tbody>
@@ -458,14 +474,46 @@ const TeacherReportViewer = ({ user, profile }) => {
                 </div>
               )}
 
-              {/* Teacher's Remarks */}
+              {/* Remarks & Comments */}
               <div className="row mb-4">
                 <div className="col-12">
-                  <h5>Teacher's Remarks</h5>
-                  <div className="border rounded p-3 bg-light">
-                    <p className="mb-0">
-                      {report.teacher_remarks || 'No remarks provided.'}
-                    </p>
+                  <h5>Remarks & Comments</h5>
+                  
+                  <div className="row">
+                    <div className="col-md-6 mb-3">
+                      <h6>Teacher's Remarks</h6>
+                      <div className="border rounded p-3 bg-light">
+                        <p className="mb-0">
+                          {report.teacher_remarks || 'No remarks provided.'}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="col-md-6 mb-3">
+                      <h6>Headmaster's Remarks</h6>
+                      <div className="border rounded p-3 bg-light">
+                        <p className="mb-0">
+                          {report.headmaster_remarks || 'No remarks provided.'}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="col-md-6 mb-3">
+                      <h6>House Report</h6>
+                      <div className="border rounded p-3 bg-light">
+                        <p className="mb-0">
+                          {report.house_report || 'No house report provided.'}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="col-md-6 mb-3">
+                      <h6>Additional Information</h6>
+                      <div className="border rounded p-3 bg-light">
+                        <p className="mb-1"><strong>Next Class:</strong> {report.next_class || 'Not specified'}</p>
+                        <p className="mb-0"><strong>Reopening Date:</strong> {report.reopening_date || 'Not specified'}</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
