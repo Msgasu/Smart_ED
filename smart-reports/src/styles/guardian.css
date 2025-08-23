@@ -624,3 +624,208 @@
   font-size: 0.875rem;
   color: var(--gray-600);
 } 
+
+/* =====================================================
+   PRINT STYLES FOR GUARDIAN REPORTS
+===================================================== */
+
+@media print {
+  /* Hide non-essential elements when printing */
+  .no-print,
+  .guardian-sidebar,
+  .mobile-sidebar-toggle,
+  .page-header,
+  .header-actions,
+  .action-button,
+  .guardian-actions {
+    display: none !important;
+  }
+
+  /* Ensure full width for print */
+  .guardian-main,
+  .guardian-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* Report viewer specific print styles */
+  .guardian-report-viewer {
+    background: white !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .report-content {
+    background: white !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 1rem !important;
+    margin: 0 !important;
+    font-size: 12px !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Ensure tables fit on page */
+  table {
+    font-size: 11px !important;
+    page-break-inside: avoid !important;
+  }
+
+  th, td {
+    padding: 6px 8px !important;
+  }
+
+  /* Ensure headers don't break across pages */
+  h1, h2, h3, h4 {
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Ensure sections don't break inappropriately */
+  .report-section {
+    page-break-inside: avoid !important;
+  }
+
+  /* Optimize colors for print */
+  * {
+    color: black !important;
+    background: white !important;
+  }
+
+  /* Keep important colors for grades and highlights */
+  .grade-a, .grade-b, .grade-c, .grade-d, .grade-f {
+    color: black !important;
+    font-weight: bold !important;
+  }
+
+  /* Ensure signatures area is visible */
+  .signature-area {
+    page-break-inside: avoid !important;
+    margin-top: 2rem !important;
+  }
+
+  /* Remove shadows and decorative elements */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Ensure proper page breaks */
+  .page-break {
+    page-break-before: always !important;
+  }
+
+  /* Optimize font sizes for print */
+  body {
+    font-size: 12px !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Ensure logo and school header are visible */
+  .school-header img {
+    max-width: 60px !important;
+    height: auto !important;
+  }
+
+  /* Ensure grid layouts work in print */
+  .grid-layout {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+  }
+
+  /* Ensure performance summary cards are readable */
+  .performance-summary {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 1rem !important;
+  }
+
+  /* Ensure student information is clearly visible */
+  .student-info {
+    background: #f8f9fa !important;
+    border: 1px solid #dee2e6 !important;
+    padding: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  /* Ensure remarks section is properly formatted */
+  .remarks-section {
+    border: 1px solid #dee2e6 !important;
+    padding: 1rem !important;
+    margin: 1rem 0 !important;
+    background: #f8f9fa !important;
+  }
+
+  /* Ensure generation date is visible */
+  .generation-date {
+    text-align: center !important;
+    font-size: 10px !important;
+    color: #6c757d !important;
+    margin-top: 2rem !important;
+    border-top: 1px solid #dee2e6 !important;
+    padding-top: 1rem !important;
+  }
+}
+
+/* =====================================================
+   RESPONSIVE DESIGN FOR GUARDIAN PORTAL
+===================================================== */
+
+@media (max-width: 1200px) {
+  .guardian-content {
+    padding: 1.5rem;
+  }
+  
+  .performance-summary {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .guardian-content {
+    padding: 1rem;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .performance-summary {
+    grid-template-columns: 1fr;
+  }
+  
+  .guardian-actions {
+    grid-template-columns: 1fr;
+  }
+  
+  .ward-header {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .guardian-content {
+    padding: 0.75rem;
+  }
+  
+  .ward-card {
+    padding: 1rem;
+  }
+  
+  .report-card-body {
+    padding: 1rem;
+  }
+} 

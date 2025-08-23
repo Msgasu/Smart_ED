@@ -1,5 +1,6 @@
 import React from 'react'
 import { FaArrowLeft, FaDownload, FaPrint } from 'react-icons/fa'
+import logo from '../assets/logo_nbg.png'
 
 const GuardianReportViewer = ({ report, student, onBack }) => {
   const handlePrint = () => {

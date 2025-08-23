@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import GuardianReportViewer from './GuardianReportViewer';
 
 const GuardianPortalPublic = () => {
   const [studentId, setStudentId] = useState('');
@@ -111,35 +112,45 @@ const GuardianPortalPublic = () => {
         return;
       }
 
-      // Step 4: Format the data for display
+      // Step 4: Format the data for GuardianReportViewer
       const formattedReport = {
-        student: {
-          name: `${studentData.profiles.first_name} ${studentData.profiles.last_name}`,
-          studentId: studentData.student_id,
-          class: studentData.class_year || 'N/A',
-          program: studentData.program || 'N/A'
-        },
+        // Report data
         term: reportData.term,
-        academicYear: reportData.academic_year,
-        totalScore: reportData.total_score || 0,
-        overallGrade: reportData.overall_grade || 'N/A',
+        academic_year: reportData.academic_year,
+        class_year: studentData.class_year || 'N/A',
+        total_score: reportData.total_score || 0,
+        overall_grade: reportData.overall_grade || 'N/A',
         conduct: reportData.conduct || 'N/A',
         attendance: reportData.attendance || 'N/A',
-        nextClass: reportData.next_class || 'N/A',
-        reopeningDate: reportData.reopening_date || 'N/A',
-        teacherRemarks: reportData.teacher_remarks || 'No remarks available.',
-        grades: gradesData.map(grade => ({
-          subject: grade.courses.name,
-          classScore: grade.class_score || 0,
-          examScore: grade.exam_score || 0,
-          total: grade.total_score || 0,
-          grade: grade.grade || 'N/A',
+        position_held: reportData.position_held || 'N/A',
+        interest: reportData.interest || 'N/A',
+        next_class: reportData.next_class || 'N/A',
+        reopening_date: reportData.reopening_date || 'N/A',
+        teacher_remarks: reportData.teacher_remarks || 'No remarks available.',
+        headmaster_remarks: reportData.headmaster_remarks || 'No remarks available.',
+        house_report: reportData.house_report || 'No house report available.',
+        
+        // Student grades with proper structure
+        student_grades: gradesData.map(grade => ({
+          courses: { course_name: grade.courses.name },
+          class_score: grade.class_score || 0,
+          exam_score: grade.exam_score || 0,
+          total_score: grade.total_score || 0,
           position: grade.position || 'N/A',
-          remark: grade.remark || 'N/A'
+          remark: grade.remark || 'N/A',
+          teacher_signature: grade.teacher_signature || 'N/A'
         }))
       };
 
-      setReportData(formattedReport);
+      // Student data for GuardianReportViewer
+      const studentDataForViewer = {
+        first_name: studentData.profiles.first_name,
+        last_name: studentData.profiles.last_name,
+        sex: studentData.sex || 'N/A',
+        students: { student_id: studentData.student_id }
+      };
+
+      setReportData({ report: formattedReport, student: studentDataForViewer });
     } catch (error) {
       console.error('Error during report lookup:', error);
       setError('An error occurred while looking up the report. Please try again.');
@@ -148,145 +159,7 @@ const GuardianPortalPublic = () => {
     }
   };
 
-  const ReportDisplay = ({ report }) => (
-    <div style={{ 
-      backgroundColor: 'white', 
-      borderRadius: '8px', 
-      border: '1px solid #e5e7eb',
-      padding: '24px',
-      marginTop: '24px',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-    }}>
-      <div style={{ 
-        backgroundColor: '#dbeafe',
-        padding: '16px',
-        borderRadius: '8px 8px 0 0',
-        marginBottom: '24px'
-      }}>
-        <h3 style={{ 
-          textAlign: 'center', 
-          fontSize: '1.5rem', 
-          fontWeight: 'bold', 
-          color: '#1e40af',
-          margin: 0
-        }}>
-          Student Report Card - {report.term} ({report.academicYear})
-        </h3>
-      </div>
-      
-      {/* Student Information */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '16px',
-        marginBottom: '24px',
-        padding: '16px',
-        backgroundColor: '#f9fafb',
-        borderRadius: '8px'
-      }}>
-        <div>
-          <p style={{ margin: '4px 0' }}><strong>Student Name:</strong> {report.student.name}</p>
-          <p style={{ margin: '4px 0' }}><strong>Student ID:</strong> {report.student.studentId}</p>
-        </div>
-        <div>
-          <p style={{ margin: '4px 0' }}><strong>Class:</strong> {report.student.class}</p>
-          <p style={{ margin: '4px 0' }}><strong>Program:</strong> {report.student.program}</p>
-        </div>
-      </div>
 
-      {/* Grades Table */}
-      <div style={{ marginBottom: '24px' }}>
-        <h4 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '12px' }}>Subject Grades</h4>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ 
-            width: '100%', 
-            borderCollapse: 'collapse',
-            border: '1px solid #d1d5db'
-          }}>
-            <thead>
-              <tr style={{ backgroundColor: '#f3f4f6' }}>
-                <th style={{ border: '1px solid #d1d5db', padding: '8px', textAlign: 'left' }}>Subject</th>
-                <th style={{ border: '1px solid #d1d5db', padding: '8px', textAlign: 'center' }}>Class Score</th>
-                <th style={{ border: '1px solid #d1d5db', padding: '8px', textAlign: 'center' }}>Exam Score</th>
-                <th style={{ border: '1px solid #d1d5db', padding: '8px', textAlign: 'center' }}>Total</th>
-                <th style={{ border: '1px solid #d1d5db', padding: '8px', textAlign: 'center' }}>Grade</th>
-                <th style={{ border: '1px solid #d1d5db', padding: '8px', textAlign: 'center' }}>Position</th>
-                <th style={{ border: '1px solid #d1d5db', padding: '8px', textAlign: 'left' }}>Remark</th>
-              </tr>
-            </thead>
-            <tbody>
-              {report.grades.map((grade, index) => (
-                <tr key={index}>
-                  <td style={{ border: '1px solid #d1d5db', padding: '8px', fontWeight: '500' }}>{grade.subject}</td>
-                  <td style={{ border: '1px solid #d1d5db', padding: '8px', textAlign: 'center' }}>{grade.classScore}</td>
-                  <td style={{ border: '1px solid #d1d5db', padding: '8px', textAlign: 'center' }}>{grade.examScore}</td>
-                  <td style={{ border: '1px solid #d1d5db', padding: '8px', textAlign: 'center', fontWeight: '600' }}>{grade.total}</td>
-                  <td style={{ border: '1px solid #d1d5db', padding: '8px', textAlign: 'center', fontWeight: '600' }}>{grade.grade}</td>
-                  <td style={{ border: '1px solid #d1d5db', padding: '8px', textAlign: 'center' }}>{grade.position}</td>
-                  <td style={{ border: '1px solid #d1d5db', padding: '8px' }}>{grade.remark}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Summary Information */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: '24px',
-        marginBottom: '24px'
-      }}>
-        <div>
-          <h4 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '12px' }}>Academic Summary</h4>
-          <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
-            <p><strong>Total Score:</strong> {report.totalScore}</p>
-            <p><strong>Overall Grade:</strong> {report.overallGrade}</p>
-            <p><strong>Conduct:</strong> {report.conduct}</p>
-            <p><strong>Attendance:</strong> {report.attendance}</p>
-          </div>
-        </div>
-        <div>
-          <h4 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '12px' }}>Next Term Information</h4>
-          <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
-            <p><strong>Promoted to:</strong> {report.nextClass}</p>
-            <p><strong>Reopening Date:</strong> {report.reopeningDate}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Teacher's Remarks */}
-      <div style={{ 
-        padding: '16px',
-        backgroundColor: '#dbeafe',
-        borderRadius: '8px',
-        marginBottom: '24px'
-      }}>
-        <h4 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '8px' }}>Teacher's Remarks</h4>
-        <p style={{ fontSize: '14px', margin: 0 }}>{report.teacherRemarks}</p>
-      </div>
-
-      {/* Print Button */}
-      <div style={{ textAlign: 'center' }}>
-        <button 
-          onClick={() => window.print()}
-          style={{
-            backgroundColor: '#2563eb',
-            color: 'white',
-            padding: '12px 24px',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: '500'
-          }}
-        >
-          📄 Print Report
-        </button>
-      </div>
-    </div>
-  );
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', padding: '20px' }}>
@@ -412,7 +285,13 @@ const GuardianPortalPublic = () => {
             </div>
 
             {/* Report Display */}
-            {reportData && <ReportDisplay report={reportData} />}
+            {reportData && (
+              <GuardianReportViewer 
+                report={reportData.report} 
+                student={reportData.student}
+                onBack={() => setReportData(null)}
+              />
+            )}
           </div>
 
           {/* Sidebar */}
