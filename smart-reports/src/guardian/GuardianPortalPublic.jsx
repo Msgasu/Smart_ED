@@ -267,23 +267,6 @@ const GuardianPortalPublic = () => {
             {/* Report Display */}
             {reportData && (
               <div style={{ marginTop: '20px' }}>
-                {console.log('Rendering GuardianReportViewer with:', reportData)}
-                <div style={{ padding: '10px', backgroundColor: '#e3f2fd', marginBottom: '10px', borderRadius: '4px' }}>
-                  <p><strong>Debug:</strong> Report loaded successfully for {reportData.student?.first_name} {reportData.student?.last_name}</p>
-                  <button 
-                    onClick={() => setReportData(null)}
-                    style={{ 
-                      padding: '8px 16px', 
-                      backgroundColor: '#1976d2', 
-                      color: 'white', 
-                      border: 'none', 
-                      borderRadius: '4px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    ← Back to Search
-                  </button>
-                </div>
                 <GuardianReportViewer 
                   report={reportData.report} 
                   student={reportData.student}
