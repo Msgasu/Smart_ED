@@ -86,20 +86,27 @@ function App() {
         if (session?.user) {
           fetchUserProfile(session.user.id)
         } else {
-          console.log('No session - clearing user profile and redirecting')
+          console.log('No session - clearing user profile')
           setUserProfile(null)
           setLoading(false)
           
-          // Use React Router navigate instead of window.location
-          setTimeout(() => {
-            navigate('/login', { replace: true })
-          }, 100)
+          // Only redirect to login if user is on a protected route
+          // Don't redirect if they're on public routes like /guardian-portal
+          const publicRoutes = ['/guardian-portal', '/login', '/signup', '/register']
+          const currentPath = window.location.pathname
+          
+          if (!publicRoutes.includes(currentPath)) {
+            console.log('Redirecting to login from protected route:', currentPath)
+            setTimeout(() => {
+              navigate('/login', { replace: true })
+            }, 100)
+          }
         }
       }
     )
 
     return () => subscription.unsubscribe()
-  }, [isCreatingUser])
+  }, [isCreatingUser, navigate])
 
   const fetchUserProfile = async (userId) => {
     try {
@@ -151,16 +158,14 @@ function App() {
   return (
     <div className="App">
       <Routes>
-        {/* Public routes - accessible without login */}
+        {/* Public routes - always accessible regardless of auth state */}
         <Route path="/guardian-portal" element={<GuardianPortalPublic />} />
-        
-        {/* Auth routes - redirect to dashboard if already logged in */}
         <Route path="/signup" element={user && userProfile ? <Navigate to="/" /> : <Signup />} />
         <Route path="/register" element={user && userProfile ? <Navigate to="/" /> : <Signup />} />
         <Route path="/login" element={user && userProfile ? <Navigate to="/" /> : <Login />} />
 
         {/* Protected routes - only accessible when logged in */}
-        {user && userProfile ? (
+        {user && userProfile && (
           <>
             <Route path="/" element={renderDashboard()} />
             <Route path="/dashboard" element={renderDashboard()} />
@@ -191,8 +196,10 @@ function App() {
               </>
             )}
           </>
-        ) : (
-          /* If not logged in, redirect protected routes to login */
+        )}
+
+        {/* Default routes when not authenticated */}
+        {!user || !userProfile ? (
           <>
             <Route path="/" element={<Login />} />
             <Route path="/dashboard" element={<Login />} />
@@ -200,10 +207,13 @@ function App() {
             <Route path="/teacher/*" element={<Login />} />
             <Route path="/guardian/*" element={<Login />} />
           </>
+        ) : (
+          /* Catch all for authenticated users */
+          <Route path="*" element={<Navigate to="/" />} />
         )}
         
-        {/* Catch all other routes */}
-        <Route path="*" element={<Login />} />
+        {/* Final catch-all for unauthenticated users (except public routes) */}
+        {(!user || !userProfile) && <Route path="*" element={<Login />} />}
       </Routes>
     </div>
   )
