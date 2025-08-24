@@ -368,9 +368,28 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
+/* Mobile backdrop for sidebar */
+.mobile-backdrop {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
 @media (max-width: 991px) {
   .mobile-sidebar-toggle {
     display: flex;
+  }
+  
+  .mobile-backdrop {
+    display: block;
+    opacity: 1;
   }
   
   .guardian-sidebar {
@@ -381,6 +400,12 @@
     z-index: 1000;
     transform: translateX(-100%);
     transition: transform 0.3s ease;
+    width: 280px;
+    box-shadow: 2px 0 20px rgba(0,0,0,0.15);
+  }
+  
+  .guardian-sidebar.collapsed {
+    width: 280px; /* Override collapsed width on mobile */
   }
   
   .guardian-sidebar.open {
@@ -389,6 +414,11 @@
   
   .guardian-main {
     margin-left: 0;
+  }
+  
+  /* Hide sidebar collapse toggle on mobile */
+  .sidebar-toggle {
+    display: none;
   }
 }
 
@@ -776,6 +806,7 @@
    RESPONSIVE DESIGN FOR GUARDIAN PORTAL
 ===================================================== */
 
+/* Large Desktop */
 @media (max-width: 1200px) {
   .guardian-content {
     padding: 1.5rem;
@@ -786,15 +817,70 @@
   }
 }
 
+/* Tablet (Portrait and Landscape) */
+@media (max-width: 1024px) {
+  .guardian-sidebar {
+    width: 260px;
+  }
+  
+  .guardian-content {
+    padding: 1.25rem;
+  }
+  
+  .performance-summary {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .guardian-actions {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .ward-header {
+    flex-direction: row;
+    gap: 1rem;
+  }
+  
+  .ward-avatar {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+  }
+  
+  .ward-selection-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+  
+  .report-card-body div[style*="grid-template-columns"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  .report-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile and Small Tablet */
 @media (max-width: 768px) {
   .guardian-content {
     padding: 1rem;
+    padding-top: 4rem; /* Account for mobile toggle button */
   }
   
   .page-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .page-description {
+    font-size: 0.875rem;
   }
   
   .header-actions {
@@ -804,28 +890,1135 @@
   
   .performance-summary {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .summary-card {
+    padding: 1.25rem;
+    text-align: center;
+  }
+  
+  .summary-value {
+    font-size: 2rem;
   }
   
   .guardian-actions {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .action-button {
+    padding: 1.5rem;
+    text-align: center;
   }
   
   .ward-header {
     flex-direction: column;
     text-align: center;
+    gap: 1rem;
+  }
+  
+  .ward-avatar {
+    width: 70px;
+    height: 70px;
+    font-size: 1.75rem;
+    margin: 0 auto;
+  }
+  
+  .ward-info {
+    text-align: center;
+  }
+  
+  .ward-details {
+    text-align: center;
+  }
+  
+  .ward-selection-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .report-card-body {
+    padding: 1rem;
+  }
+  
+  .report-card-body div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+  
+  .report-summary-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  /* Report viewer responsive styles */
+  .report-header {
+    flex-direction: column !important;
+    gap: 1rem !important;
+    text-align: center !important;
+  }
+  
+  .report-header > div:last-child {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+  
+  .report-header button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  
+  /* Student information grid */
+  .guardian-report-viewer div[style*="grid-template-columns: repeat(3, 1fr)"] {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+  /* Performance summary grid */
+  .guardian-report-viewer div[style*="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr))"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+  
+  /* Signatures grid */
+  .guardian-report-viewer div[style*="grid-template-columns: repeat(4, 1fr)"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1rem !important;
+  }
+  
+  /* Table responsive */
+  .guardian-report-viewer table {
+    font-size: 0.75rem !important;
+  }
+  
+  .guardian-report-viewer th,
+  .guardian-report-viewer td {
+    padding: 0.5rem 0.25rem !important;
+  }
+  
+  .guardian-report-viewer thead th {
+    font-size: 0.7rem !important;
   }
 }
 
+/* Mobile */
 @media (max-width: 480px) {
   .guardian-content {
     padding: 0.75rem;
+    padding-top: 4.5rem;
+  }
+  
+  .page-header h1 {
+    font-size: 1.25rem;
   }
   
   .ward-card {
     padding: 1rem;
   }
   
+  .ward-avatar {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+  }
+  
   .report-card-body {
+    padding: 0.75rem;
+  }
+  
+  .performance-summary {
+    gap: 0.75rem;
+  }
+  
+  .summary-card {
     padding: 1rem;
+  }
+  
+  .summary-value {
+    font-size: 1.5rem;
+  }
+  
+  .summary-label {
+    font-size: 0.75rem;
+  }
+  
+  .action-button {
+    padding: 1.25rem;
+  }
+  
+  .action-title {
+    font-size: 1rem;
+  }
+  
+  .action-description {
+    font-size: 0.8rem;
+  }
+  
+  /* Report viewer mobile optimizations */
+  .guardian-report-viewer .report-content {
+    padding: 1rem !important;
+  }
+  
+  .guardian-report-viewer h2 {
+    font-size: 1.25rem !important;
+  }
+  
+  .guardian-report-viewer h3 {
+    font-size: 1rem !important;
+  }
+  
+  .guardian-report-viewer h4 {
+    font-size: 0.9rem !important;
+  }
+  
+  /* Performance summary - single column */
+  .guardian-report-viewer div[style*="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr))"] {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
+  }
+  
+  .guardian-report-viewer div[style*="font-size: 1.5rem"] {
+    font-size: 1.25rem !important;
+  }
+  
+  /* Signatures - single column */
+  .guardian-report-viewer div[style*="grid-template-columns: repeat(4, 1fr)"] {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+
+}
+
+/* Ward Selection Styles */
+.ward-selection-section {
+  margin-bottom: 2rem;
+}
+
+.ward-selection-title {
+  margin-bottom: 1rem;
+  color: var(--gray-900);
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.ward-selection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.ward-card.selected {
+  border: 2px solid var(--guardian-primary);
+  background: rgba(107, 70, 193, 0.05);
+}
+
+.ward-card:hover {
+  border-color: var(--guardian-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Report Card Improvements */
+.report-item {
+  border: 1px solid var(--gray-200);
+  border-radius: 6px;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.report-item:hover {
+  border-color: var(--guardian-primary);
+  box-shadow: 0 2px 8px rgba(107, 70, 193, 0.1);
+}
+
+.report-item-info h4 {
+  margin: 0 0 0.25rem 0;
+  color: var(--gray-900);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.report-item-info p {
+  margin: 0;
+  color: var(--gray-600);
+  font-size: 0.875rem;
+}
+
+.report-view-button {
+  background: var(--guardian-primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  min-height: 44px;
+}
+
+.report-view-button:hover {
+  background: var(--guardian-dark);
+}
+
+/* Report Summary Grid */
+.report-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.report-summary-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.report-summary-label {
+  font-weight: 600;
+  color: var(--gray-700);
+  font-size: 0.875rem;
+}
+
+.report-summary-value {
+  color: var(--gray-900);
+  font-size: 1rem;
+}
+
+/* Touch improvements for mobile */
+@media (hover: none) and (pointer: coarse) {
+  .nav-item,
+  .action-button,
+  .ward-card,
+  .logout-btn,
+  .mobile-sidebar-toggle {
+    min-height: 44px;
+    padding: 0.75rem;
+  }
+  
+  .nav-item {
+    margin-bottom: 0.25rem;
+  }
+  
+  .ward-card {
+    min-height: auto;
+    padding: 1.25rem;
+  }
+  
+  button {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* =====================================================
+   GUARDIAN PORTAL PUBLIC STYLES
+===================================================== */
+
+.guardian-portal-public {
+  min-height: 100vh;
+  background-color: #f9fafb;
+  padding: 1.25rem;
+}
+
+.guardian-portal-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.guardian-portal-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.guardian-portal-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--wine);
+  margin-bottom: 0.625rem;
+  margin-top: 0;
+}
+
+.guardian-portal-description {
+  color: var(--gray-600);
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.guardian-portal-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.875rem;
+}
+
+.guardian-portal-grid.report-active {
+  grid-template-columns: 1fr;
+}
+
+.guardian-portal-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.report-lookup-card {
+  background-color: white;
+  border-radius: 8px;
+  border: 1px solid var(--gray-200);
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.report-lookup-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  color: var(--gray-900);
+}
+
+.report-lookup-form {
+  margin-bottom: 1.25rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  color: var(--gray-700);
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--gray-300);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  border-color: var(--guardian-primary);
+  box-shadow: 0 0 0 3px rgba(107, 70, 193, 0.1);
+}
+
+.error-message {
+  padding: 0.75rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #991b1b;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.submit-button {
+  background-color: var(--wine);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s ease;
+  min-height: 44px;
+}
+
+.submit-button:hover:not(.loading) {
+  background-color: var(--wine-dark);
+}
+
+.submit-button.loading {
+  background-color: var(--gray-400);
+  cursor: not-allowed;
+}
+
+.instructions-box {
+  padding: 0.75rem;
+  background-color: #f0f9ff;
+  border: 1px solid #7dd3fc;
+  border-radius: 6px;
+}
+
+.instructions-text {
+  font-size: 0.875rem;
+  color: #0c4a6e;
+  margin: 0;
+}
+
+.guardian-portal-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.sidebar-card {
+  background-color: white;
+  border-radius: 8px;
+  border: 1px solid var(--gray-200);
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.sidebar-card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.9375rem;
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--gray-900);
+}
+
+.sidebar-card-title.toggleable {
+  cursor: pointer;
+  transition: color 0.2s ease;
+  user-select: none;
+}
+
+.sidebar-card-title.toggleable:hover {
+  color: var(--wine);
+}
+
+.toggle-arrow {
+  font-size: 0.875rem;
+  transition: transform 0.3s ease;
+  color: var(--gray-500);
+}
+
+.toggle-arrow.open {
+  transform: rotate(180deg);
+}
+
+.agenda-list {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  animation: slideDown 0.3s ease-out;
+}
+
+.announcements-list {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  animation: slideDown 0.3s ease-out;
+}
+
+.contact-info {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.agenda-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.agenda-date {
+  font-weight: 500;
+  color: var(--wine);
+  flex-shrink: 0;
+}
+
+.agenda-event {
+  margin-left: 0.5rem;
+  text-align: right;
+  color: var(--gray-800);
+}
+
+
+
+.announcement-item {
+  padding: 0.75rem;
+  background-color: #dbeafe;
+  border-radius: 6px;
+  margin-bottom: 0.625rem;
+}
+
+.announcement-item:last-child {
+  margin-bottom: 0;
+}
+
+.announcement-item p {
+  margin: 0;
+  color: var(--gray-800);
+}
+
+
+
+.contact-info p {
+  margin: 0 0 0.5rem 0;
+  color: var(--gray-800);
+}
+
+.contact-info p:last-child {
+  margin-bottom: 0;
+}
+
+/* Report Viewer Container Fixes */
+.guardian-report-viewer {
+  max-width: 100%;
+  overflow-x: auto;
+  margin-top: 1.5rem;
+}
+
+.guardian-report-viewer .report-content {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Guardian Portal Public Responsive Styles */
+@media (max-width: 1024px) {
+  .guardian-portal-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .guardian-portal-sidebar {
+    order: -1;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .guardian-report-viewer {
+    margin-top: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .guardian-portal-public {
+    padding: 1rem;
+  }
+  
+  .guardian-portal-title {
+    font-size: 2rem;
+  }
+  
+  .guardian-portal-description {
+    font-size: 1rem;
+  }
+  
+  .guardian-portal-header {
+    margin-bottom: 2rem;
+  }
+  
+  .report-lookup-card {
+    padding: 1.25rem;
+  }
+  
+  .report-lookup-title {
+    font-size: 1.25rem;
+  }
+  
+  .form-grid {
+    gap: 0.75rem;
+  }
+  
+  .sidebar-card {
+    padding: 1rem;
+  }
+  
+  .agenda-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  
+  .agenda-event {
+    margin-left: 0;
+    text-align: left;
+  }
+  
+  .guardian-report-viewer {
+    width: 100%;
+    margin-top: 1rem;
+    overflow-x: hidden;
+  }
+  
+  .guardian-report-viewer .report-content {
+    padding: 1rem;
+    width: 100%;
+    margin: 0 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .guardian-portal-public {
+    padding: 0.75rem;
+  }
+  
+  .guardian-portal-title {
+    font-size: 1.75rem;
+  }
+  
+  .guardian-portal-description {
+    font-size: 0.9rem;
+  }
+  
+  .report-lookup-card {
+    padding: 1rem;
+  }
+  
+  .report-lookup-title {
+    font-size: 1.125rem;
+  }
+  
+  .sidebar-card {
+    padding: 0.875rem;
+  }
+  
+  .sidebar-card-title {
+    font-size: 1rem;
+  }
+  
+  .submit-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .guardian-report-viewer {
+    width: 100%;
+    margin-top: 0.75rem;
+  }
+  
+  .guardian-report-viewer .report-content {
+    padding: 1rem !important;
+    border-radius: 4px;
+    margin: 0 !important;
+  }
+  
+  .guardian-report-viewer .report-header {
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  /* Standardize mobile section spacing */
+  .guardian-report-viewer .report-content > div {
+    margin-bottom: 1.5rem !important;
+  }
+  
+  .guardian-report-viewer .report-content > div:last-child {
+    margin-bottom: 0 !important;
+  }
+  
+  /* Consistent mobile section headers */
+  .guardian-report-viewer .report-content div[style*="background: var(--gray-50)"],
+  .guardian-report-viewer .grades-header {
+    margin-bottom: 1rem !important;
+    padding: 0.75rem 1rem !important;
+  }
+}
+
+/* =====================================================
+   REPORT VIEWER GENERAL STYLES
+===================================================== */
+
+/* School Header */
+.school-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid var(--gray-200);
+  text-align: center;
+}
+
+.school-logo {
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+}
+
+.school-info {
+  text-align: center !important;
+  width: 100% !important;
+  display: block !important;
+}
+
+.school-name {
+  color: var(--wine);
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.school-motto {
+  color: var(--lime);
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.school-contact {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.75rem;
+  color: var(--gray-600);
+  line-height: 1.3;
+}
+
+.report-title {
+  color: var(--wine) !important;
+  margin: 0 !important;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-align: center !important;
+  display: block !important;
+  width: 100% !important;
+}
+
+/* Section Headers */
+.section-header.clickable {
+  transition: background-color 0.2s ease;
+}
+
+.section-header.clickable:hover {
+  background-color: var(--gray-100) !important;
+}
+
+.grades-header {
+  background: var(--gray-50) !important;
+  padding: 0.75rem 1rem !important;
+  border: 0 !important;
+  border-left: 4px solid var(--wine) !important;
+  margin-bottom: 1rem !important;
+  cursor: pointer !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  box-shadow: none !important;
+  outline: none !important;
+  position: relative !important;
+}
+
+.grades-header::before,
+.grades-header::after {
+  display: none !important;
+  content: none !important;
+}
+
+.grades-section {
+  margin-bottom: 2rem;
+  border: none !important;
+  background: transparent !important;
+}
+
+.grades-header-only {
+  background: var(--gray-50) !important;
+  padding: 0.75rem 1rem !important;
+  border: none !important;
+  border-left: 4px solid var(--wine) !important;
+  margin-bottom: 1rem !important;
+  cursor: pointer !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  box-shadow: none !important;
+  outline: none !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.grades-header-only:hover {
+  background-color: var(--gray-100) !important;
+}
+
+.grades-header-only::before,
+.grades-header-only::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* General Report Content Alignment */
+.guardian-report-viewer .report-content {
+  text-align: center;
+}
+
+.guardian-report-viewer .report-content > div {
+  text-align: left;
+}
+
+/* =====================================================
+   MOBILE GRADE CARDS FOR REPORT VIEWER
+===================================================== */
+
+/* Desktop table - show by default */
+.desktop-table {
+  display: block;
+}
+
+/* Mobile cards - hide by default */
+.mobile-grades {
+  display: none;
+}
+
+.mobile-grade-card {
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.mobile-grade-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--gray-200);
+  text-align: left;
+}
+
+.mobile-grade-header h5 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  text-align: left;
+}
+
+.mobile-grade-badge {
+  background: var(--wine);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.mobile-grade-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.mobile-grade-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: center;
+}
+
+.mobile-grade-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.mobile-grade-value {
+  font-size: 0.875rem;
+  color: var(--gray-900);
+  font-weight: 500;
+  text-align: center;
+}
+
+.mobile-grade-total {
+  font-weight: 700;
+  color: var(--wine);
+  font-size: 1rem;
+}
+
+.mobile-grade-remark {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.mobile-grade-remark .mobile-grade-label {
+  text-align: center;
+}
+
+.mobile-grade-remark .mobile-grade-value {
+  text-align: center;
+  font-style: italic;
+}
+
+.mobile-grade-signature {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.mobile-grade-signature .mobile-grade-label {
+  text-align: center;
+}
+
+.mobile-grade-signature .mobile-grade-value {
+  text-align: center;
+}
+
+/* Tablet layout - still show table but with smaller text */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .desktop-table table {
+    font-size: 0.75rem;
+  }
+  
+  .desktop-table th,
+  .desktop-table td {
+    padding: 0.5rem 0.25rem;
+  }
+  
+  /* Keep tablet header same as desktop (side-by-side) */
+  .school-header {
+    flex-direction: row;
+    gap: 1.5rem;
+  }
+  
+  .school-logo {
+    width: 55px;
+    height: 55px;
+  }
+  
+  .school-name {
+    font-size: 1.2rem;
+  }
+  
+  .school-motto {
+    font-size: 0.82rem;
+  }
+  
+  .school-contact {
+    font-size: 0.73rem;
+  }
+  
+  .report-title {
+    font-size: 0.95rem;
+  }
+}
+
+/* Mobile layout switch */
+@media (max-width: 768px) {
+  .desktop-table {
+    display: none;
+  }
+  
+  .mobile-grades {
+    display: block;
+  }
+  
+  /* Mobile school header adjustments */
+  .school-header {
+    flex-direction: column;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    text-align: center;
+  }
+  
+  .school-logo {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .school-info {
+    text-align: center !important;
+  }
+  
+  .school-name {
+    font-size: 1.1rem;
+    text-align: center !important;
+  }
+  
+  .school-motto {
+    font-size: 0.8rem;
+    text-align: center !important;
+  }
+  
+  .school-contact {
+    font-size: 0.7rem;
+    text-align: center !important;
+  }
+  
+  .report-title {
+    font-size: 0.9rem;
+    text-align: center !important;
+  }
+  
+  .school-info .report-title {
+    text-align: center !important;
+  }
+  
+  .guardian-report-viewer .school-info .report-title {
+    text-align: center !important;
+    display: block !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+  }
+  
+  .school-info h3.report-title {
+    text-align: center !important;
+    display: block !important;
+    width: 100% !important;
+  }
+}
+
+/* Print styles - always show desktop table and expanded grades */
+@media print {
+  .desktop-table {
+    display: block !important;
+  }
+  
+  .mobile-grades {
+    display: none !important;
+  }
+  
+  .section-header .fa-chevron-up,
+  .section-header .fa-chevron-down {
+    display: none !important;
   }
 } 

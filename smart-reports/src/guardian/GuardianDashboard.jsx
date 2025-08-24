@@ -158,9 +158,9 @@ const GuardianDashboard = ({ user, profile }) => {
 
         {/* Ward Selection */}
         {wards.length > 1 && (
-          <div className="ward-selection-section" style={{ marginBottom: '2rem' }}>
-            <h3 style={{ marginBottom: '1rem', color: 'var(--gray-900)' }}>Select Ward</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+          <div className="ward-selection-section">
+            <h3 className="ward-selection-title">Select Ward</h3>
+            <div className="ward-selection-grid">
               {wards.map((ward) => (
                 <div
                   key={ward.student_id}

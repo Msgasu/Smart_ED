@@ -47,6 +47,14 @@ const GuardianLayout = ({ children, activeTab, setActiveTab, user, profile }) =>
         <FaBars />
       </button>
 
+      {/* Mobile Backdrop */}
+      {mobileMenuOpen && (
+        <div 
+          className="mobile-backdrop"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <div className={`guardian-sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'open' : ''}`}>
         {/* Header */}

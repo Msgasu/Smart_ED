@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import GuardianReportViewer from './GuardianReportViewer';
+import '../styles/guardian.css';
 
 const GuardianPortalPublic = () => {
   const [studentId, setStudentId] = useState('');
@@ -8,6 +9,9 @@ const GuardianPortalPublic = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [reportData, setReportData] = useState(null);
+  const [termsAgendaOpen, setTermsAgendaOpen] = useState(true);
+  const [welcomeOpen, setWelcomeOpen] = useState(true);
+  const [importantInfoOpen, setImportantInfoOpen] = useState(true);
 
   // Dummy data for demonstration
   const dummyTermsAgenda = [
@@ -164,127 +168,78 @@ const GuardianPortalPublic = () => {
 
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', padding: '20px' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="guardian-portal-public">
+      <div className="guardian-portal-container">
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#7c2d12', marginBottom: '10px' }}>
+        <div className="guardian-portal-header">
+          <h1 className="guardian-portal-title">
             Guardian Portal
           </h1>
-          <p style={{ color: '#6b7280', fontSize: '1.1rem' }}>Access your ward's academic reports and school information</p>
+          <p className="guardian-portal-description">Access your ward's academic reports and school information</p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px' }}>
+        <div className={`guardian-portal-grid ${reportData ? 'report-active' : ''}`}>
           {/* Main Content */}
-          <div>
-            <div style={{ 
-              backgroundColor: 'white', 
-              borderRadius: '8px', 
-              border: '1px solid #e5e7eb',
-              padding: '24px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-            }}>
-              <h2 style={{ 
-                fontSize: '1.5rem', 
-                fontWeight: '600', 
-                marginBottom: '20px',
-                display: 'flex',
-                alignItems: 'center'
-              }}>
-                🔍 View Student Report (Term 3)
-              </h2>
-              
-              <form onSubmit={handleReportLookup} style={{ marginBottom: '20px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
-                      Student ID
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Enter Student ID (e.g., STU001)"
-                      value={studentId}
-                      onChange={(e) => setStudentId(e.target.value)}
-                      required
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        outline: 'none'
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
-                      Unique Code
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Enter Unique Code (e.g., ABC123)"
-                      value={uniqueCode}
-                      onChange={(e) => setUniqueCode(e.target.value)}
-                      required
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        outline: 'none'
-                      }}
-                    />
-                  </div>
-                </div>
+          <div className="guardian-portal-main">
+            {!reportData && (
+              <div className="report-lookup-card">
+                <h2 className="report-lookup-title">
+                  🔍 View Student Report (Term 3)
+                </h2>
                 
-                {error && (
-                  <div style={{ 
-                    padding: '12px',
-                    backgroundColor: '#fef2f2',
-                    border: '1px solid #fecaca',
-                    borderRadius: '6px',
-                    color: '#991b1b',
-                    marginBottom: '16px'
-                  }}>
-                    {error}
+                <form onSubmit={handleReportLookup} className="report-lookup-form">
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label className="form-label">
+                        Student ID
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Enter Student ID (e.g., STU001)"
+                        value={studentId}
+                        onChange={(e) => setStudentId(e.target.value)}
+                        required
+                        className="form-input"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">
+                        Unique Code
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Enter Unique Code (e.g., ABC123)"
+                        value={uniqueCode}
+                        onChange={(e) => setUniqueCode(e.target.value)}
+                        required
+                        className="form-input"
+                      />
+                    </div>
                   </div>
-                )}
+                  
+                  {error && (
+                    <div className="error-message">
+                      {error}
+                    </div>
+                  )}
 
-                <button 
-                  type="submit" 
-                  disabled={loading}
-                  style={{
-                    backgroundColor: loading ? '#9ca3af' : '#7c2d12',
-                    color: 'white',
-                    padding: '12px 24px',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  {loading ? '⏳ Looking up report...' : '🔍 View Report'}
-                </button>
-              </form>
+                  <button 
+                    type="submit" 
+                    disabled={loading}
+                    className={`submit-button ${loading ? 'loading' : ''}`}
+                  >
+                    {loading ? '⏳ Looking up report...' : '🔍 View Report'}
+                  </button>
+                </form>
 
-              {/* Instructions */}
-              <div style={{ 
-                padding: '12px',
-                backgroundColor: '#f0f9ff',
-                border: '1px solid #7dd3fc',
-                borderRadius: '6px',
-                marginBottom: '20px'
-              }}>
-                <p style={{ fontSize: '14px', color: '#0c4a6e', margin: 0 }}>
-                  <strong>Instructions:</strong> Enter your ward's Student ID and Unique Code exactly as provided by the school. These credentials are case-sensitive.
-                </p>
+                {/* Instructions */}
+                <div className="instructions-box">
+                  <p className="instructions-text">
+                    <strong>Instructions:</strong> Enter your ward's Student ID and Unique Code exactly as provided by the school. These credentials are case-sensitive.
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Report Display */}
             {reportData && (
@@ -297,92 +252,69 @@ const GuardianPortalPublic = () => {
           </div>
 
           {/* Sidebar */}
-          <div>
-            {/* Terms Agenda */}
-            <div style={{ 
-              backgroundColor: 'white', 
-              borderRadius: '8px', 
-              border: '1px solid #e5e7eb',
-              padding: '20px',
-              marginBottom: '20px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-            }}>
-              <h3 style={{ 
-                fontSize: '1.125rem', 
-                fontWeight: '600', 
-                marginBottom: '15px',
-                display: 'flex',
-                alignItems: 'center'
-              }}>
-                📅 Terms Agenda
-              </h3>
-              <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
-                {dummyTermsAgenda.map((item, index) => (
-                  <div key={index} style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'flex-start',
-                    marginBottom: '8px',
-                    padding: '4px 0'
-                  }}>
-                    <span style={{ fontWeight: '500', color: '#7c2d12' }}>{item.date}</span>
-                    <span style={{ marginLeft: '8px', textAlign: 'right' }}>{item.event}</span>
+          {!reportData && (
+            <div className="guardian-portal-sidebar">
+              {/* Terms Agenda */}
+              <div className="sidebar-card">
+                <h3 
+                  className="sidebar-card-title toggleable" 
+                  onClick={() => setTermsAgendaOpen(!termsAgendaOpen)}
+                >
+                  📅 Terms Agenda
+                  <span className={`toggle-arrow ${termsAgendaOpen ? 'open' : ''}`}>▼</span>
+                </h3>
+                {termsAgendaOpen && (
+                  <div className="agenda-list">
+                    {dummyTermsAgenda.map((item, index) => (
+                      <div key={index} className="agenda-item">
+                        <span className="agenda-date">{item.date}</span>
+                        <span className="agenda-event">{item.event}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            </div>
 
-            {/* Welcome Message */}
-            <div style={{ 
-              backgroundColor: 'white', 
-              borderRadius: '8px', 
-              border: '1px solid #e5e7eb',
-              padding: '20px',
-              marginBottom: '20px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-            }}>
-              <h3 style={{ 
-                fontSize: '1.125rem', 
-                fontWeight: '600', 
-                marginBottom: '15px',
-                display: 'flex',
-                alignItems: 'center'
-              }}>
-                🔔 Welcome
-              </h3>
-              <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
-                {dummyAnnouncements.map((announcement, index) => (
-                  <div key={index} style={{ 
-                    padding: '12px',
-                    backgroundColor: '#dbeafe',
-                    borderRadius: '6px',
-                    marginBottom: '10px'
-                  }}>
-                    <p style={{ margin: 0 }}>{announcement}</p>
+              {/* Welcome Message */}
+              <div className="sidebar-card">
+                <h3 
+                  className="sidebar-card-title toggleable" 
+                  onClick={() => setWelcomeOpen(!welcomeOpen)}
+                >
+                  🔔 Welcome
+                  <span className={`toggle-arrow ${welcomeOpen ? 'open' : ''}`}>▼</span>
+                </h3>
+                {welcomeOpen && (
+                  <div className="announcements-list">
+                    {dummyAnnouncements.map((announcement, index) => (
+                      <div key={index} className="announcement-item">
+                        <p>{announcement}</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            </div>
 
-            {/* Important Information */}
-            <div style={{ 
-              backgroundColor: 'white', 
-              borderRadius: '8px', 
-              border: '1px solid #e5e7eb',
-              padding: '20px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-            }}>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '15px' }}>
-                📞 Important Information
-              </h3>
-              <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
-                <p><strong>School Contact:</strong> +233 123 456 789</p>
-                <p><strong>Email:</strong> info@lifeinternational.edu.gh</p>
-                <p><strong>Office Hours:</strong> Mon-Fri 8:00 AM - 4:00 PM</p>
-                <p><strong>Emergency Contact:</strong> +233 987 654 321</p>
+              {/* Important Information */}
+              <div className="sidebar-card">
+                <h3 
+                  className="sidebar-card-title toggleable" 
+                  onClick={() => setImportantInfoOpen(!importantInfoOpen)}
+                >
+                  📞 Important Information
+                  <span className={`toggle-arrow ${importantInfoOpen ? 'open' : ''}`}>▼</span>
+                </h3>
+                {importantInfoOpen && (
+                  <div className="contact-info">
+                    <p><strong>School Contact:</strong> +233 123 456 789</p>
+                    <p><strong>Email:</strong> info@lifeinternational.edu.gh</p>
+                    <p><strong>Office Hours:</strong> Mon-Fri 8:00 AM - 4:00 PM</p>
+                    <p><strong>Emergency Contact:</strong> +233 987 654 321</p>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

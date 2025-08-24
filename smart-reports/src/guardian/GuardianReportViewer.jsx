@@ -1,8 +1,10 @@
-import React from 'react'
-import { FaArrowLeft, FaDownload, FaPrint } from 'react-icons/fa'
+import React, { useState } from 'react'
+import { FaArrowLeft, FaDownload, FaPrint, FaChevronDown, FaChevronUp } from 'react-icons/fa'
 import logo from '../assets/logo_nbg.png'
 
 const GuardianReportViewer = ({ report, student, onBack }) => {
+  const [gradesExpanded, setGradesExpanded] = useState(true)
+
   const handlePrint = () => {
     window.print()
   }
@@ -51,7 +53,6 @@ const GuardianReportViewer = ({ report, student, onBack }) => {
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center',
-        marginBottom: '2rem',
         paddingBottom: '1rem',
         borderBottom: '1px solid var(--gray-200)'
       }}>
@@ -82,7 +83,7 @@ const GuardianReportViewer = ({ report, student, onBack }) => {
           </p>
         </div>
         
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', borderRadius: '8px', padding: '0.25rem' }}>
           <button 
             onClick={handleDownload}
             style={{
@@ -133,31 +134,23 @@ const GuardianReportViewer = ({ report, student, onBack }) => {
         fontFamily: 'Arial, sans-serif'
       }}>
         {/* School Header */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '1.5rem',
-          marginBottom: '2rem',
-          paddingBottom: '1.5rem',
-          borderBottom: '2px solid var(--gray-200)'
-        }}>
+        <div className="school-header">
           <img 
             src={logo} 
             alt="Life International College" 
-            style={{ width: '80px', height: '80px' }}
+            className="school-logo"
           />
-          <div style={{ textAlign: 'center' }}>
-            <h2 style={{ color: 'var(--wine)', margin: '0 0 0.5rem 0', fontSize: '1.5rem', fontWeight: '700' }}>
+          <div className="school-info">
+            <h2 className="school-name">
               Life International College
             </h2>
-            <p style={{ color: 'var(--lime)', margin: '0 0 0.5rem 0', fontWeight: '600', fontSize: '0.9rem' }}>
+            <p className="school-motto">
               Knowledge • Excellence • Christ
             </p>
-            <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.85rem', color: 'var(--gray-600)' }}>
+            <p className="school-contact">
               Private Mail Bag, 252 Tema. / Tel: 024 437 7584
             </p>
-            <h3 style={{ color: 'var(--wine)', margin: 0, fontSize: '1.1rem', fontWeight: '600', letterSpacing: '1px' }}>
+            <h3 className="report-title" style={{ textAlign: 'center' }}>
               TERMINAL REPORT
             </h3>
           </div>
@@ -260,19 +253,21 @@ const GuardianReportViewer = ({ report, student, onBack }) => {
         </div>
 
         {/* Subject Grades */}
-        <div style={{ marginBottom: '2rem' }}>
-          <div style={{
-            background: 'var(--gray-50)',
-            padding: '0.75rem 1rem',
-            borderLeft: '4px solid var(--wine)',
-            marginBottom: '1rem'
-          }}>
+        <div className="grades-section">
+          <div 
+            className="grades-header-only"
+            onClick={() => setGradesExpanded(!gradesExpanded)}
+          >
             <h4 style={{ margin: 0, color: 'var(--gray-900)', fontSize: '1rem', fontWeight: '600' }}>
               SUBJECT GRADES
             </h4>
+            {gradesExpanded ? <FaChevronUp /> : <FaChevronDown />}
           </div>
           
-          <div style={{ overflowX: 'auto' }}>
+          {gradesExpanded && (
+            <>
+              {/* Desktop/Print Table */}
+              <div className="desktop-table" style={{ overflowX: 'auto' }}>
             <table style={{
               width: '100%',
               borderCollapse: 'collapse',
@@ -339,6 +334,50 @@ const GuardianReportViewer = ({ report, student, onBack }) => {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile Card Layout */}
+          <div className="mobile-grades">
+            {(report.student_grades || []).map((grade, index) => (
+              <div key={index} className="mobile-grade-card">
+                <div className="mobile-grade-header">
+                  <h5>{grade.courses?.course_name || `Subject ${index + 1}`}</h5>
+                  <span className="mobile-grade-badge">
+                    {getGradeLetter(grade.total_score || 0)}
+                  </span>
+                </div>
+                <div className="mobile-grade-grid">
+                  <div className="mobile-grade-item">
+                    <span className="mobile-grade-label">Class Score:</span>
+                    <span className="mobile-grade-value">{grade.class_score || 0}</span>
+                  </div>
+                  <div className="mobile-grade-item">
+                    <span className="mobile-grade-label">Exam Score:</span>
+                    <span className="mobile-grade-value">{grade.exam_score || 0}</span>
+                  </div>
+                  <div className="mobile-grade-item">
+                    <span className="mobile-grade-label">Total Score:</span>
+                    <span className="mobile-grade-value mobile-grade-total">{grade.total_score || 0}</span>
+                  </div>
+                  <div className="mobile-grade-item">
+                    <span className="mobile-grade-label">Position:</span>
+                    <span className="mobile-grade-value">{grade.position || '-'}</span>
+                  </div>
+                </div>
+                <div className="mobile-grade-remark">
+                  <span className="mobile-grade-label">Remark:</span>
+                  <span className="mobile-grade-value">{grade.remark || getGradeRemark(grade.total_score || 0)}</span>
+                </div>
+                {grade.teacher_signature && grade.teacher_signature !== '-' && (
+                  <div className="mobile-grade-signature">
+                    <span className="mobile-grade-label">Teacher:</span>
+                    <span className="mobile-grade-value">{grade.teacher_signature}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+            </>
+          )}
         </div>
 
         {/* Performance Summary */}
@@ -574,6 +613,9 @@ const GuardianReportViewer = ({ report, student, onBack }) => {
             font-size: 12px !important; 
             line-height: 1.3 !important;
           }
+          .desktop-table { display: block !important; }
+          .mobile-grades { display: none !important; }
+          .section-header { cursor: default !important; }
         }
       `}</style>
     </div>
