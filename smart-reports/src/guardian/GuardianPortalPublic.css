@@ -1,0 +1,240 @@
+.guardian-portal-public {
+  min-height: 100vh;
+  background-color: #f9fafb;
+  padding: 20px;
+}
+
+.guardian-portal-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.guardian-portal-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.guardian-portal-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #7c2d12;
+  margin-bottom: 10px;
+}
+
+.guardian-portal-description {
+  color: #6b7280;
+  font-size: 1.1rem;
+}
+
+.guardian-portal-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 30px;
+}
+
+.guardian-portal-grid.report-active {
+  grid-template-columns: 1fr;
+}
+
+.guardian-portal-main {
+  background-color: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.report-lookup-card {
+  background-color: white;
+}
+
+.report-lookup-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.report-lookup-form {
+  margin-bottom: 20px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: #7c2d12;
+  box-shadow: 0 0 0 2px rgba(124, 45, 18, 0.1);
+}
+
+.error-message {
+  padding: 12px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #991b1b;
+  margin-bottom: 16px;
+}
+
+.submit-button {
+  background-color: #7c2d12;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.submit-button:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.submit-button:hover:not(:disabled) {
+  background-color: #92400e;
+}
+
+.instructions {
+  padding: 12px;
+  background-color: #f0f9ff;
+  border: 1px solid #7dd3fc;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.instructions p {
+  font-size: 14px;
+  color: #0c4a6e;
+  margin: 0;
+}
+
+.guardian-portal-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sidebar-card {
+  background-color: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.sidebar-card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.sidebar-card-title.toggleable:hover {
+  color: #7c2d12;
+}
+
+.toggle-arrow {
+  transition: transform 0.2s;
+}
+
+.toggle-arrow.open {
+  transform: rotate(180deg);
+}
+
+.agenda-list {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.agenda-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  padding: 4px 0;
+}
+
+.agenda-date {
+  font-weight: 500;
+  color: #7c2d12;
+}
+
+.agenda-event {
+  margin-left: 8px;
+  text-align: right;
+}
+
+.announcements-list {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.announcement-item {
+  padding: 12px;
+  background-color: #dbeafe;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.announcement-item p {
+  margin: 0;
+}
+
+.contact-info {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.contact-info p {
+  margin-bottom: 8px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .guardian-portal-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .guardian-portal-title {
+    font-size: 2rem;
+  }
+}

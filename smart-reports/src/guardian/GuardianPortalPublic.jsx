@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import GuardianReportViewer from './GuardianReportViewer';
-import '../styles/guardian.css';
+import './GuardianPortalPublic.css';
 
 const GuardianPortalPublic = () => {
   const [studentId, setStudentId] = useState('');
@@ -178,10 +178,11 @@ const GuardianPortalPublic = () => {
         students: { student_id: studentData.student_id }
       };
 
+      console.log('Report data formatted successfully:', { report: formattedReport, student: studentDataForViewer });
       setReportData({ report: formattedReport, student: studentDataForViewer });
     } catch (error) {
       console.error('Error during report lookup:', error);
-      setError('An error occurred while looking up the report. Please try again.');
+      setError(`An error occurred while looking up the report: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -190,8 +191,8 @@ const GuardianPortalPublic = () => {
 
 
   return (
-    <div className="guardian-portal-public">
-      <div className="guardian-portal-container">
+    <div className="guardian-portal-public" style={{ minHeight: '100vh', backgroundColor: '#f9fafb', padding: '20px' }}>
+      <div className="guardian-portal-container" style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header */}
         <div className="guardian-portal-header">
           <h1 className="guardian-portal-title">
@@ -265,17 +266,35 @@ const GuardianPortalPublic = () => {
 
             {/* Report Display */}
             {reportData && (
-              <GuardianReportViewer 
-                report={reportData.report} 
-                student={reportData.student}
-                onBack={() => setReportData(null)}
-              />
+              <div style={{ marginTop: '20px' }}>
+                {console.log('Rendering GuardianReportViewer with:', reportData)}
+                <div style={{ padding: '10px', backgroundColor: '#e3f2fd', marginBottom: '10px', borderRadius: '4px' }}>
+                  <p><strong>Debug:</strong> Report loaded successfully for {reportData.student?.first_name} {reportData.student?.last_name}</p>
+                  <button 
+                    onClick={() => setReportData(null)}
+                    style={{ 
+                      padding: '8px 16px', 
+                      backgroundColor: '#1976d2', 
+                      color: 'white', 
+                      border: 'none', 
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    ← Back to Search
+                  </button>
+                </div>
+                <GuardianReportViewer 
+                  report={reportData.report} 
+                  student={reportData.student}
+                  onBack={() => setReportData(null)}
+                />
+              </div>
             )}
           </div>
 
           {/* Sidebar */}
-          {!reportData && (
-            <div className="guardian-portal-sidebar">
+          <div className="guardian-portal-sidebar" style={{ display: reportData ? 'none' : 'block' }}>
               {/* Terms Agenda */}
               <div className="sidebar-card">
                 <h3 
@@ -336,8 +355,7 @@ const GuardianPortalPublic = () => {
                   </div>
                 )}
             </div>
-            </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
