@@ -11,19 +11,13 @@ const GuardianPortalPublic = () => {
 
   // Dummy data for demonstration
   const dummyTermsAgenda = [
-    { date: '2024-01-15', event: 'Term 3 Begins' },
-    { date: '2024-02-14', event: 'Mid-term Assessments' },
-    { date: '2024-03-15', event: 'Parent-Teacher Conference' },
-    { date: '2024-04-10', event: 'Term 3 Examinations' },
-    { date: '2024-04-25', event: 'Term 3 Ends' },
-    { date: '2024-05-01', event: 'Holiday Begins' }
+    { date: '2025-09-06', event: 'Term 1 Begins (2025/2026 academic year)' },
+ 
   ];
 
   const dummyAnnouncements = [
-    'Welcome to Term 3! We are excited to continue the academic journey with your wards.',
-    'Parent-Teacher conferences are scheduled for March 15th. Please contact the school to book your slot.',
-    'Term 3 examination schedules will be available by March 1st.',
-    'School fees for Term 3 are due by January 30th.'
+    'We\'re excited to welcome all our students, parents, and staff back as we begin a new academic term! We hope everyone had a restful and enjoyable break. As we step into this new chapter, we look forward to a term filled with learning, growth, and new opportunities. Let\'s work together to make this term a successful and inspiring journey for all. Here\'s to a great start and an even greater term ahead!',
+    'Welcome back!'
   ];
 
   // Dummy report data for successful lookup
@@ -401,14 +395,15 @@ const GuardianPortalPublic = () => {
               boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
             }}>
               <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '15px' }}>
-                📞 Important Information
+                📞 Contact Information
               </h3>
               <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
-                <p><strong>School Contact:</strong> +233 123 456 789</p>
-                <p><strong>Email:</strong> info@lifeinternational.edu.gh</p>
-                <p><strong>Office Hours:</strong> Mon-Fri 8:00 AM - 4:00 PM</p>
-                <p><strong>Emergency Contact:</strong> +233 987 654 321</p>
-              </div>
+         
+                <p><strong>Email:</strong> lifeinternationalcollege@gmail.com</p>
+                <p><strong>Emergency Contact:</strong> +233 208 156 742 (Mr. Gasu)</p>
+                <p><strong>Emergency Contact:</strong> +233 249 642 785 (Mr. Tamakloe)</p>
+                <p><strong>Emergency Contact:</strong> +233 244 377 584 (Mrs. Danso)</p>
+            </div>
             </div>
           </div>
         </div>
