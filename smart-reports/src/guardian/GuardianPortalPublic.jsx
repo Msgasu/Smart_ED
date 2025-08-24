@@ -68,7 +68,7 @@ const GuardianPortalPublic = () => {
           profile_id,
           class_year,
           program,
-          profiles!inner(first_name, last_name)
+          profiles!inner(first_name, last_name, sex)
         `)
         .eq('student_id', studentId)
         .eq('unique_code', uniqueCode)
@@ -83,7 +83,25 @@ const GuardianPortalPublic = () => {
       // Step 2: Get Term 3 report for this student
       const { data: reportData, error: reportError } = await supabase
         .from('student_reports')
-        .select('*')
+        .select(`
+          id,
+          term,
+          academic_year,
+          total_score,
+          overall_grade,
+          conduct,
+          attendance,
+          position_held,
+          interest,
+          next_class,
+          reopening_date,
+          teacher_remarks,
+          headmaster_remarks,
+          house_report,
+          class_teacher_signature,
+          house_master_signature,
+          principal_signature
+        `)
         .eq('student_id', studentData.profile_id)
         .eq('term', 'Term 3')
         .order('created_at', { ascending: false })
@@ -100,7 +118,14 @@ const GuardianPortalPublic = () => {
       const { data: gradesData, error: gradesError } = await supabase
         .from('student_grades')
         .select(`
-          *,
+          id,
+          class_score,
+          exam_score,
+          total_score,
+          grade,
+          position,
+          remark,
+          teacher_signature,
           courses!inner(name)
         `)
         .eq('report_id', reportData.id);
@@ -131,13 +156,16 @@ const GuardianPortalPublic = () => {
         house_report: reportData.house_report || 'No house report available.',
         class_teacher_signature: reportData.class_teacher_signature || 'N/A',
         house_master_signature: reportData.house_master_signature || 'N/A',
+        principal_signature: reportData.principal_signature || 'N/A',
         
         // Student grades with proper structure
         student_grades: gradesData.map(grade => ({
-          courses: { course_name: grade.courses.name },
+          id: grade.id,
+          courses: { name: grade.courses.name },
           class_score: grade.class_score || 0,
           exam_score: grade.exam_score || 0,
           total_score: grade.total_score || 0,
+          grade: grade.grade || 'N/A',
           position: grade.position || 'N/A',
           remark: grade.remark || 'N/A',
           teacher_signature: grade.teacher_signature || 'N/A'
@@ -148,7 +176,7 @@ const GuardianPortalPublic = () => {
       const studentDataForViewer = {
         first_name: studentData.profiles.first_name,
         last_name: studentData.profiles.last_name,
-        sex: studentData.sex || 'N/A',
+        sex: studentData.profiles.sex || 'N/A',
         students: { student_id: studentData.student_id }
       };
 

@@ -8,11 +8,12 @@ import AdminLayout from './AdminLayout'
 import './ReportViewer.css'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend } from 'chart.js'
 import { Bar } from 'react-chartjs-2'
+import logo from '../assets/logo_nbg.png'
 
 // Register ChartJS components
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend)
 
-const ReportViewer = () => {
+const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = false }) => {
   const { reportId } = useParams()
   const navigate = useNavigate()
   
@@ -42,16 +43,27 @@ const ReportViewer = () => {
 
   useEffect(() => {
     const init = async () => {
-      await fetchUserProfile()
-      if (reportId) {
-        fetchReport()
+      if (isGuardianView && propReport) {
+        // Guardian mode: use provided report data
+        setReport(propReport)
+        setLoading(false)
+        if (propReport && !propReport.incomplete) {
+          // For guardian mode, fetch chart data like admin view
+          await fetchChartData(propReport)
+        }
+      } else {
+        // Admin mode: fetch data normally
+        await fetchUserProfile()
+        if (reportId) {
+          fetchReport()
+        }
       }
     }
     init()
-  }, [reportId])
+  }, [reportId, propReport, isGuardianView])
   
   useEffect(() => {
-    if (userProfile && reportId) {
+    if (userProfile && reportId && !isGuardianView) {
       fetchReport()
     }
   }, [userProfile])
@@ -310,6 +322,8 @@ const ReportViewer = () => {
     }
   }
 
+
+
   // Generate subject performance breakdown chart (student's individual scores only)
   const generateSubjectPerformanceChart = async (reportData) => {
     const subjects = reportData.student_grades || []
@@ -376,6 +390,14 @@ const ReportViewer = () => {
     URL.revokeObjectURL(url)
   }
 
+  const handleNavigate = (path) => {
+    if (isGuardianView && customNavigate) {
+      customNavigate(path)
+    } else {
+      navigate(path)
+    }
+  }
+
   const calculateGradeStats = () => {
     if (!report?.student_grades) return {}
     
@@ -430,7 +452,7 @@ const ReportViewer = () => {
             <p>There was an error loading the report. Please check the console for details.</p>
             <button 
               className="btn btn-primary"
-              onClick={() => navigate('/admin/classes')}
+              onClick={() => handleNavigate('/admin/classes')}
             >
               Back to Classes
             </button>
@@ -450,7 +472,7 @@ const ReportViewer = () => {
             <p>The requested report could not be found.</p>
             <button 
               className="btn btn-primary"
-              onClick={() => navigate('/admin/classes')}
+              onClick={() => handleNavigate('/admin/classes')}
             >
               Back to Classes
             </button>
@@ -468,7 +490,7 @@ const ReportViewer = () => {
           <div className="report-header no-print">
             <button 
               className="back-button"
-              onClick={() => navigate(-1)}
+              onClick={() => handleNavigate(-1)}
             >
               <FaArrowLeft /> Back
             </button>
@@ -494,7 +516,7 @@ const ReportViewer = () => {
                   <p><strong>Admin Note:</strong> This report is in draft status. You can complete it from the class reports page.</p>
                   <button 
                     className="btn btn-primary"
-                    onClick={() => navigate('/admin/classes')}
+                    onClick={() => handleNavigate('/admin/classes')}
                   >
                     Go to Class Management
                   </button>
@@ -526,14 +548,13 @@ const ReportViewer = () => {
     })
   }
 
-  return (
-    <AdminLayout user={null} profile={userProfile}>
-      <div className="report-viewer">
+  const ReportContent = () => (
+    <div className="report-viewer">
         {/* Header - Hidden when printing */}
         <div className="report-header no-print">
           <button 
             className="back-button"
-            onClick={() => navigate(-1)}
+            onClick={() => handleNavigate(-1)}
           >
             <FaArrowLeft /> Back
           </button>
@@ -567,14 +588,14 @@ const ReportViewer = () => {
           <div className="school-header">
             <div className="school-logo">
               <img 
-                src="/life-international-logo.svg" 
+                src={logo} 
                 alt="Life International College" 
                 style={{ width: '80px', height: '80px' }}
               />
             </div>
             <div className="school-info">
               <h2 style={{ color: '#722F37' }}>Life International College</h2>
-              <p style={{ color: '#8BC34A', fontWeight: '600' }}>Knowledge • Excellence • Christ</p>
+              <p style={{ color: '#8BC34A', fontWeight: '600' }}>Christ • Knowledge • Excellence</p>
               <p>Private Mail Bag, 252 Tema / Tel: 024 437 7584</p>
               <h3 style={{ color: '#722F37' }}>TERMINAL REPORT</h3>
             </div>
@@ -912,7 +933,7 @@ const ReportViewer = () => {
                     </span>
                   </div>
                   <span className="signature-label">Class Teacher</span>
-                  <span className="signature-date">Date: ________________</span>
+                 
                 </div>
               </div>
               <div className="signature-item">
@@ -923,7 +944,7 @@ const ReportViewer = () => {
                     </span>
                   </div>
                   <span className="signature-label">House Master/Mistress</span>
-                  <span className="signature-date">Date: ________________</span>
+                  
                 </div>
               </div>
               <div className="signature-item">
@@ -934,7 +955,6 @@ const ReportViewer = () => {
                     </span>
                   </div>
                   <span className="signature-label">Principal</span>
-                  <span className="signature-date">Date: ________________</span>
                 </div>
               </div>
             </div>
@@ -942,10 +962,20 @@ const ReportViewer = () => {
 
           {/* Footer */}
           <div className="report-footer">
-            <p>Generated on {new Date().toLocaleDateString()}</p>
+            <p>SmartED LMS © 2025</p>
           </div>
         </div>
       </div>
+    )
+
+  // Return the component with or without AdminLayout based on mode
+  if (isGuardianView) {
+    return <ReportContent />
+  }
+
+  return (
+    <AdminLayout user={null} profile={userProfile}>
+      <ReportContent />
     </AdminLayout>
   )
 }
