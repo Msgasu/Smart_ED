@@ -1,3 +1,22 @@
+/* Text visibility fixes for Life International branding */
+.school-info h2,
+.school-info h3,
+.report-header-section h2,
+.report-header-section h3 {
+  color: #722F37 !important;
+  -webkit-text-fill-color: #722F37 !important;
+}
+
+.school-info p[style*="color: #8BC34A"] {
+  color: #8BC34A !important;
+  -webkit-text-fill-color: #8BC34A !important;
+}
+
+/* Ensure all text in report headers is visible */
+.report-header-section * {
+  text-shadow: none !important;
+}
+
 .reports-container {
   padding: 2rem;
   max-width: 1200px;

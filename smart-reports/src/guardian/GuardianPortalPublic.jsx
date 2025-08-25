@@ -9,6 +9,7 @@ const GuardianPortalPublic = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [reportData, setReportData] = useState(null);
+  const [selectedTerm, setSelectedTerm] = useState('Term 3');
   const [termsAgendaOpen, setTermsAgendaOpen] = useState(true);
   const [welcomeOpen, setWelcomeOpen] = useState(true);
   const [importantInfoOpen, setImportantInfoOpen] = useState(true);
@@ -78,7 +79,7 @@ const GuardianPortalPublic = () => {
         return;
       }
 
-      // Step 2: Get Term 3 report for this student
+      // Step 2: Get selected term report for this student
       const { data: reportData, error: reportError } = await supabase
         .from('student_reports')
         .select(`
@@ -101,13 +102,13 @@ const GuardianPortalPublic = () => {
           principal_signature
         `)
         .eq('student_id', studentData.profile_id)
-        .eq('term', 'Term 3')
+        .eq('term', selectedTerm)
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
 
       if (reportError || !reportData) {
-        setError('No Term 3 report found for this student.');
+        setError(`No ${selectedTerm} report found for this student.`);
         setLoading(false);
         return;
       }
@@ -143,6 +144,7 @@ const GuardianPortalPublic = () => {
         class_year: studentData.class_year || 'N/A',
         total_score: reportData.total_score || 0,
         overall_grade: reportData.overall_grade || 'N/A',
+        student_id: studentData.profile_id, // Add student_id for chart comparison
         conduct: reportData.conduct || 'N/A',
         attendance: reportData.attendance || 'N/A',
         position_held: reportData.position_held || 'N/A',
@@ -172,10 +174,15 @@ const GuardianPortalPublic = () => {
 
       // Student data for GuardianReportViewer
       const studentDataForViewer = {
+        id: studentData.profile_id, // Add id for chart comparison
         first_name: studentData.profiles.first_name,
         last_name: studentData.profiles.last_name,
         sex: studentData.profiles.sex || 'N/A',
-        students: { student_id: studentData.student_id }
+        students: { student_id: studentData.student_id },
+        profile: { // Add profile structure that chart logic expects
+          first_name: studentData.profiles.first_name,
+          last_name: studentData.profiles.last_name
+        }
       };
 
       console.log('Report data formatted successfully:', { report: formattedReport, student: studentDataForViewer });
@@ -207,7 +214,7 @@ const GuardianPortalPublic = () => {
             {!reportData && (
               <div className="report-lookup-card">
                 <h2 className="report-lookup-title">
-                  🔍 View Student Report (Term 3)
+                  🔍 View Student Report
                 </h2>
                 
                 <form onSubmit={handleReportLookup} className="report-lookup-form">
@@ -239,6 +246,8 @@ const GuardianPortalPublic = () => {
                       />
                     </div>
                   </div>
+                  
+
                   
                   {error && (
                     <div className="error-message">

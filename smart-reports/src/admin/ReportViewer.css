@@ -1,18 +1,26 @@
+/* Text visibility fixes for Life International branding */
+.school-info h2,
+.school-info h3,
+.report-content h2,
+.report-content h3 {
+  color: #722F37 !important;
+  -webkit-text-fill-color: #722F37 !important;
+}
+
+.school-info p[style*="color: #8BC34A"] {
+  color: #8BC34A !important;
+  -webkit-text-fill-color: #8BC34A !important;
+}
+
 /* ReportViewer Styles */
 .report-viewer {
   background-color: #f8fafc;
   min-height: calc(100vh - 70px);
 }
 
-/* Header - Hidden when printing */
+/* Header - Hidden completely */
 .report-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.5rem 2rem;
-  background: white;
-  border-bottom: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: none !important;
 }
 
 .report-header .back-button {
@@ -213,6 +221,33 @@
 
 .school-logo {
   margin-right: 1.5rem;
+}
+
+.school-info h2 {
+  color: #1a202c !important;
+  background: transparent !important;
+}
+
+.school-info h3 {
+  color: #1a202c !important;
+  background: transparent !important;
+}
+
+.school-info p {
+  background: transparent !important;
+}
+
+/* Ensure clean PDF rendering */
+@media print {
+  .school-header {
+    background: white !important;
+  }
+  
+  .school-info * {
+    background: transparent !important;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+  }
 }
 
 .logo-placeholder {

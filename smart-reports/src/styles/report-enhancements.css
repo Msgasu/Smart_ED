@@ -48,6 +48,7 @@
 
 /* School Info Enhancements */
 .school-info h2 {
+  color: #722F37;
   background: linear-gradient(135deg, #722F37 0%, #8B4049 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -56,7 +57,16 @@
   letter-spacing: -0.5px;
 }
 
+/* Fallback for browsers that don't support background-clip */
+@supports not (-webkit-background-clip: text) {
+  .school-info h2 {
+    color: #722F37 !important;
+    -webkit-text-fill-color: #722F37 !important;
+  }
+}
+
 .school-info h3 {
+  color: #722F37;
   background: linear-gradient(135deg, #722F37 0%, #5A252A 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -64,6 +74,14 @@
   font-weight: 600;
   letter-spacing: 1.5px;
   position: relative;
+}
+
+/* Fallback for browsers that don't support background-clip */
+@supports not (-webkit-background-clip: text) {
+  .school-info h3 {
+    color: #722F37 !important;
+    -webkit-text-fill-color: #722F37 !important;
+  }
 }
 
 .school-info h3::after {
@@ -80,6 +98,7 @@
 
 /* Motto Styling */
 .school-motto {
+  color: #8BC34A;
   background: linear-gradient(135deg, #8BC34A 0%, #689F38 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -87,6 +106,14 @@
   font-weight: 600;
   letter-spacing: 0.5px;
   position: relative;
+}
+
+/* Fallback for browsers that don't support background-clip */
+@supports not (-webkit-background-clip: text) {
+  .school-motto {
+    color: #8BC34A !important;
+    -webkit-text-fill-color: #8BC34A !important;
+  }
 }
 
 /* Enhanced Login Card */
@@ -131,6 +158,46 @@
 .logo-container:hover::after {
   width: 120%;
   height: 120%;
+}
+
+/* Ensure text visibility on screen */
+.school-info h2,
+.school-info h3 {
+  /* Ensure text is always visible */
+  color: #722F37 !important;
+}
+
+.school-info p {
+  /* Ensure contact info is visible */
+  color: #2d3748 !important;
+}
+
+/* Specific targeting for TERMINAL REPORT text and inline styled elements */
+.school-info h3,
+h3[style*="color"],
+.report-header-section h3,
+.report-header-section h2,
+.report-header-section p {
+  color: #722F37 !important;
+  -webkit-text-fill-color: #722F37 !important;
+}
+
+/* Target the motto/tagline specifically */
+.school-info p[style*="color: #8BC34A"],
+p[style*="color: #8BC34A"] {
+  color: #8BC34A !important;
+  -webkit-text-fill-color: #8BC34A !important;
+}
+
+/* Override any white text in report headers */
+.school-info *,
+.report-header-section * {
+  color: inherit !important;
+}
+
+.school-info *[style*="color: white"],
+.report-header-section *[style*="color: white"] {
+  color: #722F37 !important;
 }
 
 /* Print Optimizations */

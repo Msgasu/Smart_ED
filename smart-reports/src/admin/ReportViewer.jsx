@@ -593,12 +593,12 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
                 style={{ width: '80px', height: '80px' }}
               />
             </div>
-            <div className="school-info">
-              <h2 style={{ color: '#722F37' }}>Life International College</h2>
-              <p style={{ color: '#8BC34A', fontWeight: '600' }}>Christ • Knowledge • Excellence</p>
-              <p>Private Mail Bag, 252 Tema / Tel: 024 437 7584</p>
-              <h3 style={{ color: '#722F37' }}>TERMINAL REPORT</h3>
-            </div>
+                          <div className="school-info">
+                <h2 style={{ color: '#1a202c', fontWeight: 'bold', fontSize: '1.8rem', margin: '0 0 5px 0' }}>Life International College</h2>
+                <p style={{ color: '#2f855a', fontWeight: '600', fontSize: '1rem', margin: '0 0 5px 0' }}>Christ • Knowledge • Excellence</p>
+                <p style={{ color: '#2d3748', fontSize: '0.9rem', margin: '0 0 15px 0' }}>Private Mail Bag, 252 Tema / Tel: 024 437 7584</p>
+                <h3 style={{ color: '#1a202c', fontWeight: 'bold', fontSize: '1.4rem', letterSpacing: '1px', margin: '0' }}>TERMINAL REPORT</h3>
+              </div>
           </div>
 
 

@@ -86,6 +86,12 @@
   border-radius: 6px;
   font-size: 14px;
   outline: none;
+  background-color: white;
+}
+
+.form-input select {
+  background-color: white;
+  cursor: pointer;
 }
 
 .form-input:focus {
@@ -221,6 +227,34 @@
 
 .contact-info p {
   margin-bottom: 8px;
+}
+
+/* Loading spinner animation */
+.fa-spin {
+  animation: fa-spin 2s infinite linear;
+}
+
+@keyframes fa-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Print and PDF exclusions */
+.no-print {
+  /* This class marks elements to exclude from PDF generation */
+}
+
+@media print {
+  .no-print, 
+  .download-controls, 
+  .chart-download-section,
+  button {
+    display: none !important;
+  }
 }
 
 /* Responsive design */
