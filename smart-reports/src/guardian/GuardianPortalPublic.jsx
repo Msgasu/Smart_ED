@@ -267,7 +267,7 @@ const GuardianPortalPublic = () => {
                 {/* Instructions */}
                 <div className="instructions-box">
                   <p className="instructions-text">
-                    <strong>Instructions:</strong> Enter your ward's Student ID and Unique Code exactly as provided by the school. These credentials are case-sensitive.
+                    <strong>Instructions:</strong> Enter your ward's Student ID and Unique Code exactly as provided by the school. These credentials are case-sensitive. Also, ensure there are no spaces.
                   </p>
                 </div>
               </div>
