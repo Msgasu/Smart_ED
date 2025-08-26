@@ -130,7 +130,6 @@ const GuardianPortalPublic = () => {
         .eq('report_id', reportData.id);
 
       if (gradesError) {
-        console.error('Error fetching grades:', gradesError);
         setError('Error loading grade details.');
         setLoading(false);
         return;
@@ -185,10 +184,8 @@ const GuardianPortalPublic = () => {
         }
       };
 
-      console.log('Report data formatted successfully:', { report: formattedReport, student: studentDataForViewer });
       setReportData({ report: formattedReport, student: studentDataForViewer });
     } catch (error) {
-      console.error('Error during report lookup:', error);
       setError(`An error occurred while looking up the report: ${error.message}`);
     } finally {
       setLoading(false);
