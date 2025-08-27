@@ -19,7 +19,16 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
   const location = useLocation()
   
   // Check if coming from Report Bank via URL parameter
-  const isFromReportBank = fromReportBank || new URLSearchParams(location.search).get('fromReportBank') === 'true'
+  const urlParams = new URLSearchParams(location.search)
+  const fromReportBankParam = urlParams.get('fromReportBank')
+  const isFromReportBank = fromReportBank || fromReportBankParam === 'true'
+  console.log('ReportViewer debug:', { 
+    fromReportBank, 
+    locationSearch: location.search, 
+    urlParam: fromReportBankParam,
+    isFromReportBank,
+    fullUrl: window.location.href
+  })
   
   // Helper function to get display percentages based on form level (text only)
   const getDisplayPercentages = (classYear) => {
@@ -395,11 +404,13 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
   }
 
   const handleNavigate = (path) => {
+    console.log('handleNavigate called with:', { path, isFromReportBank, isGuardianView })
     if (isGuardianView && customNavigate) {
       customNavigate(path)
-    } else if (path === -1 && isFromReportBank) {
+    } else if (path === -1 && (isFromReportBank || fromReportBankParam === 'true')) {
       // If coming from Report Bank, go back to Report Bank
-      navigate('/admin/dashboard?tab=report-bank')
+      console.log('Navigating back to Report Bank')
+      navigate('/admin/report-bank')
     } else {
       navigate(path)
     }
@@ -563,7 +574,7 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
             className="back-button"
             onClick={() => handleNavigate(-1)}
           >
-            <FaArrowLeft /> Back
+            <FaArrowLeft /> {(isFromReportBank || fromReportBankParam === 'true') ? 'Back to Report Bank' : 'Back'}
           </button>
           <div className="header-content">
             <h1>Student Report {report.status === 'draft' && <span className="badge bg-warning ms-2">DRAFT</span>}</h1>
@@ -572,6 +583,15 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
             </p>
           </div>
           <div className="header-actions">
+            {(isFromReportBank || fromReportBankParam === 'true') && (
+              <button 
+                className="btn btn-outline-secondary"
+                onClick={() => navigate('/admin/report-bank')}
+                style={{ marginRight: '10px' }}
+              >
+                ← Report Bank
+              </button>
+            )}
             <button 
               className="btn btn-secondary"
               onClick={handleDownload}

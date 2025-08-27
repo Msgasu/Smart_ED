@@ -13,7 +13,7 @@ import Login from './shared/Login'
 import Signup from './shared/Signup'
 import ClassReportsPage from './admin/ClassReportsPage'
 import ReportViewer from './admin/ReportViewer'
-import ReportBank from './admin/ReportBank'
+import ReportBankContent from './admin/ReportBankContent'
 import TeacherReportViewer from './teacher/TeacherReportViewer'
 import TeacherReportEditor from './teacher/TeacherReportEditor'
 import TeacherClassReportsPage from './teacher/TeacherClassReportsPage'
@@ -175,7 +175,7 @@ function App() {
             {userProfile.role === 'admin' && (
               <>
                 <Route path="/admin/class-reports/:className" element={<ClassReportsPage />} />
-                <Route path="/admin/report-bank" element={<ReportBank />} />
+                <Route path="/admin/report-bank" element={<ReportBankContent />} />
                 <Route path="/admin/report-view/:reportId" element={<ReportViewer />} />
                 <Route path="/admin/report-print/:reportId" element={<ReportViewer />} />
               </>

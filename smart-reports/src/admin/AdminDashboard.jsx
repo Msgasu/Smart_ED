@@ -31,10 +31,12 @@ const AdminDashboard = ({ user, profile }) => {
     // Check for tab parameter in URL
     const urlParams = new URLSearchParams(location.search)
     const tabParam = urlParams.get('tab')
+    console.log('AdminDashboard tab check:', { tabParam, activeTab, locationSearch: location.search })
     if (tabParam && tabParam !== activeTab) {
+      console.log('Setting active tab to:', tabParam)
       setActiveTab(tabParam)
     }
-  }, [location.search])
+  }, [location.search, activeTab])
 
   useEffect(() => {
     if (activeTab === 'dashboard') {
