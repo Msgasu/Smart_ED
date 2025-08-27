@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { studentReportsAPI, profilesAPI } from '../lib/api'
 import toast from 'react-hot-toast'
@@ -11,6 +12,7 @@ import CourseAssignment from './CourseAssignment'
 import { FaGraduationCap, FaChalkboardTeacher, FaBook, FaFileAlt, FaUserCheck, FaClock, FaSync } from 'react-icons/fa'
 
 const AdminDashboard = ({ user, profile }) => {
+  const location = useLocation()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [stats, setStats] = useState({
     totalStudents: 0,
@@ -24,6 +26,15 @@ const AdminDashboard = ({ user, profile }) => {
   const [classStats, setClassStats] = useState([])
   const [teacherPerformance, setTeacherPerformance] = useState([])
   const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Check for tab parameter in URL
+    const urlParams = new URLSearchParams(location.search)
+    const tabParam = urlParams.get('tab')
+    if (tabParam && tabParam !== activeTab) {
+      setActiveTab(tabParam)
+    }
+  }, [location.search])
 
   useEffect(() => {
     if (activeTab === 'dashboard') {

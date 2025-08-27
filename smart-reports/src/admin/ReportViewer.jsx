@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { FaArrowLeft, FaPrint, FaDownload, FaFileAlt, FaClock, FaExclamationTriangle } from 'react-icons/fa'
 import { supabase } from '../lib/supabase'
 import { getReportById, REPORT_STATUS } from '../lib/reportApi'
@@ -13,9 +13,13 @@ import logo from '../assets/logo_nbg.png'
 // Register ChartJS components
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend)
 
-const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = false }) => {
+const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = false, fromReportBank = false }) => {
   const { reportId } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
+  
+  // Check if coming from Report Bank via URL parameter
+  const isFromReportBank = fromReportBank || new URLSearchParams(location.search).get('fromReportBank') === 'true'
   
   // Helper function to get display percentages based on form level (text only)
   const getDisplayPercentages = (classYear) => {
@@ -393,6 +397,9 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
   const handleNavigate = (path) => {
     if (isGuardianView && customNavigate) {
       customNavigate(path)
+    } else if (path === -1 && isFromReportBank) {
+      // If coming from Report Bank, go back to Report Bank
+      navigate('/admin/dashboard?tab=report-bank')
     } else {
       navigate(path)
     }

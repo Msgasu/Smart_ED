@@ -17,6 +17,8 @@ const ReportBankContent = () => {
   const [revertingReport, setRevertingReport] = useState(null)
   const [revertReason, setRevertReason] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [expandedClasses, setExpandedClasses] = useState(new Set())
+  const [studentsPerPage] = useState(5)
 
   useEffect(() => {
     fetchUserProfile()
@@ -100,7 +102,7 @@ const ReportBankContent = () => {
   }
 
   const handleViewReport = (reportId) => {
-    navigate(`/admin/report-view/${reportId}`)
+    navigate(`/admin/report-view/${reportId}?fromReportBank=true`)
   }
 
   const handlePrintReport = (reportId) => {
@@ -185,6 +187,31 @@ const ReportBankContent = () => {
     return fullName.includes(searchTerm.toLowerCase()) || 
            studentId.includes(searchTerm.toLowerCase())
   })
+
+  // Group students by class
+  const groupedStudents = filteredStudents.reduce((groups, student) => {
+    const className = student.students?.class_year || 'Unassigned'
+    if (!groups[className]) {
+      groups[className] = []
+    }
+    groups[className].push(student)
+    return groups
+  }, {})
+
+  // Sort classes alphabetically
+  const sortedClasses = Object.keys(groupedStudents).sort()
+
+  const toggleClassExpansion = (className) => {
+    setExpandedClasses(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(className)) {
+        newSet.delete(className)
+      } else {
+        newSet.add(className)
+      }
+      return newSet
+    })
+  }
 
   const ReportRow = ({ student, report }) => {
     const hasGrades = report.student_grades && report.student_grades.length > 0
@@ -304,36 +331,73 @@ const ReportBankContent = () => {
         </div>
       ) : (
         <div className="reports-container">
-          {filteredStudents.map(student => {
-            const studentReports = getStudentReports(student.id)
+          {sortedClasses.map(className => {
+            const classStudents = groupedStudents[className]
+            const studentsWithReports = classStudents.filter(student => 
+              getStudentReports(student.id).length > 0
+            )
             
-            if (studentReports.length === 0) {
-              return null // Don't show students with no reports
+            if (studentsWithReports.length === 0) {
+              return null // Don't show classes with no reports
             }
             
             return (
-              <div key={student.id} className="student-section">
-                <div className="student-header">
-                  <h3>{student.first_name} {student.last_name}</h3>
-                  <span className="reports-count">
-                    {studentReports.length} report{studentReports.length !== 1 ? 's' : ''}
+              <div key={className} className="class-section">
+                <div className="class-header">
+                  <h2>{className}</h2>
+                  <span className="class-stats">
+                    {studentsWithReports.length} student{studentsWithReports.length !== 1 ? 's' : ''} with reports
                   </span>
                 </div>
                 
-                <div className="reports-list">
-                  {studentReports.map(report => (
-                    <ReportRow 
-                      key={report.id} 
-                      student={student} 
-                      report={report} 
-                    />
-                  ))}
-                </div>
+                                 <div className="students-list">
+                   {studentsWithReports.slice(0, expandedClasses.has(className) ? studentsWithReports.length : studentsPerPage).map(student => {
+                     const studentReports = getStudentReports(student.id)
+                     
+                     return (
+                       <div key={student.id} className="student-section">
+                         <div className="student-header">
+                           <h3>{student.first_name} {student.last_name}</h3>
+                           <span className="reports-count">
+                             {studentReports.length} report{studentReports.length !== 1 ? 's' : ''}
+                           </span>
+                         </div>
+                         
+                         <div className="reports-list">
+                           {studentReports.map(report => (
+                             <ReportRow 
+                               key={report.id} 
+                               student={student} 
+                               report={report} 
+                             />
+                           ))}
+                         </div>
+                       </div>
+                     )
+                   })}
+                   
+                   {studentsWithReports.length > studentsPerPage && (
+                     <div className="view-more-section">
+                       <button 
+                         className="view-more-btn"
+                         onClick={() => toggleClassExpansion(className)}
+                       >
+                         {expandedClasses.has(className) 
+                           ? `Show Less (${studentsPerPage} students)` 
+                           : `View More (${studentsWithReports.length - studentsPerPage} more students)`
+                         }
+                       </button>
+                     </div>
+                   )}
+                 </div>
               </div>
             )
           })}
           
-          {filteredStudents.filter(student => getStudentReports(student.id).length > 0).length === 0 && (
+          {sortedClasses.filter(className => {
+            const classStudents = groupedStudents[className]
+            return classStudents.filter(student => getStudentReports(student.id).length > 0).length > 0
+          }).length === 0 && (
             <div className="no-reports">
               <p>No reports found for the selected criteria.</p>
             </div>

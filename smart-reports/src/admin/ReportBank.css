@@ -82,8 +82,69 @@
 .reports-container {
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 40px;
 }
+
+.class-section {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #dee2e6;
+}
+
+.class-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #007bff;
+}
+
+ .class-header h2 {
+   margin: 0;
+   color: #333;
+   font-size: 20px;
+   font-weight: 600;
+ }
+
+.class-stats {
+  background: #007bff;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+ .students-list {
+   display: flex;
+   flex-direction: column;
+   gap: 20px;
+ }
+
+ .view-more-section {
+   display: flex;
+   justify-content: center;
+   padding: 15px 0;
+ }
+
+ .view-more-btn {
+   background: #007bff;
+   color: white;
+   border: none;
+   padding: 10px 20px;
+   border-radius: 6px;
+   cursor: pointer;
+   font-size: 14px;
+   font-weight: 500;
+   transition: all 0.2s ease;
+ }
+
+ .view-more-btn:hover {
+   background: #0056b3;
+   transform: translateY(-1px);
+ }
 
 .student-section {
   background: white;
@@ -101,11 +162,11 @@
   align-items: center;
 }
 
-.student-header h3 {
-  margin: 0;
-  color: #333;
-  font-size: 20px;
-}
+ .student-header h3 {
+   margin: 0;
+   color: #333;
+   font-size: 16px;
+ }
 
 .reports-count {
   background: #007bff;
@@ -143,11 +204,11 @@
   gap: 5px;
 }
 
-.student-name {
-  font-weight: 600;
-  color: #333;
-  font-size: 16px;
-}
+ .student-name {
+   font-weight: 600;
+   color: #333;
+   font-size: 14px;
+ }
 
 .student-id, .student-class {
   color: #666;
@@ -160,11 +221,11 @@
   gap: 8px;
 }
 
-.report-term {
-  font-weight: 600;
-  color: #333;
-  font-size: 16px;
-}
+ .report-term {
+   font-weight: 600;
+   color: #333;
+   font-size: 14px;
+ }
 
 .report-score {
   color: #666;
