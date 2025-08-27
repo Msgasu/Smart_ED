@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { FaArrowLeft, FaEye, FaPrint, FaDownload, FaFilter, FaSearch, FaFileAlt, FaChartBar, FaCheck, FaLock, FaUnlock, FaClock } from 'react-icons/fa'
+import { MdArrowBack, MdVisibility, MdPrint, MdDownload, MdFilterList, MdSearch, MdDescription, MdBarChart, MdCheck, MdLock, MdLockOpen, MdSchedule } from 'react-icons/md'
 import { supabase } from '../lib/supabase'
 import { getReportsByStatus, getReportStatistics, completeReport, revertReportToDraft, REPORT_STATUS } from '../lib/reportApi'
 import toast from 'react-hot-toast'
@@ -365,7 +365,7 @@ const ClassReportsPage = () => {
     </div>
   )
 
-  const ReportCard = ({ report }) => {
+    const ReportCard = ({ report }) => {
     const student = getStudentById(report.student_id)
     const hasGrades = report.student_grades && report.student_grades.length > 0
     const isCompleted = report.status === REPORT_STATUS.COMPLETED
@@ -380,16 +380,16 @@ const ClassReportsPage = () => {
             <div className="report-title">
               <h4>{report.academic_year} - {report.term}</h4>
               <div className="status-indicator">
-                {isCompleted && (
-                  <span className="status-badge completed">
-                    <FaLock /> Completed
-                  </span>
-                )}
-                {isDraft && (
-                  <span className="status-badge draft">
-                    <FaClock /> Draft
-                  </span>
-                )}
+                                 {isCompleted && (
+                   <span className="status-badge completed">
+                     <MdLock /> Completed
+                   </span>
+                 )}
+                 {isDraft && (
+                   <span className="status-badge draft">
+                     <MdSchedule /> Draft
+                   </span>
+                 )}
               </div>
             </div>
             <p className="report-meta">
@@ -408,68 +408,138 @@ const ClassReportsPage = () => {
               </p>
             )}
           </div>
-          <div className="report-actions">
-            {/* View button - available for all completed reports */}
-            {isCompleted && (
-              <button 
-                className="btn btn-primary btn-sm"
-                onClick={() => handleViewReport(report.id)}
-                title="View Report"
-              >
-                <FaEye />
-              </button>
-            )}
-            
-            {/* Print button - only for completed reports */}
-            {isCompleted && (
-              <button 
-                className="btn btn-secondary btn-sm"
-                onClick={() => handlePrintReport(report.id)}
-                title="Print Report"
-              >
-                <FaPrint />
-              </button>
-            )}
-            
-            {/* Admin controls */}
-            {isAdmin && (
-              <>
-                {/* Complete button - only for draft reports with grades */}
-                {isDraft && hasGrades && (
-                  <button 
-                    className="btn btn-success btn-sm"
-                    onClick={() => handleCompleteReport(report.id)}
-                    disabled={isCompleting}
-                    title="Mark as Completed"
-                  >
-                    {isCompleting ? <FaClock /> : <FaCheck />}
-                  </button>
-                )}
-                
-                {/* Revert button - only for completed reports */}
-                {isCompleted && (
-                  <button 
-                    className="btn btn-warning btn-sm"
-                    onClick={() => handleRevertReport(report)}
-                    title="Revert to Draft"
-                  >
-                    <FaUnlock />
-                  </button>
-                )}
-                
-                {/* Edit/View Draft button - for draft reports */}
-                {isDraft && (
-                  <button 
-                    className="btn btn-info btn-sm"
-                    onClick={() => handleViewReport(report.id)}
-                    title="Edit Draft"
-                  >
-                    <FaEye />
-                  </button>
-                )}
-              </>
-            )}
-          </div>
+          
+                     {/* Action Buttons */}
+           <div style={{ 
+             display: 'flex', 
+             gap: '8px', 
+             flexWrap: 'wrap', 
+             marginTop: '15px',
+             padding: '10px',
+             background: 'RED',
+             borderRadius: '6px',
+             border: '3px solid BLACK',
+             minHeight: '50px'
+           }}>
+             
+             {/* TEST BUTTON - This should always show */}
+             <button 
+               style={{
+                 background: 'YELLOW',
+                 color: 'BLACK',
+                 border: '2px solid BLACK',
+                 padding: '10px 15px',
+                 borderRadius: '4px',
+                 cursor: 'pointer',
+                 fontSize: '16px',
+                 fontWeight: 'bold'
+               }}
+               onClick={() => alert('TEST BUTTON WORKS!')}
+             >
+               🚨 TEST BUTTON 🚨
+             </button>
+             
+             {/* Edit Draft Button */}
+             {isDraft && (
+               <button 
+                 style={{
+                   background: '#007bff',
+                   color: 'white',
+                   border: 'none',
+                   padding: '6px 12px',
+                   borderRadius: '4px',
+                   cursor: 'pointer',
+                   fontSize: '13px',
+                   fontWeight: '500'
+                 }}
+                 onClick={() => handleViewReport(report.id)}
+                 title="Edit Draft Report"
+               >
+                 Edit Draft
+               </button>
+             )}
+             
+             {/* Complete Button */}
+             {isDraft && hasGrades && isAdmin && (
+               <button 
+                 style={{
+                   background: '#28a745',
+                   color: 'white',
+                   border: 'none',
+                   padding: '6px 12px',
+                   borderRadius: '4px',
+                   cursor: 'pointer',
+                   fontSize: '13px',
+                   fontWeight: '500'
+                 }}
+                 onClick={() => handleCompleteReport(report.id)}
+                 disabled={isCompleting}
+                 title="Mark as Completed"
+               >
+                 {isCompleting ? 'Completing...' : 'Mark Complete'}
+               </button>
+             )}
+             
+             {/* View Completed Button */}
+             {isCompleted && (
+               <button 
+                 style={{
+                   background: '#17a2b8',
+                   color: 'white',
+                   border: 'none',
+                   padding: '6px 12px',
+                   borderRadius: '4px',
+                   cursor: 'pointer',
+                   fontSize: '13px',
+                   fontWeight: '500'
+                 }}
+                 onClick={() => handleViewReport(report.id)}
+                 title="View Completed Report"
+               >
+                 View Report
+               </button>
+             )}
+             
+             {/* Print Button */}
+             {isCompleted && (
+               <button 
+                 style={{
+                   background: '#6c757d',
+                   color: 'white',
+                   border: 'none',
+                   padding: '6px 12px',
+                   borderRadius: '4px',
+                   cursor: 'pointer',
+                   fontSize: '13px',
+                   fontWeight: '500'
+                 }}
+                 onClick={() => handlePrintReport(report.id)}
+                 title="Print Report"
+               >
+                 Print
+               </button>
+             )}
+             
+             {/* Revert Button */}
+             {isCompleted && isAdmin && (
+               <button 
+                 style={{
+                   background: '#ffc107',
+                   color: 'black',
+                   border: 'none',
+                   padding: '6px 12px',
+                   borderRadius: '4px',
+                   cursor: 'pointer',
+                   fontSize: '13px',
+                   fontWeight: '500'
+                 }}
+                 onClick={() => handleRevertReport(report)}
+                 title="Revert to Draft"
+               >
+                 Revert to Draft
+               </button>
+             )}
+           </div>
         </div>
         
         {hasGrades && (
@@ -498,12 +568,12 @@ const ClassReportsPage = () => {
     <AdminLayout user={null} profile={userProfile}>
       <div className="class-reports-page">
         <div className="page-header">
-          <button 
-            className="back-button"
-            onClick={() => navigate('/admin/classes')}
-          >
-            <FaArrowLeft /> Back to Classes
-          </button>
+                     <button 
+             className="back-button"
+             onClick={() => navigate('/admin/classes')}
+           >
+             <MdArrowBack /> Back to Classes
+           </button>
           <div className="header-content">
             <h1>{className} - Class Reports</h1>
             <p className="page-description">
@@ -514,8 +584,8 @@ const ClassReportsPage = () => {
 
         {/* Filters and Controls */}
         <div className="filters-section">
-          <div className="search-box">
-            <FaSearch className="search-icon" />
+                     <div className="search-box">
+             <MdSearch className="search-icon" />
             <input
               type="text"
               placeholder="Search students by name or ID..."
@@ -618,8 +688,8 @@ const ClassReportsPage = () => {
                             ))}
                           </div>
                         ) : (
-                          <div className="no-reports">
-                            <FaFileAlt className="no-reports-icon" />
+                                                     <div className="no-reports">
+                             <MdDescription className="no-reports-icon" />
                             <p>No reports available for the selected filters</p>
                           </div>
                         )}

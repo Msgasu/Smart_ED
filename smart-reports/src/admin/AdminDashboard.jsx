@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import AdminLayout from './AdminLayout'
 import UsersPage from './UsersPage'
 import Reports from './Reports'
+import ReportBankContent from './ReportBankContent'
 import ClassManagement from './ClassManagement'
 import CourseAssignment from './CourseAssignment'
 import { FaGraduationCap, FaChalkboardTeacher, FaBook, FaFileAlt, FaUserCheck, FaClock, FaSync } from 'react-icons/fa'
@@ -693,6 +694,36 @@ const AdminDashboard = ({ user, profile }) => {
                 className="btn"
                 style={{
                   padding: '1.5rem',
+                  background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  fontWeight: '700'
+                }}
+                onClick={() => window.location.href = '/admin/report-bank'}
+              >
+                <div style={{ 
+                  fontSize: '0.9rem',
+                  backgroundColor: 'white',
+                  color: '#28a745',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '4px'
+                }}>
+                  REPORT BANK
+                </div>
+                <span>View All Reports</span>
+              </button>
+              
+              <button 
+                className="btn"
+                style={{
+                  padding: '1.5rem',
                   background: 'var(--wine-light)',
                   color: 'white',
                   border: 'none',
@@ -793,6 +824,8 @@ const AdminDashboard = ({ user, profile }) => {
         return <UsersPage />
       case 'reports':
         return <Reports />
+      case 'report-bank':
+        return <ReportBankContent />
       case 'classes':
         return <ClassManagement />
       case 'courses':

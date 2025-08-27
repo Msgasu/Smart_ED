@@ -35,6 +35,12 @@ const AdminLayout = ({ children, activeTab, setActiveTab, user, profile }) => {
       description: 'Generate & View Reports'
     },
     {
+      id: 'report-bank',
+      label: 'Report Bank',
+      icon: FaChartBar,
+      description: 'View All Student Reports'
+    },
+    {
       id: 'classes',
       label: 'Classes',
       icon: FaUsers,
