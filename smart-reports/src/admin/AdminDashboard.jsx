@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { studentReportsAPI, profilesAPI } from '../lib/api'
+import { getCurrentAcademicPeriod } from '../lib/academicPeriod'
 import toast from 'react-hot-toast'
 import AdminLayout from './AdminLayout'
 import UsersPage from './UsersPage'
@@ -9,6 +10,7 @@ import Reports from './Reports'
 import ReportBankContent from './ReportBankContent'
 import ClassManagement from './ClassManagement'
 import CourseAssignment from './CourseAssignment'
+import AcademicSettings from './AcademicSettings'
 import { FaGraduationCap, FaChalkboardTeacher, FaBook, FaFileAlt, FaUserCheck, FaClock, FaSync } from 'react-icons/fa'
 
 const AdminDashboard = ({ user, profile }) => {
@@ -149,6 +151,13 @@ const AdminDashboard = ({ user, profile }) => {
     try {
       console.log('📊 Fetching teacher performance data...')
       
+      // Get current academic period
+      const currentPeriod = await getCurrentAcademicPeriod()
+      const currentTerm = currentPeriod.term
+      const currentYear = currentPeriod.academicYear
+      
+      console.log(`📅 Filtering by: ${currentTerm} ${currentYear}`)
+      
       // Get all faculty members with their course assignments
       const { data: faculty, error: facultyError } = await supabase
         .from('profiles')
@@ -221,6 +230,8 @@ const AdminDashboard = ({ user, profile }) => {
               `)
               .eq('subject_id', courseId)
               .in('student_reports.student_id', studentIds)
+              .eq('student_reports.term', currentTerm)
+              .eq('student_reports.academic_year', currentYear)
 
             if (!gradesError && grades) {
               // Group grades by report_id to analyze each report
@@ -853,14 +864,7 @@ const AdminDashboard = ({ user, profile }) => {
           </div>
         )
       case 'settings':
-        return (
-          <div className="page-header">
-            <div className="header-content">
-              <h1>System Settings</h1>
-              <p className="page-description">Configure system preferences and settings</p>
-            </div>
-          </div>
-        )
+        return <AcademicSettings user={user} />
       default:
         return renderDashboardContent()
     }
