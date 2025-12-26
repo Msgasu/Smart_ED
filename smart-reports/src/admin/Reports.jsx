@@ -3,6 +3,7 @@ import { FaPlus, FaSearch, FaTrashAlt, FaCalendarAlt, FaSave, FaPrint, FaFileExp
 import { supabase } from '../lib/supabase'
 import { studentReportsAPI, studentGradesAPI, studentsAPI, coursesAPI } from '../lib/api'
 import { deleteCourseAssignment, addCourseToStudent } from '../lib/courseManagement'
+import { getCurrentAcademicPeriod } from '../lib/academicPeriod'
 import toast from 'react-hot-toast'
 // Using native crypto.randomUUID() instead of uuid package
 import './Reports.css'
@@ -77,6 +78,20 @@ const Reports = () => {
   const averageRef = useRef(null)
   const termRef = useRef(null)
   const academicYearRef = useRef(null)
+
+  // Load current academic period on mount
+  useEffect(() => {
+    const loadCurrentPeriod = async () => {
+      try {
+        const period = await getCurrentAcademicPeriod()
+        setSelectedTerm(period.term)
+        setSelectedYear(period.academicYear)
+      } catch (error) {
+        console.error('Error loading current period:', error)
+      }
+    }
+    loadCurrentPeriod()
+  }, [])
 
   // Load students on component mount
   useEffect(() => {
@@ -748,14 +763,18 @@ const Reports = () => {
                 </select>
               </div>
               <div className="info-item">
-                <label>Academic Year:</label>
+                <label>Academic Year: <small style={{ color: '#666', fontWeight: 'normal' }}>(Defaults to configured period)</small></label>
                 <input
                   type="text"
                   className="form-control"
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(e.target.value)}
                   ref={academicYearRef}
+                  placeholder="e.g., 2024-2025"
                 />
+                <small style={{ color: '#666', fontSize: '0.75rem', display: 'block', marginTop: '0.25rem' }}>
+                  Defaults to the academic year configured in Settings. You can change it if needed.
+                </small>
               </div>
               <div className="info-item">
                 <label>Average:</label>
