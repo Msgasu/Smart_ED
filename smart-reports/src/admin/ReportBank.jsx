@@ -18,6 +18,9 @@ const ReportBank = () => {
   const [revertingReport, setRevertingReport] = useState(null)
   const [revertReason, setRevertReason] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [termFilter, setTermFilter] = useState('all')
+  const [yearFilter, setYearFilter] = useState('all')
+  const [availableYears, setAvailableYears] = useState([])
 
   useEffect(() => {
     fetchUserProfile()
@@ -289,7 +292,8 @@ const ReportBank = () => {
           <div className="header-content">
             <h1>Report Bank</h1>
             <p className="page-description">
-              View and manage all student reports across all classes
+              View and manage <strong>all historical reports</strong> from all terms and academic years. 
+              This shows complete report history regardless of the currently configured period.
             </p>
           </div>
         </div>
