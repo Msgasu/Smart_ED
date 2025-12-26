@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { studentReportsAPI, studentGradesAPI, studentsAPI, coursesAPI } from '../lib/api'
 import { getReportsByStatus, getReportById, REPORT_STATUS } from '../lib/reportApi'
 import { addCourseToStudent } from '../lib/courseManagement'
+import { getCurrentAcademicPeriod } from '../lib/academicPeriod'
 import toast from 'react-hot-toast'
 
 import TeacherLayout from './TeacherLayout'
@@ -123,6 +124,21 @@ const TeacherDashboard = ({ user, profile }) => {
   const termRef = useRef(null)
   const academicYearRef = useRef(null)
 
+  // Load current academic period on mount
+  useEffect(() => {
+    const loadCurrentPeriod = async () => {
+      try {
+        const period = await getCurrentAcademicPeriod()
+        setCurrentPeriod(period)
+        setSelectedTerm(period.term)
+        setSelectedYear(period.academicYear)
+      } catch (error) {
+        console.error('Error loading current period:', error)
+      }
+    }
+    loadCurrentPeriod()
+  }, [])
+
   // Load students on component mount
   useEffect(() => {
     fetchStudents()
@@ -139,7 +155,25 @@ const TeacherDashboard = ({ user, profile }) => {
   // Refresh dashboard stats when switching back to dashboard tab
   useEffect(() => {
     if (activeTab === 'dashboard') {
-      fetchDashboardStats()
+      // Reload current period in case admin changed it
+      const reloadPeriod = async () => {
+        try {
+          const period = await getCurrentAcademicPeriod()
+          if (period.term !== currentPeriod.term || period.academicYear !== currentPeriod.academicYear) {
+            setCurrentPeriod(period)
+            setSelectedTerm(period.term)
+            setSelectedYear(period.academicYear)
+            // Refresh stats with new period
+            await fetchDashboardStats()
+          } else {
+            fetchDashboardStats()
+          }
+        } catch (error) {
+          console.error('Error reloading period:', error)
+          fetchDashboardStats()
+        }
+      }
+      reloadPeriod()
     }
   }, [activeTab])
 
@@ -1679,6 +1713,21 @@ const TeacherDashboard = ({ user, profile }) => {
         <div className="col">
           <h1>Teacher Dashboard</h1>
           <p className="text-muted">Welcome back, {profile?.first_name}! Here's your teaching overview.</p>
+          {currentPeriod.term && currentPeriod.academicYear && (
+            <div style={{ 
+              marginTop: '0.5rem', 
+              padding: '0.5rem 1rem', 
+              background: '#f0f0f0', 
+              borderRadius: '4px', 
+              display: 'inline-block',
+              fontSize: '0.875rem'
+            }}>
+              <strong>Current Period:</strong> {currentPeriod.term} {currentPeriod.academicYear}
+              <small style={{ marginLeft: '0.5rem', color: '#666' }}>
+                (Configured by Administrator)
+              </small>
+            </div>
+          )}
         </div>
       </div>
 
@@ -2070,12 +2119,14 @@ const TeacherDashboard = ({ user, profile }) => {
                 />
               </div>
               <div className="info-item">
-                <label>Term:</label>
+                <label>Term: <small style={{ color: '#666', fontWeight: 'normal' }}>(Configured by Admin)</small></label>
                 <select
                   className="form-control"
                   value={selectedTerm}
-                  onChange={(e) => setSelectedTerm(e.target.value)}
+                  disabled
                   ref={termRef}
+                  style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                  title="Term is configured by administrator in Settings"
                 >
                   <option value="Term 1">Term 1</option>
                   <option value="Term 2">Term 2</option>
@@ -2083,13 +2134,15 @@ const TeacherDashboard = ({ user, profile }) => {
                 </select>
               </div>
               <div className="info-item">
-                <label>Academic Year:</label>
+                <label>Academic Year: <small style={{ color: '#666', fontWeight: 'normal' }}>(Configured by Admin)</small></label>
                 <input
                   type="text"
                   className="form-control"
                   value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
+                  disabled
                   ref={academicYearRef}
+                  style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                  title="Academic year is configured by administrator in Settings"
                 />
               </div>
               <div className="info-item">
@@ -2468,7 +2521,10 @@ const TeacherDashboard = ({ user, profile }) => {
       <div className="row mb-4">
         <div className="col">
           <h1>Report Management</h1>
-          <p className="text-muted">View complete report cards for your students</p>
+          <p className="text-muted">
+            View complete report cards for your students. <strong>Shows all historical reports</strong> from all terms and years. 
+            Use filters below to narrow down by term, year, or status.
+          </p>
         </div>
         <div className="col-auto">
           <button 
