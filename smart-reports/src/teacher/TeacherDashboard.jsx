@@ -65,6 +65,7 @@ const TeacherDashboard = ({ user, profile }) => {
   const [studentSearchTerm, setStudentSearchTerm] = useState('')
   const [selectedTerm, setSelectedTerm] = useState('Term 1')
   const [selectedYear, setSelectedYear] = useState('2024-2025')
+  const [currentPeriod, setCurrentPeriod] = useState({ term: 'Term 1', academicYear: '2024-2025', reopening_date: null })
   const [reportLoading, setReportLoading] = useState(false)
   const [reportData, setReportData] = useState({
     studentName: '',
@@ -133,7 +134,18 @@ const TeacherDashboard = ({ user, profile }) => {
         setSelectedTerm(period.term)
         setSelectedYear(period.academicYear)
       } catch (error) {
-        console.error('Error loading current period:', error)
+        console.warn('Error loading current period, using defaults:', error)
+        // Use defaults if settings table doesn't exist yet
+        const currentYear = new Date().getFullYear()
+        const nextYear = currentYear + 1
+        const defaultPeriod = {
+          term: 'Term 1',
+          academicYear: `${currentYear}-${nextYear}`,
+          reopening_date: null
+        }
+        setCurrentPeriod(defaultPeriod)
+        setSelectedTerm(defaultPeriod.term)
+        setSelectedYear(defaultPeriod.academicYear)
       }
     }
     loadCurrentPeriod()
@@ -159,7 +171,7 @@ const TeacherDashboard = ({ user, profile }) => {
       const reloadPeriod = async () => {
         try {
           const period = await getCurrentAcademicPeriod()
-          if (period.term !== currentPeriod.term || period.academicYear !== currentPeriod.academicYear) {
+          if (period && currentPeriod && (period.term !== currentPeriod.term || period.academicYear !== currentPeriod.academicYear)) {
             setCurrentPeriod(period)
             setSelectedTerm(period.term)
             setSelectedYear(period.academicYear)
@@ -169,8 +181,13 @@ const TeacherDashboard = ({ user, profile }) => {
             fetchDashboardStats()
           }
         } catch (error) {
-          console.error('Error reloading period:', error)
-          fetchDashboardStats()
+          console.warn('Error reloading period, using existing values:', error)
+          // Still fetch stats even if period reload fails
+          try {
+            await fetchDashboardStats()
+          } catch (statsError) {
+            console.error('Error fetching dashboard stats:', statsError)
+          }
         }
       }
       reloadPeriod()
@@ -211,49 +228,78 @@ const TeacherDashboard = ({ user, profile }) => {
   // Update report data when student changes (exact replica of admin logic)
   useEffect(() => {
     const initializeReportData = async () => {
-      if (selectedStudent) {
-        // Get system reopening date for current period
-        const period = await getCurrentAcademicPeriod()
-        const systemReopeningDate = period.reopening_date || ''
-        
-        // CLEAR ALL PREVIOUS DATA FIRST to ensure no data leakage
-        setSubjects([])
-        setReportData({
-          studentName: `${selectedStudent.first_name} ${selectedStudent.last_name}`,
-          studentClass: selectedStudent.students?.class_year || '',
-          studentGender: selectedStudent.sex ? selectedStudent.sex.charAt(0).toUpperCase() + selectedStudent.sex.slice(1) : '',
-          attendance: '',
-          conduct: '',
-          nextClass: '',
-          teacherRemarks: '',
-          principalSignature: '',
-          reopeningDate: systemReopeningDate, // Auto-populate from system settings
-          headmasterRemarks: '',
-          houseReport: '',
-          positionHeld: '',
-          interest: ''
-        })
-        
-        // Load data specific to this student only
-        loadStudentReport()
-      } else {
-        // Clear all data when no student is selected
-        setSubjects([])
-        setReportData({
-          studentName: '',
-          studentClass: '',
-          studentGender: '',
-          attendance: '',
-          conduct: '',
-          nextClass: '',
-          teacherRemarks: '',
-          principalSignature: '',
-          reopeningDate: '',
-          headmasterRemarks: '',
-          houseReport: '',
-          positionHeld: '',
-          interest: ''
-        })
+      try {
+        if (selectedStudent) {
+          // Get system reopening date for current period (with error handling)
+          let systemReopeningDate = ''
+          try {
+            const period = await getCurrentAcademicPeriod()
+            systemReopeningDate = period.reopening_date || ''
+          } catch (error) {
+            console.warn('Could not load reopening date from settings:', error)
+            // Continue with empty reopening date
+          }
+          
+          // CLEAR ALL PREVIOUS DATA FIRST to ensure no data leakage
+          setSubjects([])
+          setReportData({
+            studentName: `${selectedStudent.first_name} ${selectedStudent.last_name}`,
+            studentClass: selectedStudent.students?.class_year || '',
+            studentGender: selectedStudent.sex ? selectedStudent.sex.charAt(0).toUpperCase() + selectedStudent.sex.slice(1) : '',
+            attendance: '',
+            conduct: '',
+            nextClass: '',
+            teacherRemarks: '',
+            principalSignature: '',
+            reopeningDate: systemReopeningDate, // Auto-populate from system settings
+            headmasterRemarks: '',
+            houseReport: '',
+            positionHeld: '',
+            interest: ''
+          })
+          
+          // Load data specific to this student only
+          loadStudentReport()
+        } else {
+          // Clear all data when no student is selected
+          setSubjects([])
+          setReportData({
+            studentName: '',
+            studentClass: '',
+            studentGender: '',
+            attendance: '',
+            conduct: '',
+            nextClass: '',
+            teacherRemarks: '',
+            principalSignature: '',
+            reopeningDate: '',
+            headmasterRemarks: '',
+            houseReport: '',
+            positionHeld: '',
+            interest: ''
+          })
+        }
+      } catch (error) {
+        console.error('Error initializing report data:', error)
+        // Still clear data even on error
+        if (selectedStudent) {
+          setSubjects([])
+          setReportData({
+            studentName: `${selectedStudent.first_name} ${selectedStudent.last_name}`,
+            studentClass: selectedStudent.students?.class_year || '',
+            studentGender: selectedStudent.sex ? selectedStudent.sex.charAt(0).toUpperCase() + selectedStudent.sex.slice(1) : '',
+            attendance: '',
+            conduct: '',
+            nextClass: '',
+            teacherRemarks: '',
+            principalSignature: '',
+            reopeningDate: '',
+            headmasterRemarks: '',
+            houseReport: '',
+            positionHeld: '',
+            interest: ''
+          })
+        }
       }
     }
     
@@ -1336,9 +1382,15 @@ const TeacherDashboard = ({ user, profile }) => {
       }
 
       if (existingReport) {
-        // Get system reopening date for current period
-        const period = await getCurrentAcademicPeriod()
-        const systemReopeningDate = period.reopening_date || ''
+        // Get system reopening date for current period (with error handling)
+        let systemReopeningDate = ''
+        try {
+          const period = await getCurrentAcademicPeriod()
+          systemReopeningDate = period?.reopening_date || ''
+        } catch (error) {
+          console.warn('Could not load reopening date from settings:', error)
+          // Continue with empty reopening date
+        }
         
         // Use existing report's reopening_date if set, otherwise use system default
         const reopeningDate = existingReport.reopening_date || systemReopeningDate
