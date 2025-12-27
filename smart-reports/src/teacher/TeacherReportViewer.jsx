@@ -297,8 +297,8 @@ const TeacherReportViewer = ({ user, profile }) => {
                         <thead className="table-light">
                           <tr>
                             <th>Subject</th>
-                            <th>Class Score (40)</th>
-                            <th>Exam Score (60)</th>
+                            <th>Class Score (30)</th>
+                            <th>Exam Score (70)</th>
                             <th>Total Score (100)</th>
                             <th>Grade</th>
                             <th>Position</th>
@@ -369,14 +369,14 @@ const TeacherReportViewer = ({ user, profile }) => {
                                 labels: report.student_grades.map(grade => grade.courses?.name || 'Unknown'),
                                 datasets: [
                                   {
-                                    label: 'Class Score (60%)',
+                                    label: 'Class Score (30%)',
                                     data: report.student_grades.map(grade => grade.class_score || 0),
                                     backgroundColor: 'rgba(54, 162, 235, 0.5)',
                                     borderColor: 'rgba(54, 162, 235, 1)',
                                     borderWidth: 1
                                   },
                                   {
-                                    label: 'Exam Score (40%)',
+                                    label: 'Exam Score (70%)',
                                     data: report.student_grades.map(grade => grade.exam_score || 0),
                                     backgroundColor: 'rgba(255, 99, 132, 0.5)',
                                     borderColor: 'rgba(255, 99, 132, 1)',
