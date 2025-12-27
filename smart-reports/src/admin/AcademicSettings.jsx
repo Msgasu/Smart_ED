@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { FaCalendarAlt, FaSave, FaInfoCircle } from 'react-icons/fa'
-import { getCurrentAcademicPeriod, setCurrentAcademicPeriod, getAvailableAcademicYears } from '../lib/academicPeriod'
+import { getCurrentAcademicPeriod, setCurrentAcademicPeriod, setReopeningDate, getAvailableAcademicYears } from '../lib/academicPeriod'
 import toast from 'react-hot-toast'
 import './AcademicSettings.css'
 
@@ -10,14 +10,17 @@ const AcademicSettings = ({ user }) => {
   const [currentPeriod, setCurrentPeriod] = useState({
     term: 'Term 1',
     academicYear: '',
+    reopening_date: null,
     updated_at: null,
     updated_by: null
   })
   const [availableYears, setAvailableYears] = useState([])
   const [formData, setFormData] = useState({
     term: 'Term 1',
-    academicYear: ''
+    academicYear: '',
+    reopening_date: ''
   })
+  const [savingReopeningDate, setSavingReopeningDate] = useState(false)
 
   useEffect(() => {
     loadSettings()
@@ -30,7 +33,8 @@ const AcademicSettings = ({ user }) => {
       setCurrentPeriod(period)
       setFormData({
         term: period.term,
-        academicYear: period.academicYear
+        academicYear: period.academicYear,
+        reopening_date: period.reopening_date || ''
       })
 
       // Load available academic years
@@ -79,6 +83,28 @@ const AcademicSettings = ({ user }) => {
       toast.error('Failed to save academic settings')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleSaveReopeningDate = async () => {
+    try {
+      setSavingReopeningDate(true)
+      const result = await setReopeningDate(
+        formData.reopening_date || null,
+        user.id
+      )
+
+      if (result.success) {
+        toast.success('Reopening date updated successfully! This will apply to all student reports for the current period.')
+        await loadSettings()
+      } else {
+        toast.error(result.error || 'Failed to update reopening date')
+      }
+    } catch (error) {
+      console.error('Error saving reopening date:', error)
+      toast.error('Failed to save reopening date')
+    } finally {
+      setSavingReopeningDate(false)
     }
   }
 
@@ -190,6 +216,58 @@ const AcademicSettings = ({ user }) => {
             </button>
           </div>
         </form>
+
+        {/* Reopening Date Section */}
+        <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid #e5e7eb' }}>
+          <h3 style={{ marginBottom: '1rem', color: 'var(--wine, #722F37)' }}>Reopening Date</h3>
+          <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.875rem' }}>
+            Set a reopening date that will automatically appear in all student reports for the current term and academic year.
+          </p>
+          
+          <div className="form-group">
+            <label htmlFor="reopening_date">
+              Reopening Date
+            </label>
+            <input
+              type="date"
+              id="reopening_date"
+              value={formData.reopening_date}
+              onChange={(e) => setFormData({ ...formData, reopening_date: e.target.value })}
+              className="form-control"
+            />
+            <small className="form-help">
+              This date will be automatically filled in all student reports for {currentPeriod.term} {currentPeriod.academicYear}
+            </small>
+            {currentPeriod.reopening_date && (
+              <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: '#f0f9ff', borderRadius: '4px', fontSize: '0.875rem' }}>
+                <strong>Current:</strong> {new Date(currentPeriod.reopening_date).toLocaleDateString()}
+              </div>
+            )}
+          </div>
+
+          <div className="form-actions">
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleSaveReopeningDate}
+              disabled={savingReopeningDate}
+            >
+              <FaSave /> {savingReopeningDate ? 'Saving...' : 'Save Reopening Date'}
+            </button>
+            {formData.reopening_date && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setFormData({ ...formData, reopening_date: '' })
+                }}
+                disabled={savingReopeningDate}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
 
         <div className="settings-note">
           <FaInfoCircle className="info-icon" />
