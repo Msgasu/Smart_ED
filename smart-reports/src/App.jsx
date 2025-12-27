@@ -11,6 +11,8 @@ import GuardianDashboard from './guardian/GuardianDashboard'
 import GuardianPortalPublic from './guardian/GuardianPortalPublic'
 import Login from './shared/Login'
 import Signup from './shared/Signup'
+import ForgotPassword from './shared/ForgotPassword'
+import ResetPassword from './shared/ResetPassword'
 import ClassReportsPage from './admin/ClassReportsPage'
 import ReportViewer from './admin/ReportViewer'
 import ReportBankContent from './admin/ReportBankContent'
@@ -77,6 +79,13 @@ function App() {
       async (event, session) => {
         console.log('Auth state change:', event, 'Session:', session ? 'exists' : 'null')
         
+        // Handle password recovery event
+        if (event === 'PASSWORD_RECOVERY') {
+          console.log('Password recovery event detected, redirecting to reset password page')
+          navigate('/reset-password', { replace: true })
+          return
+        }
+        
         // Skip auth state changes during user creation to prevent redirects
         if (isCreatingUser) {
           console.log('Skipping auth state change during user creation')
@@ -92,8 +101,8 @@ function App() {
           setLoading(false)
           
           // Only redirect to login if user is on a protected route
-          // Don't redirect if they're on public routes like /guardian-portal
-          const publicRoutes = ['/guardian-portal', '/login', '/signup', '/register']
+          // Don't redirect if they're on public routes like /guardian-portal or /reset-password
+          const publicRoutes = ['/guardian-portal', '/login', '/signup', '/register', '/forgot-password', '/reset-password']
           const currentPath = window.location.pathname
           
           if (!publicRoutes.includes(currentPath)) {
@@ -164,6 +173,8 @@ function App() {
         <Route path="/signup" element={user && userProfile ? <Navigate to="/" /> : <Signup />} />
         <Route path="/register" element={user && userProfile ? <Navigate to="/" /> : <Signup />} />
         <Route path="/login" element={user && userProfile ? <Navigate to="/" /> : <Login />} />
+        <Route path="/forgot-password" element={user && userProfile ? <Navigate to="/" /> : <ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Protected routes - only accessible when logged in */}
         {user && userProfile && (
