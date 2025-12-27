@@ -81,8 +81,12 @@ function App() {
         
         // Handle password recovery event
         if (event === 'PASSWORD_RECOVERY') {
-          console.log('Password recovery event detected, redirecting to reset password page')
+          console.log('Password recovery event detected, session:', session ? 'exists' : 'null')
+          // Set the user session (important for password update)
+          setUser(session?.user ?? null)
+          // Redirect to reset password page
           navigate('/reset-password', { replace: true })
+          // Return early to prevent other auth logic from running
           return
         }
         

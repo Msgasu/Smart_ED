@@ -9,43 +9,120 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [canReset, setCanReset] = useState(false)
+  const [error, setError] = useState(null)
   const navigate = useNavigate()
 
   useEffect(() => {
     // Check if user is in password recovery mode
     const checkRecoveryMode = async () => {
+      // Wait a bit for Supabase to process the hash if it exists
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
       // Check URL hash parameters (Supabase sends recovery tokens in hash)
       const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      
+      // Check for errors first
+      const errorParam = hashParams.get('error')
+      const errorCode = hashParams.get('error_code')
+      const errorDescription = hashParams.get('error_description')
+      
+      if (errorParam) {
+        // Handle error cases
+        let errorMessage = 'The password reset link is invalid or has expired.'
+        
+        if (errorCode === 'otp_expired') {
+          errorMessage = 'This password reset link has expired. Please request a new one.'
+        } else if (errorCode === 'access_denied') {
+          errorMessage = errorDescription 
+            ? decodeURIComponent(errorDescription.replace(/\+/g, ' '))
+            : 'Access denied. The link may have expired or already been used.'
+        }
+        
+        setError({
+          code: errorCode,
+          message: errorMessage,
+          description: errorDescription ? decodeURIComponent(errorDescription.replace(/\+/g, ' ')) : null
+        })
+        setCanReset(false)
+        // Clear the error from URL hash for cleaner URL
+        window.history.replaceState(null, '', window.location.pathname)
+        return
+      }
+      
       const accessToken = hashParams.get('access_token')
       const type = hashParams.get('type')
       
+      // Check if there's a recovery token in the hash
       if (type === 'recovery' && accessToken) {
+        console.log('Recovery token found in URL hash')
         // Supabase will automatically handle the hash and set the session
-        setCanReset(true)
+        // Wait a moment for session to be established
+        setTimeout(async () => {
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session && session.user) {
+            console.log('Recovery session established')
+            setCanReset(true)
+            setError(null)
+          } else {
+            console.log('No session found after recovery token')
+            setCanReset(false)
+          }
+        }, 500)
         return
       }
       
       // Check URL query parameters (fallback)
       const urlParams = new URLSearchParams(window.location.search)
       const urlType = urlParams.get('type')
+      const urlError = urlParams.get('error')
+      
+      if (urlError) {
+        setError({
+          code: urlParams.get('error_code'),
+          message: 'The password reset link is invalid or has expired.',
+          description: urlParams.get('error_description')
+        })
+        setCanReset(false)
+        // Clear the error from URL for cleaner URL
+        window.history.replaceState(null, '', window.location.pathname)
+        return
+      }
+      
       if (urlType === 'recovery') {
         setCanReset(true)
+        setError(null)
         return
       }
       
       // Check if there's an active session (user might already be authenticated from recovery)
       const { data: { session } } = await supabase.auth.getSession()
+      console.log('Checking for existing session:', session ? 'found' : 'not found')
       if (session && session.user) {
+        console.log('Active session found, allowing password reset')
         setCanReset(true)
+        setError(null)
+      } else {
+        console.log('No active session found')
+        // If no hash and no session, might be a direct visit - show error
+        if (!hashParams.toString() && !urlParams.toString()) {
+          setCanReset(false)
+        }
       }
     }
 
     checkRecoveryMode()
 
-    // Listen for PASSWORD_RECOVERY event
+    // Listen for PASSWORD_RECOVERY event (this is the key event from Supabase)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change in ResetPassword:', event, session ? 'session exists' : 'no session')
       if (event === 'PASSWORD_RECOVERY') {
-        setCanReset(true)
+        console.log('PASSWORD_RECOVERY event detected, session:', session ? 'exists' : 'null')
+        if (session && session.user) {
+          setCanReset(true)
+          setError(null)
+        } else {
+          console.warn('PASSWORD_RECOVERY event but no session')
+        }
       }
     })
 
@@ -67,15 +144,30 @@ const ResetPassword = () => {
       return
     }
 
+    // Verify session exists before updating password
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session || !session.user) {
+      toast.error('Session expired. Please request a new password reset link.')
+      setCanReset(false)
+      setError({
+        code: 'session_expired',
+        message: 'Your session has expired. Please request a new password reset link.',
+        description: null
+      })
+      return
+    }
+
     setLoading(true)
 
     try {
+      console.log('Updating password for user:', session.user.email)
       const { data, error } = await supabase.auth.updateUser({
         password: password
       })
 
       if (error) throw error
 
+      console.log('Password updated successfully')
       toast.success('Password updated successfully! Redirecting to login...')
       
       // Sign out to force re-login with new password
@@ -94,7 +186,7 @@ const ResetPassword = () => {
     }
   }
 
-  if (!canReset) {
+  if (!canReset || error) {
     return (
       <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #8BC34A 0%, #689F38 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
         <div style={{
@@ -124,32 +216,77 @@ const ResetPassword = () => {
             fontWeight: '600',
             margin: '0 0 1rem 0'
           }}>
-            Invalid Reset Link
+            {error?.code === 'otp_expired' ? 'Link Expired' : 'Invalid Reset Link'}
           </h2>
           <p style={{
             color: '#666',
             fontSize: '0.95rem',
-            marginBottom: '2rem',
+            marginBottom: '1rem',
             lineHeight: '1.6'
           }}>
-            This password reset link is invalid or has expired. Please request a new password reset link.
+            {error?.message || 'This password reset link is invalid or has expired. Please request a new password reset link.'}
           </p>
-          <button
-            onClick={() => navigate('/forgot-password')}
-            style={{
-              padding: '0.75rem 1.5rem',
-              background: 'linear-gradient(135deg, #8BC34A 0%, #689F38 100%)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '10px',
-              fontSize: '0.9rem',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            Request New Reset Link
-          </button>
+          {error?.description && (
+            <p style={{
+              color: '#888',
+              fontSize: '0.85rem',
+              marginBottom: '2rem',
+              lineHeight: '1.5'
+            }}>
+              {error.description}
+            </p>
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '2rem' }}>
+            <button
+              onClick={() => navigate('/forgot-password')}
+              style={{
+                padding: '0.75rem 1.5rem',
+                background: 'linear-gradient(135deg, #8BC34A 0%, #689F38 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '0.9rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 15px rgba(139,195,74,0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-2px)'
+                e.target.style.boxShadow = '0 6px 20px rgba(139,195,74,0.4)'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)'
+                e.target.style.boxShadow = '0 4px 15px rgba(139,195,74,0.3)'
+              }}
+            >
+              Request New Reset Link
+            </button>
+            <button
+              onClick={() => navigate('/login')}
+              style={{
+                padding: '0.75rem 1.5rem',
+                background: 'transparent',
+                color: '#8BC34A',
+                border: '2px solid #8BC34A',
+                borderRadius: '10px',
+                fontSize: '0.9rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = '#8BC34A'
+                e.target.style.color = 'white'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'transparent'
+                e.target.style.color = '#8BC34A'
+              }}
+            >
+              Back to Login
+            </button>
+          </div>
         </div>
       </div>
     )
