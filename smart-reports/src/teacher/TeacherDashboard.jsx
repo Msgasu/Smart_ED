@@ -23,18 +23,18 @@ const TeacherDashboard = ({ user, profile }) => {
   
   // Helper function to get display percentages based on form level (text only)
   const getDisplayPercentages = (classYear) => {
-    if (!classYear) return { classText: '40%', examText: '60%' }; // Default fallback
+    if (!classYear) return { classText: '30%', examText: '70%' }; // Default: Class 30%, Exam 70%
     
     const classYearStr = classYear.toString().toLowerCase();
     
     if (classYearStr.includes('form1') || classYearStr.includes('form 1')) {
-      return { classText: '30%', examText: '70%' };
+      return { classText: '30%', examText: '70%' }; // Class 30%, Exam 70%
     } else if (classYearStr.includes('form2') || classYearStr.includes('form 2')) {
-      return { classText: '40%', examText: '60%' };
+      return { classText: '30%', examText: '70%' }; // Class 30%, Exam 70%
     }
     
     // Default for other forms/grades
-    return { classText: '40%', examText: '60%' };
+    return { classText: '30%', examText: '70%' }; // Class 30%, Exam 70%
   };
 
   // Helper function to get max values for input validation
@@ -2820,7 +2820,7 @@ const TeacherDashboard = ({ user, profile }) => {
                             return Array.from(allSubjects).sort()
                           })(),
                           datasets: [{
-                            label: 'Average Class Score (60%)',
+                            label: 'Average Class Score (30%)',
                             data: (() => {
                               const subjects = (() => {
                                 const allSubjects = new Set()
@@ -2852,7 +2852,7 @@ const TeacherDashboard = ({ user, profile }) => {
                             borderColor: 'rgba(54, 162, 235, 1)',
                             borderWidth: 1
                           }, {
-                            label: 'Average Exam Score (40%)',
+                            label: 'Average Exam Score (70%)',
                             data: (() => {
                               const subjects = (() => {
                                 const allSubjects = new Set()
@@ -3620,14 +3620,14 @@ const TeacherDashboard = ({ user, profile }) => {
                           labels: report.student_grades.map(grade => grade.courses?.name || 'Unknown'),
                           datasets: [
                             {
-                              label: 'Class Score (60%)',
+                              label: 'Class Score (30%)',
                               data: report.student_grades.map(grade => grade.class_score || 0),
                               backgroundColor: 'rgba(54, 162, 235, 0.5)',
                               borderColor: 'rgba(54, 162, 235, 1)',
                               borderWidth: 1
                             },
                             {
-                              label: 'Exam Score (40%)',
+                              label: 'Exam Score (70%)',
                               data: report.student_grades.map(grade => grade.exam_score || 0),
                               backgroundColor: 'rgba(255, 99, 132, 0.5)',
                               borderColor: 'rgba(255, 99, 132, 1)',
