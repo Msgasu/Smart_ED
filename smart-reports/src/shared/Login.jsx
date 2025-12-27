@@ -247,6 +247,22 @@ const Login = () => {
               />
             </div>
 
+            <div style={{ textAlign: 'right', marginTop: '-0.5rem' }}>
+              <Link 
+                to="/forgot-password"
+                style={{
+                  color: '#8BC34A',
+                  textDecoration: 'none',
+                  fontSize: '0.875rem',
+                  fontWeight: '500'
+                }}
+                onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
+                onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
+              >
+                Forgot Password?
+              </Link>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
