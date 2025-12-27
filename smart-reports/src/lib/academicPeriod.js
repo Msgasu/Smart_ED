@@ -13,7 +13,7 @@ export const getCurrentAcademicPeriod = async () => {
   try {
     const { data, error } = await supabase
       .from('system_settings')
-      .select('current_term, current_academic_year, updated_at, updated_by')
+      .select('current_term, current_academic_year, reopening_date, updated_at, updated_by')
       .eq('id', 1)
       .single()
 
@@ -36,6 +36,7 @@ export const getCurrentAcademicPeriod = async () => {
       return {
         term: data.current_term || 'Term 1',
         academicYear: data.current_academic_year || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`,
+        reopening_date: data.reopening_date || null,
         updated_at: data.updated_at,
         updated_by: data.updated_by
       }
@@ -86,13 +87,21 @@ export const setCurrentAcademicPeriod = async (term, academicYear, userId) => {
       return { success: false, error: 'Invalid academic year format. Use format: YYYY-YYYY (e.g., 2024-2025)' }
     }
 
-    // Upsert the current period
+    // Get existing settings to preserve reopening_date
+    const { data: existing } = await supabase
+      .from('system_settings')
+      .select('reopening_date')
+      .eq('id', 1)
+      .single()
+
+    // Upsert the current period (preserve reopening_date if it exists)
     const { data, error } = await supabase
       .from('system_settings')
       .upsert({
         id: 1,
         current_term: term,
         current_academic_year: academicYear,
+        reopening_date: existing?.reopening_date || null,
         updated_by: userId,
         updated_at: new Date().toISOString()
       }, {
@@ -115,6 +124,95 @@ export const setCurrentAcademicPeriod = async (term, academicYear, userId) => {
     return { success: true, data }
   } catch (error) {
     console.error('Error setting current academic period:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+/**
+ * Get reopening date for current academic period
+ * @returns {Promise<Object>} Reopening date or null
+ */
+export const getReopeningDate = async () => {
+  try {
+    const period = await getCurrentAcademicPeriod()
+    return { success: true, data: period.reopening_date || null }
+  } catch (error) {
+    console.error('Error getting reopening date:', error)
+    return { success: false, error: error.message, data: null }
+  }
+}
+
+/**
+ * Set reopening date for current academic period (admin only)
+ * @param {string} reopeningDate - Reopening date (YYYY-MM-DD format)
+ * @param {string} userId - Admin user ID
+ * @returns {Promise<Object>} Success status
+ */
+export const setReopeningDate = async (reopeningDate, userId) => {
+  try {
+    // Validate date format if provided
+    if (reopeningDate && !/^\d{4}-\d{2}-\d{2}$/.test(reopeningDate)) {
+      return { success: false, error: 'Invalid date format. Use YYYY-MM-DD format' }
+    }
+
+    // First, get existing settings to preserve required fields
+    const { data: existing, error: fetchError } = await supabase
+      .from('system_settings')
+      .select('current_term, current_academic_year')
+      .eq('id', 1)
+      .single()
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      // If table doesn't exist or other error
+      if (fetchError.code === '42P01' || fetchError.code === 'PGRST116') {
+        return { 
+          success: false, 
+          error: 'System settings table does not exist. Please run the migration first.' 
+        }
+      }
+      throw fetchError
+    }
+
+    // If no existing record, we need to create one with defaults
+    if (!existing) {
+      const currentYear = new Date().getFullYear()
+      const nextYear = currentYear + 1
+      const defaultYear = `${currentYear}-${nextYear}`
+      
+      const { data, error } = await supabase
+        .from('system_settings')
+        .insert({
+          id: 1,
+          current_term: 'Term 1',
+          current_academic_year: defaultYear,
+          reopening_date: reopeningDate || null,
+          updated_by: userId,
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+      return { success: true, data }
+    }
+
+    // Update existing record, preserving required fields
+    const { data, error } = await supabase
+      .from('system_settings')
+      .update({
+        reopening_date: reopeningDate || null,
+        updated_by: userId,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', 1)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    return { success: true, data }
+  } catch (error) {
+    console.error('Error setting reopening date:', error)
     return { success: false, error: error.message }
   }
 }
