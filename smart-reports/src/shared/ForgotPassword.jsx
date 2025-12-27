@@ -15,8 +15,14 @@ const ForgotPassword = () => {
     setLoading(true)
 
     try {
-      // Get the current origin for redirect URL
-      const redirectTo = `${window.location.origin}/reset-password`
+      // Get redirect URL
+      // Priority: 1. Environment variable, 2. Current origin (auto-detects Vercel URL)
+      // For Vercel: The current origin will automatically be your Vercel URL
+      // IMPORTANT: Also configure this URL in Supabase Dashboard > Authentication > URL Configuration
+      const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin
+      const redirectTo = `${baseUrl}/reset-password`
+      
+      console.log('Password reset redirect URL:', redirectTo)
       
       const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectTo
