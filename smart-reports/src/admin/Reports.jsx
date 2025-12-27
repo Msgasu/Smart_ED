@@ -118,56 +118,64 @@ const Reports = () => {
 
   // Update report data when student changes
   useEffect(() => {
-    if (selectedStudent) {
-      // CLEAR ALL PREVIOUS DATA FIRST to ensure no data leakage
-      setSubjects([])
-             setReportData({
-         studentName: `${selectedStudent.first_name} ${selectedStudent.last_name}`,
-         studentId: selectedStudent.students?.student_id || '',
-         studentClass: selectedStudent.students?.class_year || '',
-         studentGender: selectedStudent.sex ? selectedStudent.sex.charAt(0).toUpperCase() + selectedStudent.sex.slice(1) : '',
-         attendance: '',
-         conduct: '',
-         nextClass: '',
-         teacherRemarks: '',
-         principalSignature: '',
-         classTeacherSignature: '',
-         houseMasterSignature: '',
-         reopeningDate: '',
-         headmasterRemarks: '',
-         houseReport: '',
-         positionHeld: '',
-         interest: ''
-       })
-      
-      console.log(`🔄 Loading data for NEW STUDENT: ${selectedStudent.first_name} ${selectedStudent.last_name} (ID: ${selectedStudent.id})`)
-      console.log(`📅 Term: ${selectedTerm}, Year: ${selectedYear}`)
-      
-      // Load data specific to this student only
-      loadStudentReport()
-    } else {
-      // Clear all data when no student is selected
-      setSubjects([])
-             setReportData({
-         studentName: '',
-         studentId: '',
-         studentClass: '',
-         studentGender: '',
-         attendance: '',
-         conduct: '',
-         nextClass: '',
-         teacherRemarks: '',
-         principalSignature: '',
-         classTeacherSignature: '',
-         houseMasterSignature: '',
-         reopeningDate: '',
-         headmasterRemarks: '',
-         houseReport: '',
-         positionHeld: '',
-         interest: ''
-       })
-      console.log('🔄 Cleared all data - no student selected')
+    const initializeReportData = async () => {
+      if (selectedStudent) {
+        // Get system reopening date for current period
+        const period = await getCurrentAcademicPeriod()
+        const systemReopeningDate = period.reopening_date || ''
+        
+        // CLEAR ALL PREVIOUS DATA FIRST to ensure no data leakage
+        setSubjects([])
+        setReportData({
+          studentName: `${selectedStudent.first_name} ${selectedStudent.last_name}`,
+          studentId: selectedStudent.students?.student_id || '',
+          studentClass: selectedStudent.students?.class_year || '',
+          studentGender: selectedStudent.sex ? selectedStudent.sex.charAt(0).toUpperCase() + selectedStudent.sex.slice(1) : '',
+          attendance: '',
+          conduct: '',
+          nextClass: '',
+          teacherRemarks: '',
+          principalSignature: '',
+          classTeacherSignature: '',
+          houseMasterSignature: '',
+          reopeningDate: systemReopeningDate, // Auto-populate from system settings
+          headmasterRemarks: '',
+          houseReport: '',
+          positionHeld: '',
+          interest: ''
+        })
+        
+        console.log(`🔄 Loading data for NEW STUDENT: ${selectedStudent.first_name} ${selectedStudent.last_name} (ID: ${selectedStudent.id})`)
+        console.log(`📅 Term: ${selectedTerm}, Year: ${selectedYear}`)
+        
+        // Load data specific to this student only
+        loadStudentReport()
+      } else {
+        // Clear all data when no student is selected
+        setSubjects([])
+        setReportData({
+          studentName: '',
+          studentId: '',
+          studentClass: '',
+          studentGender: '',
+          attendance: '',
+          conduct: '',
+          nextClass: '',
+          teacherRemarks: '',
+          principalSignature: '',
+          classTeacherSignature: '',
+          houseMasterSignature: '',
+          reopeningDate: '',
+          headmasterRemarks: '',
+          houseReport: '',
+          positionHeld: '',
+          interest: ''
+        })
+        console.log('🔄 Cleared all data - no student selected')
+      }
     }
+    
+    initializeReportData()
   }, [selectedStudent, selectedTerm, selectedYear])
 
   const fetchStudents = async () => {
@@ -232,22 +240,30 @@ const Reports = () => {
 
       if (existingReport) {
         console.log(`📄 Found existing report (ID: ${existingReport.id}) for this specific student + term + year`);
-                 setReportData(prev => ({
-           ...prev,
-           studentId: selectedStudent.students?.student_id || '',
-           attendance: existingReport.attendance || '',
-           conduct: existingReport.conduct || '',
-           nextClass: existingReport.next_class || '',
-           teacherRemarks: existingReport.teacher_remarks || '',
-           principalSignature: existingReport.principal_signature || '',
-           classTeacherSignature: existingReport.class_teacher_signature || '',
-           houseMasterSignature: existingReport.house_master_signature || '',
-           reopeningDate: existingReport.reopening_date || '',
-           headmasterRemarks: existingReport.headmaster_remarks || '',
-           houseReport: existingReport.house_report || '',
-           positionHeld: existingReport.position_held || '',
-           interest: existingReport.interest || ''
-         }))
+        
+        // Get system reopening date for current period
+        const period = await getCurrentAcademicPeriod()
+        const systemReopeningDate = period.reopening_date || ''
+        
+        // Use existing report's reopening_date if set, otherwise use system default
+        const reopeningDate = existingReport.reopening_date || systemReopeningDate
+        
+        setReportData(prev => ({
+          ...prev,
+          studentId: selectedStudent.students?.student_id || '',
+          attendance: existingReport.attendance || '',
+          conduct: existingReport.conduct || '',
+          nextClass: existingReport.next_class || '',
+          teacherRemarks: existingReport.teacher_remarks || '',
+          principalSignature: existingReport.principal_signature || '',
+          classTeacherSignature: existingReport.class_teacher_signature || '',
+          houseMasterSignature: existingReport.house_master_signature || '',
+          reopeningDate: reopeningDate,
+          headmasterRemarks: existingReport.headmaster_remarks || '',
+          houseReport: existingReport.house_report || '',
+          positionHeld: existingReport.position_held || '',
+          interest: existingReport.interest || ''
+        }))
 
         // Load grades for this specific report only
         console.log(`📊 Loading grades for report ID: ${existingReport.id} (specific to this student + term + year)`)
@@ -565,7 +581,7 @@ const Reports = () => {
          principal_signature: reportData.principalSignature,
          class_teacher_signature: reportData.classTeacherSignature,
          house_master_signature: reportData.houseMasterSignature,
-         reopening_date: reportData.reopeningDate,
+         reopening_date: reportData.reopeningDate?.trim() || null, // Convert empty string to null
          headmaster_remarks: reportData.headmasterRemarks,
          house_report: reportData.houseReport,
          position_held: reportData.positionHeld,
@@ -1051,13 +1067,16 @@ const Reports = () => {
                 />
               </div>
               <div className="info-item">
-                <label>Reopening Date:</label>
+                <label>Reopening Date: <small style={{ color: '#666', fontWeight: 'normal' }}>(Optional)</small></label>
                 <input
                   type="date"
                   className="form-control"
                   value={reportData.reopeningDate}
                   onChange={(e) => setReportData(prev => ({ ...prev, reopeningDate: e.target.value }))}
                 />
+                <small style={{ color: '#666', fontSize: '0.75rem', display: 'block', marginTop: '0.25rem' }}>
+                  Optional. If set in Settings, it will auto-fill for all reports. You can edit per-student if needed.
+                </small>
               </div>
               <div className="info-item">
                 <label>Principal's Remarks:</label>
