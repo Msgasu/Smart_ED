@@ -28,18 +28,8 @@ const Reports = () => {
 
   // Helper function to get max values for input validation
   const getMaxValues = (classYear) => {
-    if (!classYear) return { classMax: 40, examMax: 60 }; // Default fallback
-    
-    const classYearStr = classYear.toString().toLowerCase();
-    
-    if (classYearStr.includes('form1') || classYearStr.includes('form 1')) {
-      return { classMax: 30, examMax: 70 };
-    } else if (classYearStr.includes('form2') || classYearStr.includes('form 2')) {
-      return { classMax: 40, examMax: 60 };
-    }
-    
-    // Default for other forms/grades
-    return { classMax: 40, examMax: 60 };
+    // All classes use Class 30, Exam 70
+    return { classMax: 30, examMax: 70 };
   };
 
   const [subjects, setSubjects] = useState([])
