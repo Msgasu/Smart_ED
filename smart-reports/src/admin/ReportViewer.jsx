@@ -592,20 +592,24 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
                 ← Report Bank
               </button>
             )}
-            <button 
-              className="btn btn-secondary"
-              onClick={handleDownload}
-              disabled={printing}
-            >
-              <FaDownload /> Download
-            </button>
-            <button 
-              className="btn btn-primary"
-              onClick={handlePrint}
-              disabled={printing}
-            >
-              <FaPrint /> {printing ? 'Printing...' : 'Print'}
-            </button>
+            {!isGuardianView && (
+              <>
+                <button 
+                  className="btn btn-secondary"
+                  onClick={handleDownload}
+                  disabled={printing}
+                >
+                  <FaDownload /> Download
+                </button>
+                <button 
+                  className="btn btn-primary"
+                  onClick={handlePrint}
+                  disabled={printing}
+                >
+                  <FaPrint /> {printing ? 'Printing...' : 'Print'}
+                </button>
+              </>
+            )}
           </div>
         </div>
 
