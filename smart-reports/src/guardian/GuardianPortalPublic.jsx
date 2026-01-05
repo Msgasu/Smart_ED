@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { getCurrentAcademicPeriod } from '../lib/academicPeriod';
 import GuardianReportViewer from './GuardianReportViewer';
 import './GuardianPortalPublic.css';
 
@@ -9,10 +10,26 @@ const GuardianPortalPublic = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [reportData, setReportData] = useState(null);
-  const [selectedTerm, setSelectedTerm] = useState('Term 3');
+  const [selectedTerm, setSelectedTerm] = useState('Term 1');
+  const [currentAcademicYear, setCurrentAcademicYear] = useState('');
   const [termsAgendaOpen, setTermsAgendaOpen] = useState(true);
   const [welcomeOpen, setWelcomeOpen] = useState(true);
   const [importantInfoOpen, setImportantInfoOpen] = useState(true);
+
+  // Fetch current term and academic year from system settings on component mount
+  useEffect(() => {
+    const loadCurrentPeriod = async () => {
+      try {
+        const period = await getCurrentAcademicPeriod();
+        setSelectedTerm(period.term);
+        setCurrentAcademicYear(period.academicYear);
+      } catch (error) {
+        console.error('Error loading current academic period:', error);
+        // Keep default 'Term 1' if fetch fails
+      }
+    };
+    loadCurrentPeriod();
+  }, []);
 
   // Dummy data for demonstration
   const dummyTermsAgenda = [
@@ -80,7 +97,7 @@ const GuardianPortalPublic = () => {
       }
 
       // Step 2: Get selected term report for this student
-      const { data: reportData, error: reportError } = await supabase
+      let reportQuery = supabase
         .from('student_reports')
         .select(`
           id,
@@ -102,7 +119,14 @@ const GuardianPortalPublic = () => {
           principal_signature
         `)
         .eq('student_id', studentData.profile_id)
-        .eq('term', selectedTerm)
+        .eq('term', selectedTerm);
+      
+      // Also filter by academic year if available
+      if (currentAcademicYear) {
+        reportQuery = reportQuery.eq('academic_year', currentAcademicYear);
+      }
+      
+      const { data: reportData, error: reportError } = await reportQuery
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
