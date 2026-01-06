@@ -33,7 +33,7 @@ const GuardianPortalPublic = () => {
 
   // Dummy data for demonstration
   const dummyTermsAgenda = [
-    { date: '2025-09-06', event: 'Term 1 Begins (2025/2026 academic year)' },
+    { date: '10-01-2026', event: 'Term 1 Begins (2025/2026 academic year)' },
  
   ];
 
