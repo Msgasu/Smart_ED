@@ -743,8 +743,22 @@
 
 /* Print Styles */
 @media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    visibility: visible !important;
+  }
+
   .report-viewer {
-    background: white;
+    background: white !important;
+    visibility: visible !important;
+    display: block !important;
+    position: relative !important;
+    left: 0 !important;
+    top: 0 !important;
   }
   
   .no-print {
@@ -757,6 +771,9 @@
     box-shadow: none;
     border-radius: 0;
     max-width: 100%;
+    visibility: visible !important;
+    display: block !important;
+    color: black !important;
   }
   
   .school-header {

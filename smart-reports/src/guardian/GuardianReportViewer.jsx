@@ -40,16 +40,31 @@ const GuardianReportViewer = ({ report, student, onBack }) => {
         <style>{`
           @media print {
             .guardian-report-header,
-            .no-print {
+            .no-print,
+            .report-header {
               display: none !important;
             }
             .guardian-report-container {
-              margin: 0;
-              padding: 0;
+              margin: 0 !important;
+              padding: 0 !important;
+              display: block !important;
+              visibility: visible !important;
             }
             .pdf-content {
-              margin: 0;
-              padding: 0;
+              margin: 0 !important;
+              padding: 0 !important;
+              display: block !important;
+              visibility: visible !important;
+            }
+            .report-viewer {
+              display: block !important;
+              visibility: visible !important;
+              background: white !important;
+            }
+            .report-content {
+              display: block !important;
+              visibility: visible !important;
+              background: white !important;
             }
           }
         `}</style>
