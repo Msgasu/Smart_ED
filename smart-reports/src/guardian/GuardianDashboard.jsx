@@ -434,9 +434,6 @@ const GuardianDashboard = ({ user, profile }) => {
                       <strong>Average Score:</strong> {report.total_score?.toFixed(1) || 'N/A'}%
                     </div>
                     <div>
-                      <strong>Overall Grade:</strong> {report.overall_grade || 'N/A'}
-                    </div>
-                    <div>
                       <strong>Attendance:</strong> {report.attendance || 'N/A'}
                     </div>
                   </div>
