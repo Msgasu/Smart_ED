@@ -757,6 +757,44 @@
     page-break-before: always !important;
   }
 
+  /* Show and style charts for print */
+  .performance-charts-section {
+    display: block !important;
+    page-break-before: always !important;
+    page-break-inside: avoid !important;
+  }
+
+  .charts-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 2rem !important;
+  }
+
+  .chart-container {
+    page-break-inside: avoid !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .chart-wrapper {
+    height: 300px !important;
+    min-height: 300px !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Prevent all sections from being clipped */
+  .student-info-section,
+  .grades-section,
+  .performance-section,
+  .additional-info-section,
+  .remarks-section,
+  .signature-section {
+    page-break-inside: avoid !important;
+  }
+
+  .section-header {
+    page-break-after: avoid !important;
+  }
+
   /* Optimize font sizes for print */
   body {
     font-size: 12px !important;

@@ -818,20 +818,55 @@
     grid-template-columns: repeat(2, 1fr);
   }
   
+  /* Show charts in print */
   .charts-grid {
-    display: none !important; /* Hide charts in print */
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 2rem !important;
   }
   
   .performance-charts-section {
-    display: none !important; /* Hide charts section in print */
+    display: block !important;
+    page-break-before: always;
+    page-break-inside: avoid;
   }
   
   .chart-container {
     page-break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+
+  .chart-wrapper {
+    height: 300px !important;
+    min-height: 300px !important;
+    page-break-inside: avoid;
+  }
+
+  /* Prevent section clipping */
+  .student-info-section,
+  .grades-section,
+  .performance-section,
+  .additional-info-section,
+  .remarks-section {
+    page-break-inside: avoid;
+  }
+
+  .grades-table {
+    page-break-inside: auto;
+  }
+
+  .grades-table tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  .section-header {
+    page-break-after: avoid;
   }
   
   .report-footer {
     margin-top: 1rem;
+    page-break-inside: avoid;
   }
 }
 

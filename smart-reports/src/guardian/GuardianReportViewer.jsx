@@ -66,6 +66,28 @@ const GuardianReportViewer = ({ report, student, onBack }) => {
               visibility: visible !important;
               background: white !important;
             }
+            /* Show charts */
+            .performance-charts-section {
+              display: block !important;
+              page-break-before: always !important;
+            }
+            .charts-grid {
+              display: grid !important;
+              grid-template-columns: 1fr !important;
+            }
+            .chart-container,
+            .chart-wrapper {
+              page-break-inside: avoid !important;
+            }
+            /* Prevent section clipping */
+            .student-info-section,
+            .grades-section,
+            .performance-section,
+            .additional-info-section,
+            .remarks-section,
+            .signature-section {
+              page-break-inside: avoid !important;
+            }
           }
         `}</style>
         <div className="guardian-report-container">
