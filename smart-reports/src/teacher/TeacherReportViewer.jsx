@@ -258,19 +258,6 @@ const TeacherReportViewer = ({ user, profile }) => {
                   <table className="table table-borderless">
                     <tbody>
                       <tr>
-                        <td><strong>Overall Grade:</strong></td>
-                        <td>
-                          <span className={`badge ${
-                            calculateOverallGrade() === 'A' ? 'bg-success' :
-                            calculateOverallGrade() === 'B' ? 'bg-info' :
-                            calculateOverallGrade() === 'C' ? 'bg-warning' :
-                            'bg-secondary'
-                          } fs-6`}>
-                            {calculateOverallGrade()}
-                          </span>
-                        </td>
-                      </tr>
-                      <tr>
                         <td><strong>Total Subjects:</strong></td>
                         <td>{report.student_grades?.length || 0}</td>
                       </tr>
