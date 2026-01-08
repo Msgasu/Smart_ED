@@ -729,14 +729,6 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
                 <span className="value">{stats.total}</span>
               </div>
               <div className="performance-item">
-                <span className="label">Overall Grade:</span>
-                <span className="value">
-                  <span className={`grade-badge ${getGradeBadgeClass(report.overall_grade)}`}>
-                    {report.overall_grade || 'N/A'}
-                  </span>
-                </span>
-              </div>
-              <div className="performance-item">
                 <span className="label">Highest Score:</span>
                 <span className="value">{stats.highest || 0}%</span>
               </div>
