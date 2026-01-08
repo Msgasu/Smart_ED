@@ -29,21 +29,46 @@ const GuardianReportViewer = ({ report, student, onBack }) => {
     }
   }
 
+  // Handle print functionality
+  const handlePrint = () => {
+    window.print()
+  }
+
   try {
     return (
-      <div className="guardian-report-container">
+      <>
+        <style>{`
+          @media print {
+            .guardian-report-header,
+            .no-print {
+              display: none !important;
+            }
+            .guardian-report-container {
+              margin: 0;
+              padding: 0;
+            }
+            .pdf-content {
+              margin: 0;
+              padding: 0;
+            }
+          }
+        `}</style>
+        <div className="guardian-report-container">
         {/* Header with Back Button */}
-        <div style={{ 
-          padding: '15px', 
-          backgroundColor: '#f8f9fa', 
-          borderRadius: '8px', 
-          marginBottom: '20px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '10px'
-        }}>
+        <div 
+          className="guardian-report-header"
+          style={{ 
+            padding: '15px', 
+            backgroundColor: '#f8f9fa', 
+            borderRadius: '8px', 
+            marginBottom: '20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '10px'
+          }}
+        >
           <div>
             <h3 style={{ margin: '0 0 5px 0', color: '#495057' }}>
               {student.first_name} {student.last_name} - {report.term} {report.academic_year}
@@ -52,6 +77,7 @@ const GuardianReportViewer = ({ report, student, onBack }) => {
           
           <button 
             onClick={onBack}
+            className="no-print"
             style={{
               padding: '10px 15px',
               backgroundColor: '#6c757d',
@@ -75,9 +101,11 @@ const GuardianReportViewer = ({ report, student, onBack }) => {
             report={transformedReport}
             customNavigate={customNavigate}
             isGuardianView={true}
+            onPrint={handlePrint}
           />
         </div>
       </div>
+      </>
     )
   } catch (error) {
     console.error('Error rendering GuardianReportViewer:', error);

@@ -13,7 +13,7 @@ import logo from '../assets/logo_nbg.png'
 // Register ChartJS components
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend)
 
-const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = false, fromReportBank = false }) => {
+const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = false, fromReportBank = false, onPrint }) => {
   const { reportId } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
@@ -590,6 +590,14 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
                 style={{ marginRight: '10px' }}
               >
                 ← Report Bank
+              </button>
+            )}
+            {isGuardianView && onPrint && (
+              <button 
+                className="btn btn-primary"
+                onClick={onPrint}
+              >
+                <FaPrint /> Print
               </button>
             )}
             {!isGuardianView && (
