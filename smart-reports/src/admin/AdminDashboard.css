@@ -153,6 +153,54 @@
   padding: 1.5rem;
   border-bottom: 1px solid var(--admin-card-border);
   flex-shrink: 0;
+  background: #f1f5f9;
+}
+
+.admin-dashboard-card-header .admin-dashboard-card-title,
+.admin-dashboard-card-header .admin-dashboard-card-subtitle {
+  color: var(--admin-text);
+}
+
+.admin-dashboard-card-header .admin-dashboard-card-subtitle {
+  color: var(--admin-text-muted);
+}
+
+.admin-dashboard-section-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--admin-card-border);
+  background: #f1f5f9;
+}
+
+.admin-dashboard-section-header .admin-dashboard-card-title {
+  margin: 0;
+}
+
+.admin-dashboard-teacher-sort {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.admin-dashboard-teacher-sort-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--admin-text-muted);
+}
+
+.admin-dashboard-teacher-sort-select {
+  padding: 0.375rem 0.625rem;
+  font-size: 0.8125rem;
+  border: 1px solid var(--admin-card-border);
+  border-radius: 0.5rem;
+  background: var(--admin-card-bg);
+  color: var(--admin-text);
+  cursor: pointer;
+}
+
+.admin-dashboard-teacher-sort-select:focus {
+  outline: none;
+  border-color: var(--admin-primary);
 }
 
 /* Scrollable teacher list - keeps card within viewport */

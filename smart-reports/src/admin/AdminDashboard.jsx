@@ -41,6 +41,7 @@ const AdminDashboard = ({ user, profile }) => {
   const [recentActivity, setRecentActivity] = useState([])
   const [classStats, setClassStats] = useState([])
   const [teacherPerformance, setTeacherPerformance] = useState([])
+  const [teacherPerformanceSort, setTeacherPerformanceSort] = useState('desc')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -178,16 +179,10 @@ const AdminDashboard = ({ user, profile }) => {
 
   const fetchTeacherPerformance = async () => {
     try {
-      console.log('📊 Fetching teacher performance data...')
-      
-      // Get current academic period
       const currentPeriod = await getCurrentAcademicPeriod()
       const currentTerm = currentPeriod.term
       const currentYear = currentPeriod.academicYear
-      
-      console.log(`📅 Filtering by: ${currentTerm} ${currentYear}`)
-      
-      // Get all faculty members with their course assignments
+
       const { data: faculty, error: facultyError } = await supabase
         .from('profiles')
         .select(`
@@ -210,137 +205,134 @@ const AdminDashboard = ({ user, profile }) => {
       if (facultyError) throw facultyError
 
       const facultyList = faculty || []
+      const BATCH_SIZE = 100
+
       const teacherStats = await Promise.all(facultyList.map(async (teacher) => {
-        const teacherCourses = teacher.faculty_courses
-        
-        // Calculate stats for each course this teacher teaches
-        const courseStats = await Promise.all(teacherCourses.map(async (fc) => {
-          const courseId = fc.course_id
-          const course = fc.courses
-
-          // Get total students in this course
-          const { data: enrollments, error: enrollmentError } = await supabase
-            .from('student_courses')
-            .select('student_id')
-            .eq('course_id', courseId)
-            .eq('status', 'enrolled')
-
-          if (enrollmentError) {
-            console.error('Error fetching enrollments for course', courseId, enrollmentError)
+        try {
+          const teacherCourses = Array.isArray(teacher.faculty_courses) ? teacher.faculty_courses : []
+          if (teacherCourses.length === 0) {
             return {
-              course,
+              id: teacher.id,
+              name: `${teacher.first_name || ''} ${teacher.last_name || ''}`.trim() || 'Unknown',
               totalStudents: 0,
-              reportsWithGrades: 0,
-              percentage: 0
+              reportsWithSomeGrades: 0,
+              reportsCompletelyFilled: 0,
+              overallSomeGradesPercentage: 0,
+              overallCompletePercentage: 0,
+              courses: []
             }
           }
 
-          const totalStudents = enrollments?.length || 0
-          const studentIds = enrollments?.map(e => e.student_id) || []
+          const courseStats = await Promise.all(teacherCourses.map(async (fc) => {
+            const courseId = fc?.course_id
+            const course = fc?.courses || { id: courseId, code: '—', name: 'Unknown' }
+            if (!courseId) {
+              return { course, totalStudents: 0, reportsWithSomeGrades: 0, reportsCompletelyFilled: 0, someGradesPercentage: 0, completePercentage: 0 }
+            }
 
-          // Get all grades this teacher has entered for students in this course
-          let reportsWithSomeGrades = 0
-          let reportsCompletelyFilled = 0
-          
-          if (studentIds.length > 0) {
-            const { data: grades, error: gradesError } = await supabase
-              .from('student_grades')
-              .select(`
-                report_id,
-                class_score,
-                exam_score,
-                total_score,
-                grade,
-                remark,
-                student_reports!inner (
-                  student_id,
-                  term,
-                  academic_year
-                )
-              `)
-              .eq('subject_id', courseId)
-              .in('student_reports.student_id', studentIds)
-              .eq('student_reports.term', currentTerm)
-              .eq('student_reports.academic_year', currentYear)
+            const { data: enrollments, error: enrollmentError } = await supabase
+              .from('student_courses')
+              .select('student_id')
+              .eq('course_id', courseId)
+              .eq('status', 'enrolled')
 
-            if (!gradesError && grades) {
-              // Group grades by report_id to analyze each report
+            if (enrollmentError) {
+              console.error('Enrollments error for course', courseId, enrollmentError)
+              return { course, totalStudents: 0, reportsWithSomeGrades: 0, reportsCompletelyFilled: 0, someGradesPercentage: 0, completePercentage: 0 }
+            }
+
+            const totalStudents = enrollments?.length || 0
+            const studentIds = (enrollments || []).map(e => e.student_id).filter(Boolean)
+            let reportsWithSomeGrades = 0
+            let reportsCompletelyFilled = 0
+
+            if (studentIds.length > 0) {
               const reportGrades = new Map()
-              grades.forEach(grade => {
-                reportGrades.set(grade.report_id, grade)
-              })
+              for (let i = 0; i < studentIds.length; i += BATCH_SIZE) {
+                const batch = studentIds.slice(i, i + BATCH_SIZE)
+                const { data: grades, error: gradesError } = await supabase
+                  .from('student_grades')
+                  .select(`
+                    report_id,
+                    class_score,
+                    exam_score,
+                    total_score,
+                    grade,
+                    remark,
+                    student_reports!inner ( student_id, term, academic_year )
+                  `)
+                  .eq('subject_id', courseId)
+                  .in('student_reports.student_id', batch)
+                  .eq('student_reports.term', currentTerm)
+                  .eq('student_reports.academic_year', currentYear)
 
-              reportGrades.forEach(grade => {
-                // Check if this teacher has filled ANY fields for this report
+                if (!gradesError && grades) {
+                  grades.forEach((grade) => {
+                    if (!reportGrades.has(grade.report_id)) {
+                      reportGrades.set(grade.report_id, grade)
+                    }
+                  })
+                }
+              }
+
+              reportGrades.forEach((grade) => {
                 const hasAnyGrades = (
-                  (grade.class_score !== null && grade.class_score > 0) ||
-                  (grade.exam_score !== null && grade.exam_score > 0) ||
-                  (grade.total_score !== null && grade.total_score > 0) ||
-                  (grade.grade !== null && grade.grade !== '') ||
-                  (grade.remark !== null && grade.remark !== '')
+                  (grade.class_score != null && grade.class_score > 0) ||
+                  (grade.exam_score != null && grade.exam_score > 0) ||
+                  (grade.total_score != null && grade.total_score > 0) ||
+                  (grade.grade != null && grade.grade !== '') ||
+                  (grade.remark != null && grade.remark !== '')
                 )
+                if (hasAnyGrades) reportsWithSomeGrades++
 
-                if (hasAnyGrades) {
-                  reportsWithSomeGrades++
-                }
-
-                // Check if ALL fields are completely filled
                 const isCompletelyFilled = (
-                  grade.class_score !== null && grade.class_score > 0 &&
-                  grade.exam_score !== null && grade.exam_score > 0 &&
-                  grade.total_score !== null && grade.total_score > 0 &&
-                  grade.grade !== null && grade.grade !== '' &&
-                  grade.remark !== null && grade.remark !== ''
+                  grade.class_score != null && grade.class_score > 0 &&
+                  grade.exam_score != null && grade.exam_score > 0 &&
+                  grade.total_score != null && grade.total_score > 0 &&
+                  (grade.grade != null && grade.grade !== '') &&
+                  (grade.remark != null && grade.remark !== '')
                 )
-
-                if (isCompletelyFilled) {
-                  reportsCompletelyFilled++
-                }
+                if (isCompletelyFilled) reportsCompletelyFilled++
               })
             }
-          }
 
-          const someGradesPercentage = totalStudents > 0 ? Math.round((reportsWithSomeGrades / totalStudents) * 100) : 0
-          const completePercentage = totalStudents > 0 ? Math.round((reportsCompletelyFilled / totalStudents) * 100) : 0
+            const someGradesPercentage = totalStudents > 0 ? Math.round((reportsWithSomeGrades / totalStudents) * 100) : 0
+            const completePercentage = totalStudents > 0 ? Math.round((reportsCompletelyFilled / totalStudents) * 100) : 0
+            return { course, totalStudents, reportsWithSomeGrades, reportsCompletelyFilled, someGradesPercentage, completePercentage }
+          }))
+
+          const totalStudentsAllCourses = courseStats.reduce((s, stat) => s + stat.totalStudents, 0)
+          const totalReportsWithSomeGrades = courseStats.reduce((s, stat) => s + stat.reportsWithSomeGrades, 0)
+          const totalReportsCompletelyFilled = courseStats.reduce((s, stat) => s + stat.reportsCompletelyFilled, 0)
+          const overallSomeGradesPercentage = totalStudentsAllCourses > 0 ? Math.round((totalReportsWithSomeGrades / totalStudentsAllCourses) * 100) : 0
+          const overallCompletePercentage = totalStudentsAllCourses > 0 ? Math.round((totalReportsCompletelyFilled / totalStudentsAllCourses) * 100) : 0
 
           return {
-            course,
-            totalStudents,
-            reportsWithSomeGrades,
-            reportsCompletelyFilled,
-            someGradesPercentage,
-            completePercentage
+            id: teacher.id,
+            name: `${teacher.first_name || ''} ${teacher.last_name || ''}`.trim() || 'Unknown',
+            totalStudents: totalStudentsAllCourses,
+            reportsWithSomeGrades: totalReportsWithSomeGrades,
+            reportsCompletelyFilled: totalReportsCompletelyFilled,
+            overallSomeGradesPercentage,
+            overallCompletePercentage,
+            courses: courseStats
           }
-        }))
-
-        // Calculate overall stats for this teacher
-        const totalStudentsAllCourses = courseStats.reduce((sum, stat) => sum + stat.totalStudents, 0)
-        const totalReportsWithSomeGrades = courseStats.reduce((sum, stat) => sum + stat.reportsWithSomeGrades, 0)
-        const totalReportsCompletelyFilled = courseStats.reduce((sum, stat) => sum + stat.reportsCompletelyFilled, 0)
-        
-        const overallSomeGradesPercentage = totalStudentsAllCourses > 0 
-          ? Math.round((totalReportsWithSomeGrades / totalStudentsAllCourses) * 100) 
-          : 0
-        const overallCompletePercentage = totalStudentsAllCourses > 0 
-          ? Math.round((totalReportsCompletelyFilled / totalStudentsAllCourses) * 100) 
-          : 0
-
-        return {
-          id: teacher.id,
-          name: `${teacher.first_name} ${teacher.last_name}`,
-          totalStudents: totalStudentsAllCourses,
-          reportsWithSomeGrades: totalReportsWithSomeGrades,
-          reportsCompletelyFilled: totalReportsCompletelyFilled,
-          overallSomeGradesPercentage,
-          overallCompletePercentage,
-          courses: courseStats
+        } catch (err) {
+          console.error('Teacher performance error for', teacher.id, err)
+          return {
+            id: teacher.id,
+            name: `${teacher.first_name || ''} ${teacher.last_name || ''}`.trim() || 'Unknown',
+            totalStudents: 0,
+            reportsWithSomeGrades: 0,
+            reportsCompletelyFilled: 0,
+            overallSomeGradesPercentage: 0,
+            overallCompletePercentage: 0,
+            courses: []
+          }
         }
       }))
 
-      // Sort by overall complete percentage (highest first)
       teacherStats.sort((a, b) => b.overallCompletePercentage - a.overallCompletePercentage)
-      
-      console.log('📊 Teacher performance data:', teacherStats)
       setTeacherPerformance(teacherStats)
 
     } catch (error) {
@@ -415,10 +407,26 @@ const AdminDashboard = ({ user, profile }) => {
                 <h3 className="admin-dashboard-card-title">Teacher Performance Overview</h3>
                 <p className="admin-dashboard-card-subtitle">Reports filled by each teacher across their assigned courses</p>
               </div>
+              <label className="admin-dashboard-teacher-sort">
+                <span className="admin-dashboard-teacher-sort-label">Sort:</span>
+                <select
+                  value={teacherPerformanceSort}
+                  onChange={(e) => setTeacherPerformanceSort(e.target.value)}
+                  className="admin-dashboard-teacher-sort-select"
+                  aria-label="Sort teacher performance"
+                >
+                  <option value="desc">Descending (complete %)</option>
+                  <option value="asc">Ascending (complete %)</option>
+                </select>
+              </label>
             </div>
             <div className="admin-dashboard-teacher-list">
             {teacherPerformance.length > 0 ? (
-              teacherPerformance.map((teacher) => (
+              [...teacherPerformance]
+                .sort((a, b) => teacherPerformanceSort === 'desc'
+                  ? b.overallCompletePercentage - a.overallCompletePercentage
+                  : a.overallCompletePercentage - b.overallCompletePercentage)
+                .map((teacher) => (
                 <div key={teacher.id} className="admin-dashboard-teacher-item">
                   <div className="admin-dashboard-teacher-header">
                     <div>
@@ -480,7 +488,9 @@ const AdminDashboard = ({ user, profile }) => {
           </div>
 
           <div className="admin-dashboard-card">
-            <h3 className="admin-dashboard-card-title" style={{ padding: '1.5rem 1.5rem 0' }}>Recent Activity</h3>
+            <div className="admin-dashboard-section-header">
+              <h3 className="admin-dashboard-card-title">Recent Activity</h3>
+            </div>
             <div className="admin-dashboard-activity-list">
               {recentActivity.length === 0 ? (
                 <div className="admin-dashboard-empty">No recent activity</div>
