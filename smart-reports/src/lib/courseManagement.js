@@ -2,14 +2,64 @@ import { supabase } from './supabase'
 import toast from 'react-hot-toast'
 
 /**
- * Add a course to a student's course list in the database
- * @param {string} studentId - The student ID
- * @param {string} courseId - The course ID
- * @returns {Promise<Object>} - Object containing success status and any errors
+ * Get the current academic year string (e.g., "2025-2026")
+ * @returns {string}
  */
-export const addCourseToStudent = async (studentId, courseId) => {
+export const getCurrentAcademicYear = () => {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth() + 1
+  if (month >= 9) {
+    return `${year}-${year + 1}`
+  }
+  return `${year - 1}-${year}`
+}
+
+/**
+ * Determine the current term based on the date.
+ * @returns {string} - 'Term 1', 'Term 2', or 'Term 3'
+ */
+export const getCurrentTerm = () => {
+  const now = new Date()
+  const month = now.getMonth() + 1
+  if (month >= 9 && month <= 12) return 'Term 1'
+  if (month >= 1 && month <= 3) return 'Term 2'
+  return 'Term 3'
+}
+
+/**
+ * Get all terms that are current or future within the academic year
+ * @param {string} currentTerm
+ * @returns {string[]}
+ */
+const getCurrentAndFutureTerms = (currentTerm) => {
+  const allTerms = ['Term 1', 'Term 2', 'Term 3']
+  const currentIndex = allTerms.indexOf(currentTerm)
+  return allTerms.slice(currentIndex)
+}
+
+/**
+ * Add a course to a student's course list with term-versioned enrollment tracking.
+ * @param {string} studentId - The student profile ID
+ * @param {string} courseId - The course ID
+ * @param {Object} options - Optional term/year context
+ * @param {string} options.term - Specific term (defaults to current term)
+ * @param {string} options.academicYear - Specific academic year (defaults to current)
+ * @param {boolean} options.includeAllTerms - If true, enroll for all 3 terms (default: true)
+ * @returns {Promise<Object>}
+ */
+export const addCourseToStudent = async (studentId, courseId, options = {}) => {
   try {
-    // First check if the course is already assigned to this student
+    const term = options.term || getCurrentTerm()
+    const academicYear = options.academicYear || getCurrentAcademicYear()
+    const includeAllTerms = options.includeAllTerms !== undefined ? options.includeAllTerms : false
+
+    // Default: only current + future terms (past terms should not get new courses)
+    const termsToEnroll = includeAllTerms
+      ? ['Term 1', 'Term 2', 'Term 3']
+      : getCurrentAndFutureTerms(term)
+
+    // 1. Maintain legacy student_courses entry
     const { data: existingAssignment, error: checkError } = await supabase
       .from('student_courses')
       .select('id')
@@ -26,38 +76,107 @@ export const addCourseToStudent = async (studentId, courseId) => {
       }
     }
 
-    if (existingAssignment) {
-      return {
-        success: true,
-        errors: [],
-        message: 'Course is already assigned to this student',
-        alreadyExists: true
+    if (!existingAssignment) {
+      const { error: insertError } = await supabase
+        .from('student_courses')
+        .insert([{
+          student_id: studentId,
+          course_id: courseId,
+          status: 'enrolled'
+        }])
+
+      if (insertError) {
+        console.error('Error adding course to student_courses:', insertError)
+        return {
+          success: false,
+          errors: [insertError.message],
+          message: `Error adding course to student: ${insertError.message}`
+        }
       }
     }
 
-    // Add the course to the student's course list
-    const { error: insertError } = await supabase
-      .from('student_courses')
-      .insert([{
-        student_id: studentId,
-        course_id: courseId,
-        status: 'enrolled'
-      }])
+    // 2. Create term-versioned enrollment records
+    let enrollmentErrors = []
+    let enrolledCount = 0
+    let alreadyExistsCount = 0
 
-    if (insertError) {
-      console.error('Error adding course to student:', insertError)
+    for (const enrollTerm of termsToEnroll) {
+      const { data: existing, error: existCheck } = await supabase
+        .from('student_course_enrollments')
+        .select('id, status')
+        .eq('student_id', studentId)
+        .eq('course_id', courseId)
+        .eq('term', enrollTerm)
+        .eq('academic_year', academicYear)
+        .single()
+
+      if (existCheck && existCheck.code !== 'PGRST116') {
+        enrollmentErrors.push(`Check ${enrollTerm}: ${existCheck.message}`)
+        continue
+      }
+
+      if (existing) {
+        if (existing.status === 'dropped') {
+          const { error: updateError } = await supabase
+            .from('student_course_enrollments')
+            .update({
+              status: 'enrolled',
+              dropped_at: null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existing.id)
+
+          if (updateError) {
+            enrollmentErrors.push(`Re-enroll ${enrollTerm}: ${updateError.message}`)
+          } else {
+            enrolledCount++
+          }
+        } else {
+          alreadyExistsCount++
+        }
+        continue
+      }
+
+      const { error: enrollError } = await supabase
+        .from('student_course_enrollments')
+        .insert([{
+          student_id: studentId,
+          course_id: courseId,
+          term: enrollTerm,
+          academic_year: academicYear,
+          status: 'enrolled'
+        }])
+
+      if (enrollError) {
+        enrollmentErrors.push(`Insert ${enrollTerm}: ${enrollError.message}`)
+      } else {
+        enrolledCount++
+      }
+    }
+
+    if (enrollmentErrors.length > 0) {
       return {
         success: false,
-        errors: [insertError.message],
-        message: `Error adding course to student: ${insertError.message}`
+        errors: enrollmentErrors,
+        message: `Course enrollment had errors: ${enrollmentErrors.join(', ')}`
+      }
+    }
+
+    if (alreadyExistsCount === termsToEnroll.length) {
+      return {
+        success: true,
+        errors: [],
+        message: 'Course is already assigned to this student for the selected term(s)',
+        alreadyExists: true
       }
     }
 
     return {
       success: true,
       errors: [],
-      message: 'Course successfully added to student',
-      alreadyExists: false
+      message: `Course successfully enrolled for ${enrolledCount} term(s)`,
+      alreadyExists: false,
+      enrolledTerms: termsToEnroll
     }
 
   } catch (error) {
@@ -71,139 +190,209 @@ export const addCourseToStudent = async (studentId, courseId) => {
 }
 
 /**
- * Delete a course assignment and all related data from the database
- * @param {string} studentId - The student ID
- * @param {string} courseId - The course ID
- * @param {string} assignmentId - The assignment ID (optional, for direct assignment deletion)
- * @returns {Promise<Object>} - Object containing success status and any errors
+ * Remove a course enrollment for a specific term only.
+ * Preserves historical term data.
+ * @param {string} studentId
+ * @param {string} courseId
+ * @param {Object} options - { term, academicYear } (both required)
+ * @returns {Promise<Object>}
  */
-export const deleteCourseAssignment = async (studentId, courseId, assignmentId = null) => {
+export const removeCourseFromTerm = async (studentId, courseId, options = {}) => {
   try {
+    const { term, academicYear } = options
+    if (!term || !academicYear) {
+      return {
+        success: false,
+        errors: ['Term and academic year are required for term-specific removal'],
+        message: 'Term and academic year are required'
+      }
+    }
+
     let errors = []
 
-    // 1. Delete from student_courses table
-    let deleteQuery = supabase
-      .from('student_courses')
-      .delete()
+    // 1. Mark enrollment as 'dropped' for this specific term
+    const { error: enrollError } = await supabase
+      .from('student_course_enrollments')
+      .update({
+        status: 'dropped',
+        dropped_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('student_id', studentId)
+      .eq('course_id', courseId)
+      .eq('term', term)
+      .eq('academic_year', academicYear)
 
-    if (assignmentId) {
-      // If we have the assignment ID, use it for more precise deletion
-      deleteQuery = deleteQuery.eq('id', assignmentId)
-    } else {
-      // Otherwise, delete by student and course
-      deleteQuery = deleteQuery
-        .eq('student_id', studentId)
-        .eq('course_id', courseId)
+    if (enrollError) {
+      errors.push(`Enrollment update: ${enrollError.message}`)
     }
 
-    const { error: courseError } = await deleteQuery
-
-    if (courseError) {
-      console.error('Error deleting course assignment:', courseError)
-      errors.push(`Course assignment: ${courseError.message}`)
-    }
-
-    // 2. Delete grades from all reports for this student and course
-    const { data: reports, error: reportsError } = await supabase
+    // 2. Remove grades from this specific term's report ONLY
+    const { data: report, error: reportFetchError } = await supabase
       .from('student_reports')
+      .select('id, status')
+      .eq('student_id', studentId)
+      .eq('term', term)
+      .eq('academic_year', academicYear)
+      .single()
+
+    if (reportFetchError && reportFetchError.code !== 'PGRST116') {
+      errors.push(`Report fetch: ${reportFetchError.message}`)
+    }
+
+    if (report) {
+      if (report.status === 'completed') {
+        errors.push('Cannot modify grades in a completed report. Revert to draft first.')
+      } else {
+        const { error: gradeError } = await supabase
+          .from('student_grades')
+          .delete()
+          .eq('report_id', report.id)
+          .eq('subject_id', courseId)
+
+        if (gradeError) {
+          errors.push(`Grade deletion: ${gradeError.message}`)
+        }
+      }
+    }
+
+    // 3. Check if student still has any enrolled terms for this course
+    const { data: remainingEnrollments } = await supabase
+      .from('student_course_enrollments')
       .select('id')
       .eq('student_id', studentId)
-
-    if (reportsError) {
-      console.error('Error fetching reports:', reportsError)
-      errors.push(`Reports fetch: ${reportsError.message}`)
-    } else if (reports && reports.length > 0) {
-      const reportIds = reports.map(report => report.id)
-      
-      const { error: gradesError } = await supabase
-        .from('student_grades')
-        .delete()
-        .in('report_id', reportIds)
-        .eq('subject_id', courseId)
-
-      if (gradesError) {
-        console.error('Error deleting grades:', gradesError)
-        errors.push(`Grades: ${gradesError.message}`)
-      }
-    }
-
-    // 3. Delete any assignment submissions for this course
-    const { data: assignments, error: assignmentsError } = await supabase
-      .from('assignments')
-      .select('id')
       .eq('course_id', courseId)
+      .eq('status', 'enrolled')
 
-    if (assignmentsError) {
-      console.error('Error fetching assignments:', assignmentsError)
-      errors.push(`Assignments fetch: ${assignmentsError.message}`)
-    } else if (assignments && assignments.length > 0) {
-      const assignmentIds = assignments.map(assignment => assignment.id)
-      
-      const { error: submissionsError } = await supabase
-        .from('student_assignments')
+    if (!remainingEnrollments || remainingEnrollments.length === 0) {
+      await supabase
+        .from('student_courses')
         .delete()
         .eq('student_id', studentId)
-        .in('assignment_id', assignmentIds)
-
-      if (submissionsError) {
-        console.error('Error deleting assignment submissions:', submissionsError)
-        errors.push(`Submissions: ${submissionsError.message}`)
-      }
-    }
-
-    // 4. Delete any assignment files for this course
-    if (assignments && assignments.length > 0) {
-      const assignmentIds = assignments.map(assignment => assignment.id)
-      
-      // First get the file paths
-      const { data: files, error: filesError } = await supabase
-        .from('assignment_files')
-        .select('path')
-        .eq('student_id', studentId)
-        .in('assignment_id', assignmentIds)
-
-      if (filesError) {
-        console.error('Error fetching assignment files:', filesError)
-        errors.push(`Files fetch: ${filesError.message}`)
-      } else if (files && files.length > 0) {
-        // Delete from storage
-        const filePaths = files.map(file => file.path)
-        const { error: storageError } = await supabase
-          .storage
-          .from('assignments')
-          .remove(filePaths)
-
-        if (storageError) {
-          console.error('Error deleting files from storage:', storageError)
-          errors.push(`Storage: ${storageError.message}`)
-        }
-
-        // Delete file records from database
-        const { error: filesDeleteError } = await supabase
-          .from('assignment_files')
-          .delete()
-          .eq('student_id', studentId)
-          .in('assignment_id', assignmentIds)
-
-        if (filesDeleteError) {
-          console.error('Error deleting file records:', filesDeleteError)
-          errors.push(`File records: ${filesDeleteError.message}`)
-        }
-      }
+        .eq('course_id', courseId)
     }
 
     if (errors.length > 0) {
       return {
         success: false,
         errors,
-        message: `Course deleted with some errors: ${errors.join(', ')}`
+        message: `Course removal had issues: ${errors.join('; ')}`
       }
     }
 
     return {
       success: true,
       errors: [],
-      message: 'Course and all related data deleted successfully'
+      message: `Course removed from ${term} (${academicYear}). Other terms are unaffected.`
+    }
+
+  } catch (error) {
+    console.error('Error in removeCourseFromTerm:', error)
+    return {
+      success: false,
+      errors: [error.message],
+      message: `Error removing course from term: ${error.message}`
+    }
+  }
+}
+
+/**
+ * Remove a course from a student going forward.
+ * - Drops enrollment for current + future terms
+ * - Removes grades from current + future term draft reports
+ * - Removes from legacy student_courses (student no longer takes this course)
+ * - Past term enrollments and completed report grades are PRESERVED
+ * 
+ * @param {string} studentId
+ * @param {string} courseId
+ * @param {string} assignmentId
+ * @param {Object} options - { term, academicYear }
+ * @returns {Promise<Object>}
+ */
+export const deleteCourseAssignment = async (studentId, courseId, assignmentId = null, options = {}) => {
+  try {
+    let errors = []
+    const currentTerm = options.term || getCurrentTerm()
+    const currentAcademicYear = options.academicYear || getCurrentAcademicYear()
+    const futureTerms = getCurrentAndFutureTerms(currentTerm)
+
+    // 1. Mark enrollments as 'dropped' for current and future terms
+    for (const term of futureTerms) {
+      const { error: dropError } = await supabase
+        .from('student_course_enrollments')
+        .update({
+          status: 'dropped',
+          dropped_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('student_id', studentId)
+        .eq('course_id', courseId)
+        .eq('term', term)
+        .eq('academic_year', currentAcademicYear)
+
+      if (dropError) {
+        errors.push(`Drop ${term}: ${dropError.message}`)
+      }
+    }
+
+    // 2. Delete grades from ONLY current and future term draft reports (past terms untouched)
+    for (const term of futureTerms) {
+      const { data: report, error: reportError } = await supabase
+        .from('student_reports')
+        .select('id, status')
+        .eq('student_id', studentId)
+        .eq('term', term)
+        .eq('academic_year', currentAcademicYear)
+        .single()
+
+      if (reportError && reportError.code !== 'PGRST116') {
+        errors.push(`Report fetch ${term}: ${reportError.message}`)
+        continue
+      }
+
+      if (report && report.status !== 'completed') {
+        const { error: gradeError } = await supabase
+          .from('student_grades')
+          .delete()
+          .eq('report_id', report.id)
+          .eq('subject_id', courseId)
+
+        if (gradeError) {
+          errors.push(`Grades ${term}: ${gradeError.message}`)
+        }
+      }
+    }
+
+    // 3. Always remove from legacy student_courses — student no longer takes this course
+    let deleteQuery = supabase
+      .from('student_courses')
+      .delete()
+
+    if (assignmentId) {
+      deleteQuery = deleteQuery.eq('id', assignmentId)
+    } else {
+      deleteQuery = deleteQuery
+        .eq('student_id', studentId)
+        .eq('course_id', courseId)
+    }
+
+    const { error: courseError } = await deleteQuery
+    if (courseError) {
+      errors.push(`student_courses: ${courseError.message}`)
+    }
+
+    if (errors.length > 0) {
+      return {
+        success: false,
+        errors,
+        message: `Course removed with some errors: ${errors.join(', ')}`
+      }
+    }
+
+    return {
+      success: true,
+      errors: [],
+      message: `Course removed. Past term reports are preserved.`
     }
 
   } catch (error) {
@@ -217,10 +406,7 @@ export const deleteCourseAssignment = async (studentId, courseId, assignmentId =
 }
 
 /**
- * Delete a course from a specific report only
- * @param {string} reportId - The report ID
- * @param {string} courseId - The course ID
- * @returns {Promise<Object>} - Object containing success status and any errors
+ * Delete a course from a specific report only (already term-scoped)
  */
 export const deleteCourseFromReport = async (reportId, courseId) => {
   try {
@@ -256,13 +442,13 @@ export const deleteCourseFromReport = async (reportId, courseId) => {
 }
 
 /**
- * Delete a course assignment from the course assignment page
- * @param {string} assignmentId - The assignment ID
- * @returns {Promise<Object>} - Object containing success status and any errors
+ * Delete a course assignment by its ID — term-aware.
+ * @param {string} assignmentId
+ * @param {Object} options - Optional term context
+ * @returns {Promise<Object>}
  */
-export const deleteCourseAssignmentById = async (assignmentId) => {
+export const deleteCourseAssignmentById = async (assignmentId, options = {}) => {
   try {
-    // First, get the assignment details
     const { data: assignment, error: fetchError } = await supabase
       .from('student_courses')
       .select('student_id, course_id')
@@ -270,7 +456,6 @@ export const deleteCourseAssignmentById = async (assignmentId) => {
       .single()
 
     if (fetchError) {
-      console.error('Error fetching assignment:', fetchError)
       return {
         success: false,
         errors: [fetchError.message],
@@ -286,8 +471,7 @@ export const deleteCourseAssignmentById = async (assignmentId) => {
       }
     }
 
-    // Use the comprehensive deletion function
-    return await deleteCourseAssignment(assignment.student_id, assignment.course_id, assignmentId)
+    return await deleteCourseAssignment(assignment.student_id, assignment.course_id, assignmentId, options)
 
   } catch (error) {
     console.error('Error in deleteCourseAssignmentById:', error)
@@ -298,3 +482,300 @@ export const deleteCourseAssignmentById = async (assignmentId) => {
     }
   }
 }
+
+/**
+ * Get enrolled courses for a student in a specific term.
+ * @param {string} studentId
+ * @param {string} term
+ * @param {string} academicYear
+ * @returns {Promise<Object>}
+ */
+export const getStudentCoursesForTerm = async (studentId, term, academicYear) => {
+  try {
+    if (!studentId || !term || !academicYear) {
+      throw new Error('studentId, term, and academicYear are required')
+    }
+
+    const { data, error } = await supabase
+      .from('student_course_enrollments')
+      .select(`
+        id,
+        course_id,
+        term,
+        academic_year,
+        status,
+        enrolled_at,
+        courses (
+          id,
+          code,
+          name,
+          description
+        )
+      `)
+      .eq('student_id', studentId)
+      .eq('term', term)
+      .eq('academic_year', academicYear)
+      .eq('status', 'enrolled')
+
+    if (error) throw error
+
+    return { data: data || [], error: null }
+  } catch (error) {
+    console.error('Error fetching term courses:', error)
+    return { data: null, error }
+  }
+}
+
+/**
+ * Sync legacy student_courses into student_course_enrollments for one student.
+ * Current+future terms: sync from legacy data.
+ * Past terms: only create if grades exist.
+ * @param {string} studentId
+ * @param {string} academicYear
+ * @returns {Promise<Object>}
+ */
+export const syncLegacyEnrollments = async (studentId, academicYear = null) => {
+  try {
+    const resolvedYear = academicYear || getCurrentAcademicYear()
+    const currentTerm = getCurrentTerm()
+    const allTerms = ['Term 1', 'Term 2', 'Term 3']
+    const currentTermIndex = allTerms.indexOf(currentTerm)
+    const futureTerms = allTerms.slice(currentTermIndex)
+    const pastTerms = allTerms.slice(0, currentTermIndex)
+
+    const { data: legacyCourses, error: legacyError } = await supabase
+      .from('student_courses')
+      .select('student_id, course_id')
+      .eq('student_id', studentId)
+      .eq('status', 'enrolled')
+
+    if (legacyError) throw legacyError
+    if (!legacyCourses || legacyCourses.length === 0) {
+      return { synced: 0, error: null }
+    }
+
+    let syncedCount = 0
+
+    // Current + future terms: sync from legacy
+    for (const enrollment of legacyCourses) {
+      for (const term of futureTerms) {
+        const { data: existing } = await supabase
+          .from('student_course_enrollments')
+          .select('id')
+          .eq('student_id', enrollment.student_id)
+          .eq('course_id', enrollment.course_id)
+          .eq('term', term)
+          .eq('academic_year', resolvedYear)
+          .single()
+
+        if (!existing) {
+          const { error: insertError } = await supabase
+            .from('student_course_enrollments')
+            .insert([{
+              student_id: enrollment.student_id,
+              course_id: enrollment.course_id,
+              term: term,
+              academic_year: resolvedYear,
+              status: 'enrolled'
+            }])
+
+          if (!insertError) syncedCount++
+        }
+      }
+    }
+
+    // Past terms: only create enrollments where grades exist
+    if (pastTerms.length > 0) {
+      const { data: pastReports } = await supabase
+        .from('student_reports')
+        .select('id, term')
+        .eq('student_id', studentId)
+        .eq('academic_year', resolvedYear)
+        .in('term', pastTerms)
+
+      if (pastReports && pastReports.length > 0) {
+        for (const report of pastReports) {
+          const { data: grades } = await supabase
+            .from('student_grades')
+            .select('subject_id')
+            .eq('report_id', report.id)
+
+          if (grades) {
+            for (const grade of grades) {
+              if (!grade.subject_id) continue
+
+              const { data: existing } = await supabase
+                .from('student_course_enrollments')
+                .select('id')
+                .eq('student_id', studentId)
+                .eq('course_id', grade.subject_id)
+                .eq('term', report.term)
+                .eq('academic_year', resolvedYear)
+                .single()
+
+              if (!existing) {
+                const { error: insertError } = await supabase
+                  .from('student_course_enrollments')
+                  .insert([{
+                    student_id: studentId,
+                    course_id: grade.subject_id,
+                    term: report.term,
+                    academic_year: resolvedYear,
+                    status: 'enrolled'
+                  }])
+
+                if (!insertError) syncedCount++
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return { synced: syncedCount, error: null }
+  } catch (error) {
+    console.error('Error syncing legacy enrollments:', error)
+    return { synced: 0, error }
+  }
+}
+
+/**
+ * Sync all legacy enrollments (batch operation for admin).
+ * Only creates enrollment records for current + future terms.
+ * Past term enrollments are only created if the student has existing grades
+ * for that course in that term's report (preserving true history).
+ * @param {string} academicYear
+ * @returns {Promise<Object>}
+ */
+export const syncAllLegacyEnrollments = async (academicYear = null) => {
+  try {
+    const resolvedYear = academicYear || getCurrentAcademicYear()
+    const currentTerm = getCurrentTerm()
+    const allTerms = ['Term 1', 'Term 2', 'Term 3']
+    const currentTermIndex = allTerms.indexOf(currentTerm)
+    const futureTerms = allTerms.slice(currentTermIndex)
+    const pastTerms = allTerms.slice(0, currentTermIndex)
+
+    const { data: allEnrollments, error: fetchError } = await supabase
+      .from('student_courses')
+      .select('student_id, course_id')
+      .eq('status', 'enrolled')
+
+    if (fetchError) throw fetchError
+    if (!allEnrollments || allEnrollments.length === 0) {
+      return { synced: 0, error: null }
+    }
+
+    // For current + future terms: create enrollments for all active student_courses
+    const toInsert = []
+    for (const enrollment of allEnrollments) {
+      for (const term of futureTerms) {
+        toInsert.push({
+          student_id: enrollment.student_id,
+          course_id: enrollment.course_id,
+          term: term,
+          academic_year: resolvedYear,
+          status: 'enrolled'
+        })
+      }
+    }
+
+    // For past terms: only create enrollments where grades actually exist
+    if (pastTerms.length > 0) {
+      // Get all past-term reports for this academic year
+      const { data: pastReports, error: pastReportsError } = await supabase
+        .from('student_reports')
+        .select('id, student_id, term')
+        .eq('academic_year', resolvedYear)
+        .in('term', pastTerms)
+
+      if (!pastReportsError && pastReports && pastReports.length > 0) {
+        const reportIds = pastReports.map(r => r.id)
+
+        // Get all grades for these past reports
+        const { data: pastGrades, error: pastGradesError } = await supabase
+          .from('student_grades')
+          .select('report_id, subject_id')
+          .in('report_id', reportIds)
+
+        if (!pastGradesError && pastGrades) {
+          // Build a map: reportId -> { student_id, term }
+          const reportMap = {}
+          pastReports.forEach(r => { reportMap[r.id] = r })
+
+          // Create enrollment records only for courses that have grades
+          for (const grade of pastGrades) {
+            const report = reportMap[grade.report_id]
+            if (report && grade.subject_id) {
+              toInsert.push({
+                student_id: report.student_id,
+                course_id: grade.subject_id,
+                term: report.term,
+                academic_year: resolvedYear,
+                status: 'enrolled'
+              })
+            }
+          }
+        }
+      }
+    }
+
+    if (toInsert.length === 0) {
+      return { synced: 0, error: null }
+    }
+
+    const { error: upsertError } = await supabase
+      .from('student_course_enrollments')
+      .upsert(toInsert, {
+        onConflict: 'student_id,course_id,term,academic_year',
+        ignoreDuplicates: true
+      })
+
+    if (upsertError) throw upsertError
+
+    return { synced: toInsert.length, error: null }
+  } catch (error) {
+    console.error('Error syncing all legacy enrollments:', error)
+    return { synced: 0, error }
+  }
+}
+
+/**
+ * Get enrollment history for a student across all terms
+ * @param {string} studentId
+ * @param {string} academicYear - Optional filter
+ * @returns {Promise<Object>}
+ */
+export const getStudentEnrollmentHistory = async (studentId, academicYear = null) => {
+  try {
+    let query = supabase
+      .from('student_course_enrollments')
+      .select(`
+        *,
+        courses (
+          id,
+          code,
+          name,
+          description
+        )
+      `)
+      .eq('student_id', studentId)
+      .order('academic_year', { ascending: false })
+      .order('term')
+
+    if (academicYear) {
+      query = query.eq('academic_year', academicYear)
+    }
+
+    const { data, error } = await query
+
+    if (error) throw error
+
+    return { data: data || [], error: null }
+  } catch (error) {
+    console.error('Error fetching enrollment history:', error)
+    return { data: null, error }
+  }
+}
+
+

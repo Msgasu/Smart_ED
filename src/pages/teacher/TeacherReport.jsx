@@ -17,7 +17,7 @@ import {
   calculateClassScoreFromAssignments,
   getStudentReports
 } from '../../backend/teachers';
-import { deleteCourseAssignment } from '../../lib/courseManagement';
+import { deleteCourseAssignment, syncLegacyEnrollments, getCurrentAcademicYear } from '../../lib/courseManagement';
 import './styles/TeacherReport.css';
 import { supabase } from '../../lib/supabase';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, RadialLinearScale, ArcElement, Title, Tooltip, Legend } from 'chart.js';
@@ -743,9 +743,18 @@ const TeacherReport = () => {
 
       if (reportError && reportError.code !== 'PGRST116') throw reportError;
 
-      // Get student's assigned courses
-      const { data: assignedCourses, error: coursesError } = await supabase
-        .from('student_courses')
+      // Get student's courses for this specific term from term-versioned enrollments
+      const currentTerm = termSelectRef.current.value;
+      const currentAcademicYear = academicYearRef.current.value;
+
+      // Auto-sync legacy enrollments if needed (ensures term records exist)
+      await syncLegacyEnrollments(studentId, currentAcademicYear).catch(err => 
+        console.warn('Legacy sync (non-fatal):', err)
+      );
+
+      // Fetch courses from term-versioned enrollment table
+      let { data: termEnrollments, error: termError } = await supabase
+        .from('student_course_enrollments')
         .select(`
           course_id,
           courses (
@@ -754,9 +763,33 @@ const TeacherReport = () => {
             code
           )
         `)
-        .eq('student_id', studentId);
+        .eq('student_id', studentId)
+        .eq('term', currentTerm)
+        .eq('academic_year', currentAcademicYear)
+        .eq('status', 'enrolled');
 
-      if (coursesError) throw coursesError;
+      if (termError) throw termError;
+
+      // Fallback to legacy student_courses if no term enrollments found
+      let assignedCourses = termEnrollments;
+      if (!assignedCourses || assignedCourses.length === 0) {
+        console.log('No term enrollments found, falling back to student_courses');
+        const { data: legacyCourses, error: legacyError } = await supabase
+          .from('student_courses')
+          .select(`
+            course_id,
+            courses (
+              id,
+              name,
+              code
+            )
+          `)
+          .eq('student_id', studentId)
+          .eq('status', 'enrolled');
+
+        if (legacyError) throw legacyError;
+        assignedCourses = legacyCourses || [];
+      }
       
       const coursesWithGrades = [];
       
@@ -778,31 +811,62 @@ const TeacherReport = () => {
         document.getElementById('positionHeld').value = existingReport.position_held || '';
         document.getElementById('interest').value = existingReport.interest || '';
         
-        // Get saved grades for this report
+        // Get saved grades for this report — these are the SOURCE OF TRUTH
+        // Grades that exist in student_grades for this report ALWAYS show,
+        // regardless of current enrollment status (preserves historical records)
         const { data: grades, error: gradesError } = await supabase
           .from('student_grades')
-          .select('*')
+          .select(`
+            *,
+            subject:subject_id (
+              id,
+              name,
+              code
+            )
+          `)
           .eq('report_id', existingReport.id);
           
         if (gradesError) throw gradesError;
         
-        // Process each assigned course
+        // Step 1: Add all existing grades (historical record — never filtered out)
+        const gradedCourseIds = new Set();
+        for (const grade of (grades || [])) {
+          if (grade.subject_id && grade.subject) {
+            gradedCourseIds.add(grade.subject_id);
+            coursesWithGrades.push({
+              id: Date.now() + Math.random(),
+              courseId: grade.subject_id,
+              name: grade.subject.name,
+              code: grade.subject.code,
+              classScore: grade.class_score || '',
+              examScore: grade.exam_score || '',
+              totalScore: grade.total_score || '',
+              position: grade.position || '',
+              grade: grade.grade || '',
+              remark: grade.remark || '',
+              teacherSignature: grade.teacher_signature || ''
+            });
+          }
+        }
+
+        // Step 2: Add any currently enrolled courses that don't have grades yet
+        // (new courses added this term that haven't been graded)
         for (const course of assignedCourses) {
-          const existingGrade = grades?.find(grade => grade.subject_id === course.course_id);
-          
-          coursesWithGrades.push({
-            id: Date.now() + Math.random(), // Temporary unique ID for the UI
-            courseId: course.course_id,
-            name: course.courses.name,
-            code: course.courses.code,
-            classScore: existingGrade?.class_score || '',
-            examScore: existingGrade?.exam_score || '',
-            totalScore: existingGrade?.total_score || '',
-            position: existingGrade?.position || '',
-            grade: existingGrade?.grade || '',
-            remark: existingGrade?.remark || '',
-            teacherSignature: existingGrade?.teacher_signature || ''
-          });
+          if (!gradedCourseIds.has(course.course_id)) {
+            coursesWithGrades.push({
+              id: Date.now() + Math.random(),
+              courseId: course.course_id,
+              name: course.courses.name,
+              code: course.courses.code,
+              classScore: '',
+              examScore: '',
+              totalScore: '',
+              position: '',
+              grade: '',
+              remark: '',
+              teacherSignature: ''
+            });
+          }
         }
         
         // Update the average score display

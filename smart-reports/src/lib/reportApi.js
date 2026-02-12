@@ -505,6 +505,118 @@ export const getReportStatistics = async (filters = {}) => {
 }
 
 /**
+ * Get enrolled courses for a student in a specific term.
+ * Used to determine which courses should appear on a report.
+ * Falls back to student_courses if no term enrollments exist.
+ * 
+ * @param {string} studentId - The student profile ID
+ * @param {string} term - The term ('Term 1', 'Term 2', 'Term 3')
+ * @param {string} academicYear - The academic year
+ * @returns {Promise<Object>}
+ */
+export const getTermEnrolledCourses = async (studentId, term, academicYear) => {
+  try {
+    if (!studentId || !term || !academicYear) {
+      return { data: null, error: 'studentId, term, and academicYear are required' }
+    }
+
+    // Try term-versioned enrollments first
+    const { data: termEnrollments, error: termError } = await supabase
+      .from('student_course_enrollments')
+      .select(`
+        id,
+        course_id,
+        term,
+        academic_year,
+        status,
+        enrolled_at,
+        courses (
+          id,
+          code,
+          name,
+          description
+        )
+      `)
+      .eq('student_id', studentId)
+      .eq('term', term)
+      .eq('academic_year', academicYear)
+      .eq('status', 'enrolled')
+
+    if (termError) throw termError
+
+    if (termEnrollments && termEnrollments.length > 0) {
+      return { data: termEnrollments, error: null }
+    }
+
+    // Fallback: legacy student_courses
+    const { data: legacyCourses, error: legacyError } = await supabase
+      .from('student_courses')
+      .select(`
+        id,
+        course_id,
+        courses (
+          id,
+          code,
+          name,
+          description
+        )
+      `)
+      .eq('student_id', studentId)
+      .eq('status', 'enrolled')
+
+    if (legacyError) throw legacyError
+
+    return { data: legacyCourses || [], error: null }
+  } catch (error) {
+    console.error('Error fetching term enrolled courses:', error)
+    return { data: null, error: error.message }
+  }
+}
+
+/**
+ * Get a report filtered to only show courses enrolled for its term.
+ * This ensures reports are generated based only on enrollments tied to the selected term.
+ * @param {string} reportId - The report ID
+ * @returns {Promise<Object>}
+ */
+export const getTermScopedReportById = async (reportId) => {
+  try {
+    // Get the full report first
+    const { data: report, error: reportError } = await getReportById(reportId, true)
+    if (reportError) return { data: null, error: reportError }
+    if (!report) return { data: null, error: 'Report not found' }
+
+    // Get term-specific enrollments
+    const { data: enrollments, error: enrollError } = await getTermEnrolledCourses(
+      report.student_id,
+      report.term,
+      report.academic_year
+    )
+
+    if (enrollError || !enrollments || enrollments.length === 0) {
+      // Fallback: return unfiltered report
+      return { data: report, error: null }
+    }
+
+    // Filter student_grades to only include enrolled courses for this term
+    const enrolledCourseIds = new Set(enrollments.map(e => e.course_id))
+    
+    if (report.student_grades) {
+      report.student_grades = report.student_grades.filter(
+        grade => enrolledCourseIds.has(grade.subject_id)
+      )
+    }
+
+    report.enrolled_courses = enrollments
+
+    return { data: report, error: null }
+  } catch (error) {
+    console.error('Error fetching term-scoped report:', error)
+    return { data: null, error: error.message }
+  }
+}
+
+/**
  * Save or update a report (only if in draft status)
  * @param {Object} reportData - Report data
  * @returns {Promise<Object>} Saved report data or error

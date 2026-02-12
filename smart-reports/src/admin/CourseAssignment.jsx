@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { FaBook, FaChalkboardTeacher, FaGraduationCap, FaPlus, FaTrash, FaSearch, FaUserCheck, FaUsers, FaCalendarAlt } from 'react-icons/fa'
 import { supabase } from '../lib/supabase'
-import { deleteCourseAssignmentById } from '../lib/courseManagement'
+import { deleteCourseAssignmentById, removeCourseFromTerm, getCurrentAcademicYear, getCurrentTerm, syncAllLegacyEnrollments } from '../lib/courseManagement'
 import toast from 'react-hot-toast'
 import './CourseAssignment.css'
 
@@ -12,6 +12,7 @@ const CourseAssignment = () => {
   const [students, setStudents] = useState([])
   const [facultyCourses, setFacultyCourses] = useState([])
   const [studentCourses, setStudentCourses] = useState([])
+  const [termEnrollments, setTermEnrollments] = useState([])
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedClass, setSelectedClass] = useState('')
@@ -23,10 +24,25 @@ const CourseAssignment = () => {
   const [bulkCourseSearchTerm, setBulkCourseSearchTerm] = useState('')
   const [bulkStudentSearchTerm, setBulkStudentSearchTerm] = useState('')
 
+  // Term/Year context for enrollment operations
+  const [selectedTerm, setSelectedTerm] = useState(getCurrentTerm())
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState(getCurrentAcademicYear())
+
   // Pagination states
   const [facultyCurrentPage, setFacultyCurrentPage] = useState(1)
   const [studentsCurrentPage, setStudentsCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
+
+  // Generate academic year options (current ± 2 years)
+  const academicYearOptions = useMemo(() => {
+    const now = new Date()
+    const year = now.getFullYear()
+    const years = []
+    for (let y = year - 2; y <= year + 1; y++) {
+      years.push(`${y}-${y + 1}`)
+    }
+    return years
+  }, [])
 
   // Class structure for filtering students
   const classStructure = [
@@ -36,7 +52,16 @@ const CourseAssignment = () => {
   ]
 
   useEffect(() => {
-    fetchAllData()
+    // Auto-sync legacy enrollments on first load, then fetch all data
+    const init = async () => {
+      try {
+        await syncAllLegacyEnrollments(selectedAcademicYear)
+      } catch (err) {
+        console.error('Legacy sync error (non-fatal):', err)
+      }
+      fetchAllData()
+    }
+    init()
   }, [])
 
   const fetchAllData = async () => {
@@ -47,7 +72,8 @@ const CourseAssignment = () => {
         fetchFaculty(),
         fetchStudents(),
         fetchFacultyCourses(),
-        fetchStudentCourses()
+        fetchStudentCourses(),
+        fetchTermEnrollments()
       ])
     } catch (error) {
       console.error('Error fetching data:', error)
@@ -184,6 +210,52 @@ const CourseAssignment = () => {
     }
   }
 
+  const fetchTermEnrollments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('student_course_enrollments')
+        .select(`
+          *,
+          courses (
+            id,
+            code,
+            name
+          ),
+          profiles:student_id (
+            id,
+            first_name,
+            last_name,
+            students (
+              student_id,
+              class_year
+            )
+          )
+        `)
+        .eq('term', selectedTerm)
+        .eq('academic_year', selectedAcademicYear)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setTermEnrollments(data || [])
+    } catch (error) {
+      console.error('Error fetching term enrollments:', error)
+      throw error
+    }
+  }
+
+  // Re-sync and re-fetch term enrollments when term/year changes
+  useEffect(() => {
+    const refreshTermData = async () => {
+      try {
+        await syncAllLegacyEnrollments(selectedAcademicYear)
+      } catch (err) {
+        console.error('Sync error (non-fatal):', err)
+      }
+      fetchTermEnrollments().catch(console.error)
+    }
+    refreshTermData()
+  }, [selectedTerm, selectedAcademicYear])
+
   const assignCourseToFaculty = async (facultyId, courseId) => {
     try {
       // Check if assignment already exists
@@ -223,7 +295,7 @@ const CourseAssignment = () => {
 
   const assignCourseToStudent = async (studentId, courseId) => {
     try {
-      // Check if assignment already exists
+      // Check if assignment already exists in legacy table
       const { data: existing } = await supabase
         .from('student_courses')
         .select('id')
@@ -232,26 +304,69 @@ const CourseAssignment = () => {
         .eq('status', 'enrolled')
         .single()
 
-      if (existing) {
-        toast.error('Course is already assigned to this student')
-        return
+      if (!existing) {
+        const { error } = await supabase
+          .from('student_courses')
+          .insert([{
+            student_id: studentId,
+            course_id: courseId,
+            status: 'enrolled'
+          }])
+
+        if (error) throw error
       }
 
-      const { error } = await supabase
-        .from('student_courses')
-        .insert([{
-          student_id: studentId,
-          course_id: courseId,
-          status: 'enrolled'
-        }])
+      // Create term-versioned enrollment for current + future terms only
+      // (past terms should not get new courses — the student wasn't taking them then)
+      const allTerms = ['Term 1', 'Term 2', 'Term 3']
+      const currentTermIndex = allTerms.indexOf(selectedTerm)
+      const termsToEnroll = allTerms.slice(currentTermIndex)
+      let enrolledCount = 0
 
-      if (error) throw error
+      for (const term of termsToEnroll) {
+        const { data: existingTermEnroll } = await supabase
+          .from('student_course_enrollments')
+          .select('id, status')
+          .eq('student_id', studentId)
+          .eq('course_id', courseId)
+          .eq('term', term)
+          .eq('academic_year', selectedAcademicYear)
+          .single()
+
+        if (existingTermEnroll) {
+          if (existingTermEnroll.status === 'dropped') {
+            await supabase
+              .from('student_course_enrollments')
+              .update({ status: 'enrolled', dropped_at: null, updated_at: new Date().toISOString() })
+              .eq('id', existingTermEnroll.id)
+            enrolledCount++
+          }
+          continue
+        }
+
+        const { error: enrollError } = await supabase
+          .from('student_course_enrollments')
+          .insert([{
+            student_id: studentId,
+            course_id: courseId,
+            term: term,
+            academic_year: selectedAcademicYear,
+            status: 'enrolled'
+          }])
+
+        if (enrollError) {
+          console.error(`Error creating term enrollment for ${term}:`, enrollError)
+        } else {
+          enrolledCount++
+        }
+      }
 
       const student = students.find(s => s.id === studentId)
       const course = courses.find(c => c.id === courseId)
       
-      toast.success(`${course.code} assigned to ${student.first_name} ${student.last_name}`)
+      toast.success(`${course.code} assigned to ${student.first_name} ${student.last_name} from ${selectedTerm} onwards`)
       fetchStudentCourses()
+      fetchTermEnrollments()
     } catch (error) {
       console.error('Error assigning course to student:', error)
       toast.error('Error assigning course to student')
@@ -269,7 +384,7 @@ const CourseAssignment = () => {
         return
       }
 
-      // Get students who don't already have this course
+      // Get students who don't already have this course in legacy table
       const { data: existingAssignments } = await supabase
         .from('student_courses')
         .select('student_id')
@@ -282,26 +397,68 @@ const CourseAssignment = () => {
         student => !existingStudentIds.includes(student.id)
       )
 
-      if (studentsToAssign.length === 0) {
-        toast.error('All students in this class already have this course')
-        return
+      // Insert into legacy table for students who don't have it yet
+      if (studentsToAssign.length > 0) {
+        const assignments = studentsToAssign.map(student => ({
+          student_id: student.id,
+          course_id: courseId,
+          status: 'enrolled'
+        }))
+
+        const { error } = await supabase
+          .from('student_courses')
+          .insert(assignments)
+
+        if (error) throw error
       }
 
-      const assignments = studentsToAssign.map(student => ({
-        student_id: student.id,
-        course_id: courseId,
-        status: 'enrolled'
-      }))
+      // Create term-versioned enrollment for current + future terms only
+      const allTerms = ['Term 1', 'Term 2', 'Term 3']
+      const currentTermIndex = allTerms.indexOf(selectedTerm)
+      const termsToEnroll = allTerms.slice(currentTermIndex)
+      let termEnrollCount = 0
 
-      const { error } = await supabase
-        .from('student_courses')
-        .insert(assignments)
+      for (const student of classStudents) {
+        for (const term of termsToEnroll) {
+          const { data: existingTermEnroll } = await supabase
+            .from('student_course_enrollments')
+            .select('id, status')
+            .eq('student_id', student.id)
+            .eq('course_id', courseId)
+            .eq('term', term)
+            .eq('academic_year', selectedAcademicYear)
+            .single()
 
-      if (error) throw error
+          if (existingTermEnroll) {
+            if (existingTermEnroll.status === 'dropped') {
+              await supabase
+                .from('student_course_enrollments')
+                .update({ status: 'enrolled', dropped_at: null, updated_at: new Date().toISOString() })
+                .eq('id', existingTermEnroll.id)
+              termEnrollCount++
+            }
+            continue
+          }
+
+          const { error: enrollError } = await supabase
+            .from('student_course_enrollments')
+            .insert([{
+              student_id: student.id,
+              course_id: courseId,
+              term: term,
+              academic_year: selectedAcademicYear,
+              status: 'enrolled'
+            }])
+
+          if (!enrollError) termEnrollCount++
+        }
+      }
 
       const course = courses.find(c => c.id === courseId)
-      toast.success(`${course.code} assigned to ${studentsToAssign.length} students in ${className}`)
+      const newCount = studentsToAssign.length
+      toast.success(`${course.code} assigned to ${newCount > 0 ? newCount + ' new students' : 'all students'} in ${className} for ${selectedAcademicYear}`)
       fetchStudentCourses()
+      fetchTermEnrollments()
     } catch (error) {
       console.error('Error bulk assigning course to class:', error)
       toast.error('Error bulk assigning course to class')
@@ -315,7 +472,7 @@ const CourseAssignment = () => {
     }
 
     try {
-      // Get students who don't already have this course
+      // Get students who don't already have this course in legacy table
       const { data: existingAssignments } = await supabase
         .from('student_courses')
         .select('student_id')
@@ -328,30 +485,66 @@ const CourseAssignment = () => {
         studentId => !existingStudentIds.includes(studentId)
       )
 
-      if (studentsToAssign.length === 0) {
-        toast.error('All selected students already have this course')
-        return
+      // Insert into legacy table for new students
+      if (studentsToAssign.length > 0) {
+        const assignments = studentsToAssign.map(studentId => ({
+          student_id: studentId,
+          course_id: selectedCourse,
+          status: 'enrolled'
+        }))
+
+        const { error } = await supabase
+          .from('student_courses')
+          .insert(assignments)
+
+        if (error) throw error
       }
 
-      const assignments = studentsToAssign.map(studentId => ({
-        student_id: studentId,
-        course_id: selectedCourse,
-        status: 'enrolled'
-      }))
+      // Create term-versioned enrollments for current + future terms only
+      const allTerms = ['Term 1', 'Term 2', 'Term 3']
+      const currentTermIndex = allTerms.indexOf(selectedTerm)
+      const termsToEnroll = allTerms.slice(currentTermIndex)
+      for (const studentId of selectedStudents) {
+        for (const term of termsToEnroll) {
+          const { data: existingTermEnroll } = await supabase
+            .from('student_course_enrollments')
+            .select('id, status')
+            .eq('student_id', studentId)
+            .eq('course_id', selectedCourse)
+            .eq('term', term)
+            .eq('academic_year', selectedAcademicYear)
+            .single()
 
-      const { error } = await supabase
-        .from('student_courses')
-        .insert(assignments)
+          if (existingTermEnroll) {
+            if (existingTermEnroll.status === 'dropped') {
+              await supabase
+                .from('student_course_enrollments')
+                .update({ status: 'enrolled', dropped_at: null, updated_at: new Date().toISOString() })
+                .eq('id', existingTermEnroll.id)
+            }
+            continue
+          }
 
-      if (error) throw error
+          await supabase
+            .from('student_course_enrollments')
+            .insert([{
+              student_id: studentId,
+              course_id: selectedCourse,
+              term: term,
+              academic_year: selectedAcademicYear,
+              status: 'enrolled'
+            }])
+        }
+      }
 
       const course = courses.find(c => c.id === selectedCourse)
-      toast.success(`${course.code} assigned to ${studentsToAssign.length} students`)
+      toast.success(`${course.code} assigned to ${selectedStudents.length} students for ${selectedAcademicYear}`)
       
       setSelectedStudents([])
       setSelectedCourse('')
       setShowBulkModal(false)
       fetchStudentCourses()
+      fetchTermEnrollments()
     } catch (error) {
       console.error('Error bulk assigning course:', error)
       toast.error('Error bulk assigning course')
@@ -377,11 +570,15 @@ const CourseAssignment = () => {
 
   const removeStudentCourse = async (assignmentId) => {
     try {
-      const result = await deleteCourseAssignmentById(assignmentId)
+      const result = await deleteCourseAssignmentById(assignmentId, {
+        term: selectedTerm,
+        academicYear: selectedAcademicYear
+      })
       
       if (result.success) {
         toast.success(result.message)
         fetchStudentCourses()
+        fetchTermEnrollments()
       } else {
         toast.error(result.message)
         console.error('Errors during deletion:', result.errors)
@@ -389,6 +586,32 @@ const CourseAssignment = () => {
     } catch (error) {
       console.error('Error removing student course:', error)
       toast.error('Error removing course assignment')
+    }
+  }
+
+  /**
+   * Remove a course from a student completely going forward.
+   * Drops enrollment for current + future terms and removes from student_courses.
+   * Past term enrollments and grades are preserved.
+   */
+  const removeStudentCourseForward = async (studentId, courseId) => {
+    try {
+      const { deleteCourseAssignment } = await import('../lib/courseManagement')
+      const result = await deleteCourseAssignment(studentId, courseId, null, {
+        term: selectedTerm,
+        academicYear: selectedAcademicYear
+      })
+
+      if (result.success) {
+        toast.success(result.message)
+        fetchStudentCourses()
+        fetchTermEnrollments()
+      } else {
+        toast.error(result.message)
+      }
+    } catch (error) {
+      console.error('Error removing course:', error)
+      toast.error('Error removing course')
     }
   }
 
@@ -654,11 +877,46 @@ const CourseAssignment = () => {
     const { currentItems: currentStudents, renderPagination: renderStudentsPagination } = 
       createPagination(filteredStudents, studentsCurrentPage, setStudentsCurrentPage)
 
+    // Build a map of term enrollments by student for quick lookup
+    const termEnrollmentsByStudent = {}
+    termEnrollments.forEach(enrollment => {
+      const sid = enrollment.student_id
+      if (!termEnrollmentsByStudent[sid]) {
+        termEnrollmentsByStudent[sid] = []
+      }
+      termEnrollmentsByStudent[sid].push(enrollment)
+    })
+
     return (
       <div className="student-assignment">
         <div className="assignment-header">
           <h2>Student Course Assignment ({filteredStudents.length} total)</h2>
           <div className="header-controls">
+            {/* Term/Year context selectors */}
+            <div className="term-context" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <FaCalendarAlt style={{ color: '#666' }} />
+              <select
+                value={selectedAcademicYear}
+                onChange={(e) => setSelectedAcademicYear(e.target.value)}
+                className="class-filter"
+                title="Academic Year"
+              >
+                {academicYearOptions.map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <select
+                value={selectedTerm}
+                onChange={(e) => setSelectedTerm(e.target.value)}
+                className="class-filter"
+                title="Term"
+              >
+                <option value="Term 1">Term 1</option>
+                <option value="Term 2">Term 2</option>
+                <option value="Term 3">Term 3</option>
+              </select>
+            </div>
+
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
@@ -742,6 +1000,24 @@ const CourseAssignment = () => {
             <tbody>
               {currentStudents.map(student => {
                 const studentAssignments = studentCourses.filter(sc => sc.student_id === student.id)
+                const studentTermEnrollments = (termEnrollmentsByStudent[student.id] || []).filter(e => e.status === 'enrolled')
+                
+                // Use term enrollments if available, otherwise fall back to legacy student_courses
+                const hasTermData = studentTermEnrollments.length > 0
+                const displayCourses = hasTermData
+                  ? studentTermEnrollments.map(e => ({
+                      id: e.id,
+                      code: e.courses?.code || 'N/A',
+                      courseId: e.course_id,
+                      isTermRecord: true
+                    }))
+                  : studentAssignments.map(a => ({
+                      id: a.id,
+                      code: a.courses?.code || 'N/A',
+                      courseId: a.course_id,
+                      isTermRecord: false
+                    }))
+
                 return (
                   <tr key={student.id}>
                     <td>
@@ -758,18 +1034,22 @@ const CourseAssignment = () => {
                     </td>
                     <td>
                       <div className="enrolled-courses">
-                        {studentAssignments.map(assignment => (
-                          <div key={assignment.id} className="course-tag">
-                            <span>{assignment.courses.code}</span>
-                            <button
-                              onClick={() => removeStudentCourse(assignment.id)}
-                              className="remove-btn"
-                              title="Remove course"
-                            >
-                              <FaTrash />
-                            </button>
-                          </div>
-                        ))}
+                        {displayCourses.length > 0 ? (
+                          displayCourses.map(course => (
+                            <div key={course.id} className="course-tag">
+                              <span>{course.code}</span>
+                              <button
+                                onClick={() => removeStudentCourseForward(student.id, course.courseId)}
+                                className="remove-btn"
+                                title="Remove course (past term grades preserved)"
+                              >
+                                <FaTrash />
+                              </button>
+                            </div>
+                          ))
+                        ) : (
+                          <span style={{ color: '#999', fontSize: '0.85em' }}>No courses assigned</span>
+                        )}
                       </div>
                     </td>
                     <td>
@@ -800,7 +1080,7 @@ const CourseAssignment = () => {
         </div>
       </div>
     )
-  }, [students, selectedClass, searchTerm, courses, courseSearchTerm, studentCourses, studentsCurrentPage])
+  }, [students, selectedClass, searchTerm, courses, courseSearchTerm, studentCourses, studentsCurrentPage, termEnrollments, selectedTerm, selectedAcademicYear])
 
   const BulkAssignModal = () => {
     if (!showBulkModal) return null
