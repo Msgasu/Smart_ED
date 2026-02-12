@@ -252,8 +252,47 @@
   .no-print, 
   .download-controls, 
   .chart-download-section,
-  button {
+  button,
+  .guardian-portal-header,
+  .guardian-portal-sidebar,
+  .guardian-report-header {
     display: none !important;
+  }
+
+  .guardian-portal-public {
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  .guardian-portal-container {
+    max-width: none !important;
+    margin: 0 !important;
+  }
+
+  .guardian-portal-grid {
+    display: block !important;
+  }
+
+  .guardian-portal-main {
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+  }
+
+  .guardian-report-container {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .pdf-content,
+  .report-viewer,
+  .report-content {
+    display: block !important;
+    visibility: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
   }
 }
 

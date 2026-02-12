@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabase';
+import { getCurrentAcademicYear, getCurrentTerm } from '../../lib/courseManagement';
 
 /**
  * Get all courses for a student
@@ -29,6 +30,50 @@ export const getStudentCourses = async (studentId) => {
     return { data, error: null };
   } catch (error) {
     console.error('Error fetching student courses:', error);
+    return { data: null, error };
+  }
+};
+
+/**
+ * Get courses for a student in a specific term (term-versioned).
+ * This returns only courses that are enrolled for the given term+year.
+ * @param {string} studentId - The student profile ID
+ * @param {string} term - The term ('Term 1', 'Term 2', 'Term 3')
+ * @param {string} academicYear - The academic year (e.g., '2025-2026')
+ * @returns {Promise<Object>}
+ */
+export const getStudentCoursesForTerm = async (studentId, term, academicYear) => {
+  try {
+    if (!studentId || !term || !academicYear) {
+      throw new Error('Student ID, term, and academic year are required');
+    }
+
+    const { data, error } = await supabase
+      .from('student_course_enrollments')
+      .select(`
+        id,
+        course_id,
+        term,
+        academic_year,
+        status,
+        enrolled_at,
+        courses (
+          id,
+          code,
+          name,
+          description
+        )
+      `)
+      .eq('student_id', studentId)
+      .eq('term', term)
+      .eq('academic_year', academicYear)
+      .eq('status', 'enrolled');
+
+    if (error) throw error;
+
+    return { data: data || [], error: null };
+  } catch (error) {
+    console.error('Error fetching term-specific courses:', error);
     return { data: null, error };
   }
 };
@@ -127,18 +172,25 @@ export const getCourseDetails = async (courseId) => {
 };
 
 /**
- * Enroll a student in a course
+ * Enroll a student in a course.
+ * Now creates term-versioned enrollment records alongside legacy student_courses.
  * @param {string} studentId - The student ID
  * @param {string} courseId - The course ID
+ * @param {Object} options - Optional term context
+ * @param {string} options.term - Specific term (defaults to current)
+ * @param {string} options.academicYear - Specific academic year (defaults to current)
  * @returns {Promise<Object>} - The enrollment result
  */
-export const enrollInCourse = async (studentId, courseId) => {
+export const enrollInCourse = async (studentId, courseId, options = {}) => {
   try {
     if (!studentId || !courseId) {
       throw new Error('Student ID and Course ID are required');
     }
+
+    const academicYear = options.academicYear || getCurrentAcademicYear();
+    const currentTerm = options.term || getCurrentTerm();
     
-    // Check if already enrolled
+    // Check if already enrolled in legacy table
     const { data: existingEnrollment, error: checkError } = await supabase
       .from('student_courses')
       .select('*')
@@ -147,25 +199,77 @@ export const enrollInCourse = async (studentId, courseId) => {
       
     if (checkError) throw checkError;
     
+    let legacyData;
     if (existingEnrollment && existingEnrollment.length > 0) {
-      return { data: existingEnrollment[0], error: null, alreadyEnrolled: true };
+      legacyData = existingEnrollment[0];
+    } else {
+      // Enroll in legacy table
+      const { data, error } = await supabase
+        .from('student_courses')
+        .insert([
+          { student_id: studentId, course_id: courseId }
+        ])
+        .select()
+        .single();
+        
+      if (error) throw error;
+      legacyData = data;
+    }
+
+    // Create term-versioned enrollment records for current + future terms only
+    const allTerms = ['Term 1', 'Term 2', 'Term 3'];
+    const currentTermIndex = allTerms.indexOf(currentTerm);
+    const termsToEnroll = allTerms.slice(currentTermIndex);
+    for (const term of termsToEnroll) {
+      const { data: existingTermEnroll, error: termCheckError } = await supabase
+        .from('student_course_enrollments')
+        .select('id, status')
+        .eq('student_id', studentId)
+        .eq('course_id', courseId)
+        .eq('term', term)
+        .eq('academic_year', academicYear)
+        .single();
+
+      if (termCheckError && termCheckError.code !== 'PGRST116') {
+        console.error(`Error checking term enrollment for ${term}:`, termCheckError);
+        continue;
+      }
+
+      if (existingTermEnroll) {
+        // If previously dropped, re-enroll
+        if (existingTermEnroll.status === 'dropped') {
+          await supabase
+            .from('student_course_enrollments')
+            .update({
+              status: 'enrolled',
+              dropped_at: null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingTermEnroll.id);
+        }
+        continue;
+      }
+
+      // Create new term enrollment
+      await supabase
+        .from('student_course_enrollments')
+        .insert([{
+          student_id: studentId,
+          course_id: courseId,
+          term: term,
+          academic_year: academicYear,
+          status: 'enrolled'
+        }]);
     }
     
-    // Enroll in course
-    const { data, error } = await supabase
-      .from('student_courses')
-      .insert([
-        { student_id: studentId, course_id: courseId }
-      ])
-      .select()
-      .single();
-      
-    if (error) throw error;
+    // Create default report entries only for the terms we actually enrolled in
+    await createDefaultReportEntries(studentId, courseId, academicYear, termsToEnroll);
     
-    // Create default report entries for the enrolled course
-    await createDefaultReportEntries(studentId, courseId);
-    
-    return { data, error: null, alreadyEnrolled: false };
+    return { 
+      data: legacyData, 
+      error: null, 
+      alreadyEnrolled: !!(existingEnrollment && existingEnrollment.length > 0) 
+    };
   } catch (error) {
     console.error('Error enrolling in course:', error);
     return { data: null, error };
@@ -173,14 +277,17 @@ export const enrollInCourse = async (studentId, courseId) => {
 };
 
 /**
- * Create default report entries for an enrolled course
+ * Create default report entries for an enrolled course.
+ * Only creates entries for the specified terms (not past terms).
  * @param {string} studentId - The student ID (profile ID)
  * @param {string} courseId - The course ID
+ * @param {string} academicYear - The academic year (optional, defaults to current)
+ * @param {string[]} termsToCreate - Which terms to create entries for (defaults to current+future)
  * @returns {Promise<void>}
  */
-const createDefaultReportEntries = async (studentId, courseId) => {
+const createDefaultReportEntries = async (studentId, courseId, academicYear = null, termsToCreate = null) => {
   try {
-    // Get student profile information to access profile_id (needed for student_reports)
+    // Get student profile information
     const { data: studentProfile, error: profileError } = await supabase
       .from('students')
       .select('profile_id')
@@ -190,12 +297,12 @@ const createDefaultReportEntries = async (studentId, courseId) => {
     if (profileError) throw profileError;
     if (!studentProfile) throw new Error('Student profile not found');
     
-    // Get current academic year and term
-    const currentDate = new Date();
-    const academicYear = `${currentDate.getFullYear()}-${currentDate.getFullYear() + 1}`;
+    const resolvedAcademicYear = academicYear || getCurrentAcademicYear();
     
-    // Default terms
-    const terms = ['Term 1', 'Term 2', 'Term 3'];
+    // Only create entries for specified terms, or current+future by default
+    const allTerms = ['Term 1', 'Term 2', 'Term 3'];
+    const currentTermIndex = allTerms.indexOf(getCurrentTerm());
+    const terms = termsToCreate || allTerms.slice(currentTermIndex);
     
     // For each term, ensure a report entry exists
     for (const term of terms) {
@@ -205,7 +312,7 @@ const createDefaultReportEntries = async (studentId, courseId) => {
         .select('id')
         .eq('student_id', studentProfile.profile_id)
         .eq('term', term)
-        .eq('academic_year', academicYear);
+        .eq('academic_year', resolvedAcademicYear);
         
       if (reportCheckError) throw reportCheckError;
       
@@ -218,7 +325,7 @@ const createDefaultReportEntries = async (studentId, courseId) => {
           .insert({
             student_id: studentProfile.profile_id,
             term: term,
-            academic_year: academicYear,
+            academic_year: resolvedAcademicYear,
             total_score: 0,
             overall_grade: null
           })
@@ -259,4 +366,4 @@ const createDefaultReportEntries = async (studentId, courseId) => {
     console.error('Error creating default report entries:', error);
     throw error;
   }
-}; 
+};

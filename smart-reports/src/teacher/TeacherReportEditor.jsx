@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { FaArrowLeft, FaSave, FaEye, FaUser, FaGraduationCap, FaChartBar } from 'react-icons/fa'
 import { supabase } from '../lib/supabase'
-import { getReportById, saveReport, canEditReport, REPORT_STATUS } from '../lib/reportApi'
+import { getReportById, saveReport, canEditReport, REPORT_STATUS, getTermEnrolledCourses } from '../lib/reportApi'
 import toast from 'react-hot-toast'
 
 // Helper function to get max values for input validation
@@ -144,7 +144,7 @@ const TeacherReportEditor = ({ user, profile }) => {
       setHasAccess(true)
       setCanEdit(true)
 
-      // Fetch existing grades for this report
+      // Fetch existing grades for this report — SOURCE OF TRUTH for historical data
       const { data: existingGrades, error: gradesError } = await supabase
         .from('student_grades')
         .select(`
@@ -159,21 +159,60 @@ const TeacherReportEditor = ({ user, profile }) => {
 
       if (gradesError) throw gradesError
 
-      // Initialize grades for all teacher's courses
-      const initialGrades = courses.map(course => {
-        const existingGrade = existingGrades?.find(g => g.subject_id === course.id)
-        return {
-          subject_id: course.id,
-          course_name: course.name,
-          course_code: course.code,
-          class_score: existingGrade?.class_score || '',
-          exam_score: existingGrade?.exam_score || '',
-          total_score: existingGrade?.total_score || 0,
-          grade: existingGrade?.grade || '',
-          remark: existingGrade?.remark || '',
-          id: existingGrade?.id || null
+      // Get term-enrolled courses to know what NEW courses to show (for courses without grades yet)
+      let enrolledCourseIds = new Set()
+      if (reportData?.term && reportData?.academic_year) {
+        const { data: termCourses } = await getTermEnrolledCourses(
+          reportData.student_id,
+          reportData.term,
+          reportData.academic_year
+        )
+        if (termCourses && termCourses.length > 0) {
+          enrolledCourseIds = new Set(termCourses.map(tc => tc.course_id))
         }
-      })
+      }
+
+      const initialGrades = []
+      const gradedCourseIds = new Set()
+
+      // Step 1: Add all existing grades (historical record — always shown)
+      for (const grade of (existingGrades || [])) {
+        if (grade.subject_id && grade.courses) {
+          gradedCourseIds.add(grade.subject_id)
+          initialGrades.push({
+            subject_id: grade.subject_id,
+            course_name: grade.courses.name,
+            course_code: grade.courses.code,
+            class_score: grade.class_score || '',
+            exam_score: grade.exam_score || '',
+            total_score: grade.total_score || 0,
+            grade: grade.grade || '',
+            remark: grade.remark || '',
+            id: grade.id || null
+          })
+        }
+      }
+
+      // Step 2: Add enrolled courses that don't have grades yet (new this term)
+      const filteredCourses = enrolledCourseIds.size > 0
+        ? courses.filter(course => enrolledCourseIds.has(course.id))
+        : courses
+
+      for (const course of filteredCourses) {
+        if (!gradedCourseIds.has(course.id)) {
+          initialGrades.push({
+            subject_id: course.id,
+            course_name: course.name,
+            course_code: course.code,
+            class_score: '',
+            exam_score: '',
+            total_score: 0,
+            grade: '',
+            remark: '',
+            id: null
+          })
+        }
+      }
 
       setGrades(initialGrades)
 

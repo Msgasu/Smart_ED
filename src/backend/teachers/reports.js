@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabase';
+import { getCurrentAcademicYear, getCurrentTerm } from '../../lib/courseManagement';
 
 /**
  * Save a student's report for a specific term and academic year
@@ -839,6 +840,134 @@ export const generateStudentReport = async (reportData) => {
       data: null,
       error: error.message
     };
+  }
+};
+
+/**
+ * Get enrolled courses for a student in a specific term.
+ * Uses the term-versioned student_course_enrollments table.
+ * Falls back to student_courses (legacy) if no term enrollments found.
+ * 
+ * @param {string} studentId - The student profile ID
+ * @param {string} term - The term ('Term 1', 'Term 2', 'Term 3')
+ * @param {string} academicYear - The academic year (e.g., '2025-2026')
+ * @returns {Promise<Object>} - { data: courses[], error }
+ */
+export const getEnrolledCoursesForTerm = async (studentId, term, academicYear) => {
+  try {
+    if (!studentId || !term || !academicYear) {
+      throw new Error('studentId, term, and academicYear are required');
+    }
+
+    // Try term-versioned enrollments first
+    const { data: termEnrollments, error: termError } = await supabase
+      .from('student_course_enrollments')
+      .select(`
+        id,
+        course_id,
+        term,
+        academic_year,
+        status,
+        courses (
+          id,
+          code,
+          name,
+          description
+        )
+      `)
+      .eq('student_id', studentId)
+      .eq('term', term)
+      .eq('academic_year', academicYear)
+      .eq('status', 'enrolled');
+
+    if (termError) throw termError;
+
+    // If term enrollments exist, use them
+    if (termEnrollments && termEnrollments.length > 0) {
+      return { data: termEnrollments, error: null };
+    }
+
+    // Fallback: use legacy student_courses table (for backward compatibility)
+    console.log(`No term enrollments found for ${term} ${academicYear}, falling back to student_courses`);
+    const { data: legacyCourses, error: legacyError } = await supabase
+      .from('student_courses')
+      .select(`
+        id,
+        course_id,
+        courses (
+          id,
+          code,
+          name,
+          description
+        )
+      `)
+      .eq('student_id', studentId)
+      .eq('status', 'enrolled');
+
+    if (legacyError) throw legacyError;
+
+    // Map to same shape as term enrollments
+    const mappedCourses = (legacyCourses || []).map(sc => ({
+      ...sc,
+      term,
+      academic_year: academicYear,
+      status: 'enrolled'
+    }));
+
+    return { data: mappedCourses, error: null };
+  } catch (error) {
+    console.error('Error fetching enrolled courses for term:', error);
+    return { data: null, error };
+  }
+};
+
+/**
+ * Get a report with only the courses enrolled for its specific term.
+ * Filters student_grades to only include subjects the student was enrolled in for the report's term.
+ * 
+ * @param {string} reportId - The report ID
+ * @returns {Promise<Object>}
+ */
+export const getTermScopedReport = async (reportId) => {
+  try {
+    // Get the base report
+    const { data: report, error: reportError } = await getStudentReport(reportId);
+    if (reportError) throw reportError;
+    if (!report) return { data: null, error: null };
+
+    // Get term enrollments for this report's term
+    const { data: enrollments, error: enrollError } = await getEnrolledCoursesForTerm(
+      report.student_id,
+      report.term,
+      report.academic_year
+    );
+
+    if (enrollError) {
+      console.warn('Could not fetch term enrollments, returning full report:', enrollError);
+      return { data: report, error: null };
+    }
+
+    // Filter grades to only include enrolled courses for this term
+    if (enrollments && enrollments.length > 0) {
+      const enrolledCourseIds = new Set(enrollments.map(e => e.course_id));
+      const filteredGrades = (report.grades || []).filter(
+        grade => enrolledCourseIds.has(grade.subject_id)
+      );
+      
+      return {
+        data: {
+          ...report,
+          grades: filteredGrades,
+          enrolled_courses: enrollments
+        },
+        error: null
+      };
+    }
+
+    return { data: report, error: null };
+  } catch (error) {
+    console.error('Error fetching term-scoped report:', error);
+    return { data: null, error };
   }
 };
 

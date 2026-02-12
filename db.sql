@@ -170,6 +170,26 @@ CREATE TABLE public.student_courses (
   CONSTRAINT student_courses_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.profiles(id)
 );
 
+-- Term-versioned enrollment tracking for Smart Reports.
+-- Each row represents a student's enrollment in a course for a specific term+year.
+-- Removing a course in a new term only affects that term; historical terms remain immutable.
+CREATE TABLE public.student_course_enrollments (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  student_id uuid NOT NULL,
+  course_id uuid NOT NULL,
+  term character varying NOT NULL CHECK (term::text = ANY (ARRAY['Term 1'::text, 'Term 2'::text, 'Term 3'::text])),
+  academic_year character varying NOT NULL,
+  status character varying DEFAULT 'enrolled'::character varying CHECK (status::text = ANY (ARRAY['enrolled'::text, 'dropped'::text, 'completed'::text])),
+  enrolled_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  dropped_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT student_course_enrollments_pkey PRIMARY KEY (id),
+  CONSTRAINT student_course_enrollments_unique UNIQUE (student_id, course_id, term, academic_year),
+  CONSTRAINT student_course_enrollments_student_fkey FOREIGN KEY (student_id) REFERENCES public.profiles(id),
+  CONSTRAINT student_course_enrollments_course_fkey FOREIGN KEY (course_id) REFERENCES public.courses(id)
+);
+
 CREATE TABLE public.student_grades (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   report_id uuid,
