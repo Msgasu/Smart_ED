@@ -1,0 +1,448 @@
+/* Admin Dashboard - Redesign */
+.admin-dashboard {
+  --admin-primary: #8B3D48;
+  --admin-secondary: #90BE6D;
+  --admin-bg: #F8FAFC;
+  --admin-card-bg: #fff;
+  --admin-card-border: #f1f5f9;
+  --admin-text: #0f172a;
+  --admin-text-muted: #64748b;
+}
+
+.admin-dashboard {
+  background: var(--admin-bg);
+  min-height: 100%;
+}
+
+.admin-dashboard-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.admin-dashboard-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--admin-text);
+  margin: 0;
+}
+
+.admin-dashboard-header p {
+  font-size: 0.875rem;
+  color: var(--admin-text-muted);
+  margin: 0;
+}
+
+.admin-dashboard-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.admin-dashboard-btn-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  background: var(--admin-primary);
+  color: white;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.admin-dashboard-btn-refresh:hover {
+  opacity: 0.9;
+}
+
+/* Stat cards - 4 column grid */
+.admin-dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 1024px) {
+  .admin-dashboard-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-dashboard-stat-card {
+  background: var(--admin-card-bg);
+  border: 1px solid var(--admin-card-border);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.admin-dashboard-stat-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  background: rgba(144, 190, 109, 0.15);
+  color: var(--admin-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.admin-dashboard-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--admin-text);
+  line-height: 1.2;
+}
+
+.admin-dashboard-stat-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.125rem;
+}
+
+/* Teacher performance + Recent activity grid */
+.admin-dashboard-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 1024px) {
+  .admin-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-dashboard-card {
+  background: var(--admin-card-bg);
+  border: 1px solid var(--admin-card-border);
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.admin-dashboard-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--admin-card-border);
+  flex-shrink: 0;
+}
+
+/* Scrollable teacher list - keeps card within viewport */
+.admin-dashboard-teacher-list {
+  max-height: min(50vh, 400px);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.admin-dashboard-card-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--admin-text);
+  margin: 0;
+}
+
+.admin-dashboard-card-subtitle {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+  margin: 0.25rem 0 0 0;
+}
+
+.admin-dashboard-teacher-item {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--admin-card-border);
+}
+
+.admin-dashboard-teacher-item:last-child {
+  border-bottom: none;
+}
+
+.admin-dashboard-teacher-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.admin-dashboard-teacher-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--admin-primary);
+  margin: 0 0 0.25rem 0;
+}
+
+.admin-dashboard-teacher-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+}
+
+.admin-dashboard-teacher-pct {
+  display: flex;
+  gap: 2rem;
+  text-align: right;
+}
+
+.admin-dashboard-teacher-pct-item p:first-child {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--admin-primary);
+  margin: 0;
+}
+
+.admin-dashboard-teacher-pct-item p:last-child {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--admin-text-muted);
+  margin: 0.125rem 0 0 0;
+}
+
+.admin-dashboard-teacher-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--admin-card-border);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.admin-dashboard-teacher-bar-fill {
+  height: 100%;
+  background: var(--admin-primary);
+  border-radius: 9999px;
+  transition: width 0.2s;
+}
+
+.admin-dashboard-course-list {
+  margin-top: 1rem;
+}
+
+.admin-dashboard-course-list-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 0.75rem 0;
+}
+
+.admin-dashboard-course-row {
+  background: var(--admin-bg);
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.admin-dashboard-activity-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.admin-dashboard-activity-item {
+  padding: 1rem;
+  transition: background 0.15s;
+}
+
+.admin-dashboard-activity-item:hover {
+  background: var(--admin-bg);
+}
+
+.admin-dashboard-activity-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--admin-text);
+  margin: 0;
+}
+
+.admin-dashboard-activity-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.admin-dashboard-activity-term {
+  font-size: 0.625rem;
+  font-weight: 700;
+  background: rgba(144, 190, 109, 0.2);
+  color: var(--admin-secondary);
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.admin-dashboard-activity-date {
+  font-size: 0.625rem;
+  color: var(--admin-text-muted);
+}
+
+.admin-dashboard-activity-more {
+  width: 100%;
+  padding: 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--admin-text-muted);
+  background: rgba(248, 250, 252, 0.8);
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.admin-dashboard-activity-more:hover {
+  color: var(--admin-primary);
+}
+
+/* Quick actions */
+.admin-dashboard-quick-actions {
+  margin-top: 2rem;
+}
+
+.admin-dashboard-quick-actions h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--admin-text);
+  margin: 0 0 1.5rem 0;
+}
+
+.admin-dashboard-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 1200px) {
+  .admin-dashboard-quick-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-dashboard-quick-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.admin-dashboard-quick-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  background: var(--admin-card-bg);
+  border: 1px solid var(--admin-card-border);
+  border-radius: 1rem;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+  text-align: center;
+}
+
+.admin-dashboard-quick-btn:hover {
+  border-color: var(--admin-primary);
+}
+
+.admin-dashboard-quick-btn:hover .admin-dashboard-quick-btn-label {
+  color: var(--admin-primary);
+}
+
+.admin-dashboard-quick-btn-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  border: 1px solid var(--admin-card-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: var(--admin-primary);
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.admin-dashboard-quick-btn:hover .admin-dashboard-quick-btn-icon {
+  background: var(--admin-primary);
+  color: white;
+  border-color: var(--admin-primary);
+}
+
+.admin-dashboard-quick-btn.admin-dashboard-quick-btn-green:hover .admin-dashboard-quick-btn-icon {
+  background: var(--admin-secondary);
+  border-color: var(--admin-secondary);
+  color: white;
+}
+
+.admin-dashboard-quick-btn-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--admin-text-muted);
+}
+
+.admin-dashboard-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  gap: 1rem;
+}
+
+.admin-dashboard-loading p {
+  margin: 0;
+  color: var(--admin-text-muted);
+  font-size: 0.875rem;
+}
+
+.spinner-border {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid var(--admin-card-border);
+  border-top-color: var(--admin-primary);
+  border-radius: 50%;
+  animation: admin-dashboard-spin 0.8s linear infinite;
+}
+
+@keyframes admin-dashboard-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.admin-dashboard-empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--admin-text-muted);
+  font-size: 0.875rem;
+}

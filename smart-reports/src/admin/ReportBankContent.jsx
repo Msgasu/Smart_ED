@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getReportsByStatus, completeReport, revertReportToDraft, REPORT_STATUS } from '../lib/reportApi'
 import toast from 'react-hot-toast'
+import AdminLayout from './AdminLayout'
 import './ReportBank.css'
 
 const ReportBankContent = () => {
@@ -303,6 +304,7 @@ const ReportBankContent = () => {
   }
 
   return (
+    <AdminLayout profile={userProfile}>
     <div className="report-bank-page">
       <div className="page-header">
         <div className="header-content">
@@ -459,6 +461,7 @@ const ReportBankContent = () => {
         </div>
       )}
     </div>
+    </AdminLayout>
   )
 }
 
