@@ -45,15 +45,11 @@ const AdminDashboard = ({ user, profile }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check for tab parameter in URL
     const urlParams = new URLSearchParams(location.search)
     const tabParam = urlParams.get('tab')
-    console.log('AdminDashboard tab check:', { tabParam, activeTab, locationSearch: location.search })
-    if (tabParam && tabParam !== activeTab) {
-      console.log('Setting active tab to:', tabParam)
-      setActiveTab(tabParam)
-    }
-  }, [location.search, activeTab])
+    const nextTab = tabParam && ['users', 'reports', 'report-bank', 'classes', 'courses', 'settings', 'analytics'].includes(tabParam) ? tabParam : 'dashboard'
+    setActiveTab(nextTab)
+  }, [location.search])
 
   useEffect(() => {
     if (activeTab === 'dashboard') {
@@ -517,11 +513,11 @@ const AdminDashboard = ({ user, profile }) => {
         <section className="admin-dashboard-quick-actions">
           <h3>Quick Actions</h3>
           <div className="admin-dashboard-quick-grid">
-            <button type="button" className="admin-dashboard-quick-btn" onClick={() => setActiveTab('users')}>
+            <button type="button" className="admin-dashboard-quick-btn" onClick={() => navigate('/?tab=users')}>
               <span className="admin-dashboard-quick-btn-icon"><FaUserPlus /></span>
               <span className="admin-dashboard-quick-btn-label">Manage Users</span>
             </button>
-            <button type="button" className="admin-dashboard-quick-btn admin-dashboard-quick-btn-green" onClick={() => setActiveTab('reports')}>
+            <button type="button" className="admin-dashboard-quick-btn admin-dashboard-quick-btn-green" onClick={() => navigate('/?tab=reports')}>
               <span className="admin-dashboard-quick-btn-icon"><FaChartLine /></span>
               <span className="admin-dashboard-quick-btn-label">Create Reports</span>
             </button>
@@ -529,15 +525,15 @@ const AdminDashboard = ({ user, profile }) => {
               <span className="admin-dashboard-quick-btn-icon"><FaEye /></span>
               <span className="admin-dashboard-quick-btn-label">View All Reports</span>
             </button>
-            <button type="button" className="admin-dashboard-quick-btn" onClick={() => setActiveTab('settings')}>
+            <button type="button" className="admin-dashboard-quick-btn" onClick={() => navigate('/?tab=settings')}>
               <span className="admin-dashboard-quick-btn-icon"><FaCog /></span>
               <span className="admin-dashboard-quick-btn-label">System Settings</span>
             </button>
-            <button type="button" className="admin-dashboard-quick-btn admin-dashboard-quick-btn-green" onClick={() => setActiveTab('classes')}>
+            <button type="button" className="admin-dashboard-quick-btn admin-dashboard-quick-btn-green" onClick={() => navigate('/?tab=classes')}>
               <span className="admin-dashboard-quick-btn-icon"><FaSchool /></span>
               <span className="admin-dashboard-quick-btn-label">Manage Classes</span>
             </button>
-            <button type="button" className="admin-dashboard-quick-btn" onClick={() => setActiveTab('courses')}>
+            <button type="button" className="admin-dashboard-quick-btn" onClick={() => navigate('/?tab=courses')}>
               <span className="admin-dashboard-quick-btn-icon"><FaBookOpen /></span>
               <span className="admin-dashboard-quick-btn-label">Assign Courses</span>
             </button>
@@ -578,12 +574,7 @@ const AdminDashboard = ({ user, profile }) => {
   }
 
   return (
-    <AdminLayout 
-      activeTab={activeTab} 
-      setActiveTab={setActiveTab}
-      user={user}
-      profile={profile}
-    >
+    <AdminLayout user={user} profile={profile}>
       {renderContent()}
     </AdminLayout>
   )

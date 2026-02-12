@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import AdminSidebar from './AdminSidebar'
 import '../styles/report-enhancements.css'
 
@@ -12,38 +12,26 @@ function getActiveKeyFromPath(pathname) {
   return m ? m[1] : 'dashboard'
 }
 
-const AdminLayout = ({ children, activeTab, setActiveTab, user, profile }) => {
-  const navigate = useNavigate()
+function getActiveKeyFromLocation(pathname, search) {
+  if (pathname === '/' || pathname === '/dashboard') {
+    const tab = new URLSearchParams(search).get('tab')
+    const valid = ['users', 'reports', 'report-bank', 'classes', 'courses', 'settings', 'analytics']
+    return tab && valid.includes(tab) ? tab : 'dashboard'
+  }
+  return getActiveKeyFromPath(pathname)
+}
+
+const AdminLayout = ({ children, user, profile }) => {
   const location = useLocation()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-
-  const isDashboard = activeTab !== undefined && setActiveTab !== undefined
-  const activeKey = isDashboard ? activeTab : getActiveKeyFromPath(location.pathname)
-
-  const handleNavSelect = (key) => {
-    if (key === 'report-bank') {
-      navigate('/admin/report-bank')
-      return
-    }
-    if (key === 'dashboard') {
-      navigate('/')
-      return
-    }
-    if (isDashboard) {
-      setActiveTab(key)
-      navigate(`/?tab=${key}`, { replace: true })
-      return
-    }
-    navigate(`/?tab=${key}`)
-  }
+  const activeKey = getActiveKeyFromLocation(location.pathname, location.search)
 
   return (
     <div className="admin-layout">
       <AdminSidebar
         profile={profile}
         activeKey={activeKey}
-        onNavSelect={handleNavSelect}
         onLogout={window.handleGlobalLogout}
         collapsed={sidebarCollapsed}
         mobileOpen={mobileMenuOpen}

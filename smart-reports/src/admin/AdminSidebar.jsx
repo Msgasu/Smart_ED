@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import {
   FaThLarge,
@@ -23,20 +24,22 @@ const MENU_ITEMS = [
   { id: 'settings', label: 'Settings', icon: FaCog },
 ]
 
+function getTo(id) {
+  if (id === 'dashboard') return { pathname: '/' }
+  if (id === 'report-bank') return { pathname: '/admin/report-bank' }
+  return { pathname: '/', search: `?tab=${id}` }
+}
+
 const AdminSidebar = ({
   profile,
   activeKey,
-  onNavSelect,
   onLogout,
   collapsed = false,
   mobileOpen = false,
   onMobileToggle,
   onMobileClose,
 }) => {
-  const handleNav = (id) => {
-    onNavSelect?.(id)
-    onMobileClose?.()
-  }
+  const handleLinkClick = () => onMobileClose?.()
 
   const handleLogout = async () => {
     const fn = onLogout || (() => window.handleGlobalLogout?.())
@@ -85,16 +88,16 @@ const AdminSidebar = ({
             {MENU_ITEMS.map(({ id, label, icon: Icon }) => {
               const isActive = activeKey === id
               return (
-                <button
+                <Link
                   key={id}
-                  type="button"
+                  to={getTo(id)}
                   className={`admin-sidebar-nav-item ${isActive ? 'active' : ''}`}
-                  onClick={() => handleNav(id)}
+                  onClick={handleLinkClick}
                   title={label}
                 >
                   <Icon className="admin-sidebar-nav-icon" aria-hidden />
                   {!collapsed && <span className="admin-sidebar-nav-label">{label}</span>}
-                </button>
+                </Link>
               )
             })}
           </nav>

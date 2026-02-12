@@ -111,6 +111,7 @@
   font-weight: 700;
   color: var(--admin-text);
   line-height: 1.2;
+  margin: 0;
 }
 
 .admin-dashboard-stat-label {
@@ -119,7 +120,7 @@
   color: var(--admin-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-top: 0.125rem;
+  margin: 0.125rem 0 0 0;
 }
 
 /* Teacher performance + Recent activity grid */
@@ -442,6 +443,24 @@
   background: var(--admin-primary);
   color: white;
   border-color: var(--admin-primary);
+}
+
+/* Green quick actions: green icon and label by default (like Create Reports) */
+.admin-dashboard-quick-btn.admin-dashboard-quick-btn-green .admin-dashboard-quick-btn-icon {
+  color: var(--admin-secondary);
+  border-color: var(--admin-secondary);
+}
+
+.admin-dashboard-quick-btn.admin-dashboard-quick-btn-green .admin-dashboard-quick-btn-label {
+  color: var(--admin-secondary);
+}
+
+.admin-dashboard-quick-btn.admin-dashboard-quick-btn-green:hover {
+  border-color: var(--admin-secondary);
+}
+
+.admin-dashboard-quick-btn.admin-dashboard-quick-btn-green:hover .admin-dashboard-quick-btn-label {
+  color: var(--admin-secondary);
 }
 
 .admin-dashboard-quick-btn.admin-dashboard-quick-btn-green:hover .admin-dashboard-quick-btn-icon {

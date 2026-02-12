@@ -122,6 +122,8 @@
   width: 100%;
   text-align: left;
   transition: background 0.2s, color 0.2s;
+  text-decoration: none;
+  box-sizing: border-box;
 }
 
 .admin-sidebar-nav-item:hover {
