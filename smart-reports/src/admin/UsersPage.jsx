@@ -679,7 +679,7 @@ const UsersPage = () => {
 
           {currentUsers.map(user => (
             <div key={user.id} className="users-page-row">
-              <div className="users-page-cell users-page-cell-user">
+              <div className="users-page-cell users-page-cell-user" data-label="User">
                 <div className="users-page-avatar">
                   {(user.first_name?.[0] || '')}{(user.last_name?.[0] || '')}
                 </div>
@@ -688,17 +688,17 @@ const UsersPage = () => {
                   <div className="users-page-email">{user.email}</div>
                 </div>
               </div>
-              <div className="users-page-cell">
+              <div className="users-page-cell" data-label="Role">
                 <span className={`users-page-badge users-page-badge-role users-page-badge-${getRoleColor(user.role)}`}>
                   {(user.role || '').toUpperCase()}
                 </span>
               </div>
-              <div className="users-page-cell">
+              <div className="users-page-cell" data-label="Status">
                 <span className={`users-page-badge users-page-badge-status users-page-badge-${getStatusColor(user.status)}`}>
                   {(user.status || 'active').toUpperCase()}
                 </span>
               </div>
-              <div className="users-page-cell users-page-cell-details">
+              <div className="users-page-cell users-page-cell-details" data-label="Details">
                 {user.role === 'student' && (
                   <span className="users-page-detail">Class: {getStudentClass(user) || 'N/A'}</span>
                 )}
@@ -712,10 +712,10 @@ const UsersPage = () => {
                   <span className="users-page-detail">—</span>
                 )}
               </div>
-              <div className="users-page-cell users-page-cell-date">
+              <div className="users-page-cell users-page-cell-date" data-label="Joined">
                 {user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}
               </div>
-              <div className="users-page-cell users-page-cell-actions">
+              <div className="users-page-cell users-page-cell-actions" data-label="Actions">
                 <div className="action-buttons">
                   <button 
                     className="action-btn edit"

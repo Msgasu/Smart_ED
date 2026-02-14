@@ -35,7 +35,7 @@
 
 @media (max-width: 640px) {
   .users-page-stats {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -318,6 +318,87 @@
   }
   .users-page-row {
     grid-template-columns: minmax(120px, 2fr) minmax(70px, 0.9fr) minmax(70px, 0.9fr) minmax(80px, 1.2fr) minmax(70px, 0.9fr) minmax(80px, 1fr);
+  }
+}
+
+/* Mobile: user rows as cards */
+@media (max-width: 768px) {
+  .users-page-table-wrap {
+    padding: 0;
+    box-shadow: none;
+    border: none;
+    background: transparent;
+  }
+  .users-page-table-header {
+    padding: 1rem 0;
+    border-bottom: none;
+    background: transparent;
+  }
+  .users-page-thead {
+    display: none;
+  }
+  .users-page-table {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .users-page-row {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: 1rem;
+    border: 1px solid var(--users-border);
+    background: var(--users-card-bg);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    align-items: stretch;
+  }
+  .users-page-row:hover {
+    background: var(--users-card-bg);
+  }
+  .users-page-cell {
+    padding: 0;
+    border: none;
+  }
+  .users-page-cell::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--users-text-muted);
+    margin-bottom: 0.25rem;
+  }
+  .users-page-cell-user::before {
+    display: none;
+  }
+  .users-page-cell-user {
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--users-border);
+  }
+  .users-page-cell-actions {
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--users-border);
+    justify-content: flex-start;
+  }
+  .users-page-cell-actions::before {
+    display: none;
+  }
+  .users-page .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 480px) {
+  .users-page-search-input,
+  .users-page-filter-select {
+    font-size: 1rem;
+  }
+  .users-page-stats .stats-card {
+    padding: 1rem;
   }
 }
 
