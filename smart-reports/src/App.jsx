@@ -13,7 +13,6 @@ import Login from './shared/Login'
 import Signup from './shared/Signup'
 import ForgotPassword from './shared/ForgotPassword'
 import ResetPassword from './shared/ResetPassword'
-import ClassReportsPage from './admin/ClassReportsPage'
 import ReportViewer from './admin/ReportViewer'
 import ReportBankContent from './admin/ReportBankContent'
 import TeacherReportViewer from './teacher/TeacherReportViewer'
@@ -211,7 +210,6 @@ function App() {
             {/* Admin-specific routes */}
             {userProfile.role === 'admin' && (
               <>
-                <Route path="/admin/class-reports/:className" element={<ClassReportsPage />} />
                 <Route path="/admin/report-bank" element={<ReportBankContent />} />
                 <Route path="/admin/report-view/:reportId" element={<ReportViewer />} />
                 <Route path="/admin/report-print/:reportId" element={<ReportViewer />} />

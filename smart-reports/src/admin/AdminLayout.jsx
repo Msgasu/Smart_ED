@@ -7,7 +7,6 @@ function getActiveKeyFromPath(pathname) {
   if (pathname === '/' || pathname === '/dashboard') return 'dashboard'
   if (pathname.startsWith('/admin/report-bank')) return 'report-bank'
   if (pathname.startsWith('/admin/report-view') || pathname.startsWith('/admin/report-print')) return 'report-bank'
-  if (pathname.startsWith('/admin/class-reports')) return 'classes'
   const m = pathname.match(/^\/admin\/([^/]+)/)
   return m ? m[1] : 'dashboard'
 }
