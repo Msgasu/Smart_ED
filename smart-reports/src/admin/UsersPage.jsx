@@ -631,7 +631,6 @@ const UsersPage = () => {
           <option value="all">All Roles</option>
           <option value="student">Students</option>
           <option value="faculty">Faculty</option>
-          <option value="guardian">Guardians</option>
           <option value="admin">Admins</option>
         </select>
         <select
