@@ -736,7 +736,7 @@ const Reports = () => {
       {/* Filters - same pattern as Users */}
       <div className="reports-page-filters">
         <div className="reports-page-search">
-          <FaSearch className="reports-page-search-icon" aria-hidden />
+          <FaSearch className="reports-page-search-icon" aria-hidden="true" />
           <input
             type="text"
             className="reports-page-search-input"
