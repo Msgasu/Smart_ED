@@ -55,17 +55,17 @@ const AdminDashboard = ({ user, profile }) => {
     if (activeTab === 'dashboard') {
       let cancelled = false
       
-      const timeoutPromise = new Promise((resolve) => {
-        setTimeout(() => resolve('timeout'), 15000)
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Dashboard data fetch timed out after 15 seconds')), 15000)
       })
       
       Promise.race([fetchDashboardData(), timeoutPromise])
         .catch((error) => {
-          // Handle any errors from fetchDashboardData
-          console.error('Error in dashboard data fetch:', error)
-        })
-        .finally(() => {
-          if (!cancelled) setLoading(false)
+          // Handle timeout or other errors not caught by fetchDashboardData
+          if (!cancelled && error.message.includes('timed out')) {
+            setLoading(false)
+            toast.error('Dashboard loading timed out. Please refresh.')
+          }
         })
       
       return () => {
