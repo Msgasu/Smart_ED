@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import AdminSidebar from './AdminSidebar'
 import '../styles/report-enhancements.css'
@@ -23,9 +23,14 @@ function getActiveKeyFromLocation(pathname, search) {
 
 const AdminLayout = ({ children, user, profile }) => {
   const location = useLocation()
+  const mainRef = useRef(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const activeKey = getActiveKeyFromLocation(location.pathname, location.search)
+
+  useEffect(() => {
+    mainRef.current?.scrollTo(0, 0)
+  }, [location.pathname, location.search])
 
   return (
     <div className="admin-layout">
@@ -38,7 +43,7 @@ const AdminLayout = ({ children, user, profile }) => {
         onMobileToggle={() => setMobileMenuOpen((o) => !o)}
         onMobileClose={() => setMobileMenuOpen(false)}
       />
-      <main className="admin-main">
+      <main ref={mainRef} className="admin-main">
         <div className="admin-content">{children}</div>
       </main>
     </div>

@@ -31,7 +31,8 @@
 
 .admin-sidebar-wrap {
   width: 16rem;
-  height: 100vh;
+  height: 100%;
+  min-height: 100vh;
   flex-shrink: 0;
   background: var(--admin-sidebar-bg);
   border-right: 1px solid var(--admin-sidebar-border);
