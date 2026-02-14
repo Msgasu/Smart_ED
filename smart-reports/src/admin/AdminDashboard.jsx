@@ -66,11 +66,12 @@ const AdminDashboard = ({ user, profile }) => {
       
       Promise.race([fetchDashboardData(), timeoutPromise])
         .catch((error) => {
-          // Handle timeout or other errors not caught by fetchDashboardData
+          // Handle timeout errors - other errors are already handled by fetchDashboardData's internal try-catch
           if (!cancelled && error.isTimeout) {
             setLoading(false)
             toast.error('Dashboard loading timed out. Please refresh.')
           }
+          // Non-timeout errors are intentionally not handled here as fetchDashboardData has comprehensive error handling
         })
         .finally(() => {
           // Clear the timeout after promise completes (success or error)
