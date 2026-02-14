@@ -99,6 +99,114 @@
   background: #cbd5e1;
 }
 
+.reports-page-btn-lock {
+  background: var(--reports-primary);
+  color: #fff;
+}
+
+.reports-page-btn-lock:hover {
+  opacity: 0.9;
+}
+
+.reports-page-btn-unlock {
+  background: #64748b;
+  color: #fff;
+}
+
+.reports-page-btn-unlock:hover {
+  opacity: 0.9;
+}
+
+.reports-page-btn-warning {
+  background: #b45309;
+  color: #fff;
+}
+
+.reports-page-btn-warning:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.reports-page-btn-warning:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Revert modal */
+.reports-page-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.reports-page-modal-content {
+  background: var(--reports-card-bg);
+  border-radius: 1rem;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  padding: 1.5rem;
+}
+
+.reports-page-modal-content h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--reports-text);
+}
+
+.reports-page-modal-content p {
+  margin: 0 0 1rem 0;
+  font-size: 0.875rem;
+  color: var(--reports-text-muted);
+}
+
+.reports-page-modal-report-info {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: var(--reports-bg);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--reports-text);
+}
+
+.reports-page-modal-content .form-group {
+  margin-bottom: 1rem;
+}
+
+.reports-page-modal-content .form-group label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--reports-text);
+}
+
+.reports-page-modal-content .form-group small {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--reports-text-muted);
+}
+
+.reports-page-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--reports-border);
+}
+
 /* Filters row */
 .reports-page-filters {
   display: flex;

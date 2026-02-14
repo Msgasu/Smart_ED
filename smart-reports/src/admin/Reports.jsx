@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { FaPlus, FaSearch, FaTrashAlt, FaUndo, FaSave, FaPrint, FaFileExport } from 'react-icons/fa'
+import { FaPlus, FaSearch, FaTrashAlt, FaUndo, FaSave, FaPrint, FaFileExport, FaLock, FaUnlock } from 'react-icons/fa'
 import { studentReportsAPI, studentGradesAPI, studentsAPI, coursesAPI } from '../lib/api'
+import { completeReport, revertReportToDraft, REPORT_STATUS } from '../lib/reportApi'
 import { deleteCourseAssignment, addCourseToStudent } from '../lib/courseManagement'
 import { getCurrentAcademicPeriod } from '../lib/academicPeriod'
 import toast from 'react-hot-toast'
@@ -43,6 +44,10 @@ const Reports = () => {
   const [selectedTerm, setSelectedTerm] = useState('Term 1')
   const [selectedYear, setSelectedYear] = useState('2024-2025')
   const [reportLoading, setReportLoading] = useState(false)
+  const [currentReportId, setCurrentReportId] = useState(null)
+  const [reportStatus, setReportStatus] = useState(REPORT_STATUS.DRAFT)
+  const [showRevertModal, setShowRevertModal] = useState(false)
+  const [revertReason, setRevertReason] = useState('')
   const [reportData, setReportData] = useState({
     studentName: '',
     studentId: '',
@@ -161,6 +166,8 @@ const Reports = () => {
         // Load data specific to this student only
         loadStudentReport()
       } else {
+        setCurrentReportId(null)
+        setReportStatus(REPORT_STATUS.DRAFT)
         // Clear all data when no student is selected
         setSubjects([])
         setReportData({
@@ -249,7 +256,9 @@ const Reports = () => {
       }
 
       if (existingReport) {
-        console.log(`📄 Found existing report (ID: ${existingReport.id}) for this specific student + term + year`);
+        console.log(`📄 Found existing report (ID: ${existingReport.id}) for this specific student + term + year`)
+        setCurrentReportId(existingReport.id)
+        setReportStatus(existingReport.status || REPORT_STATUS.DRAFT)
         
         // Get system reopening date for current period
         const period = await getCurrentAcademicPeriod()
@@ -337,6 +346,8 @@ const Reports = () => {
           })
         }
       } else {
+        setCurrentReportId(null)
+        setReportStatus(REPORT_STATUS.DRAFT)
         // No existing report, create default subjects from enrolled courses
         console.log(`📝 No existing report found. Creating new template with ${enrolledCourses.length} enrolled courses for ${selectedStudent.first_name}`)
         const defaultSubjects = enrolledCourses.map(enrollment => ({
@@ -602,6 +613,9 @@ const Reports = () => {
 
       if (reportError) throw reportError
 
+      setCurrentReportId(savedReport.id)
+      setReportStatus(savedReport.status || REPORT_STATUS.DRAFT)
+
       // Save grades
       const gradesPayload = subjects.map(subject => ({
         report_id: savedReport.id,
@@ -650,6 +664,45 @@ const Reports = () => {
     toast.success('Export functionality will be implemented soon')
   }
 
+  const handleLockReport = async () => {
+    if (!currentReportId) return
+    try {
+      const { data, error } = await completeReport(currentReportId)
+      if (error) {
+        toast.error(error)
+        return
+      }
+      setReportStatus(REPORT_STATUS.COMPLETED)
+      toast.success('Report locked')
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to lock report')
+    }
+  }
+
+  const handleOpenRevertModal = () => {
+    setRevertReason('')
+    setShowRevertModal(true)
+  }
+
+  const handleConfirmRevert = async () => {
+    if (!currentReportId || revertReason.trim().length < 10) return
+    try {
+      const { data, error } = await revertReportToDraft(currentReportId, revertReason.trim())
+      if (error) {
+        toast.error(error)
+        return
+      }
+      setReportStatus(REPORT_STATUS.DRAFT)
+      setShowRevertModal(false)
+      setRevertReason('')
+      toast.success('Report reverted to draft')
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to revert report')
+    }
+  }
+
   return (
     <div className="reports-page">
       <div className="reports-page-header">
@@ -658,6 +711,16 @@ const Reports = () => {
           <p className="reports-page-description">Create and edit terminal reports for students</p>
         </div>
         <div className="reports-page-header-actions">
+          {currentReportId && reportStatus === REPORT_STATUS.DRAFT && (
+            <button type="button" className="reports-page-btn reports-page-btn-lock" onClick={handleLockReport} title="Lock report">
+              <FaLock /> Lock
+            </button>
+          )}
+          {currentReportId && reportStatus === REPORT_STATUS.COMPLETED && (
+            <button type="button" className="reports-page-btn reports-page-btn-unlock" onClick={handleOpenRevertModal} title="Unlock report">
+              <FaUnlock /> Unlock
+            </button>
+          )}
           <button className="reports-page-btn reports-page-btn-success" onClick={saveReport} disabled={reportLoading}>
             <FaSave /> Save Report
           </button>
@@ -1157,6 +1220,58 @@ const Reports = () => {
             </div>
           </div>
         </>
+      )}
+
+      {/* Revert Report to Draft modal */}
+      {showRevertModal && (
+        <div className="reports-page-modal-overlay">
+          <div className="reports-page-modal-content">
+            <h3>Revert Report to Draft</h3>
+            <p>
+              Are you sure you want to revert this report back to draft status?
+              This will unlock the report for editing but remove its completed status.
+            </p>
+            {selectedStudent && (
+              <div className="reports-page-modal-report-info">
+                <strong>Report:</strong> {selectedYear} — {selectedTerm}
+                <br />
+                <strong>Student:</strong> {selectedStudent.first_name} {selectedStudent.last_name}
+              </div>
+            )}
+            <div className="form-group">
+              <label htmlFor="revertReason">Reason for reverting (required):</label>
+              <textarea
+                id="revertReason"
+                value={revertReason}
+                onChange={(e) => setRevertReason(e.target.value)}
+                placeholder="Please explain why this report is being reverted to draft status..."
+                className="form-control"
+                rows={4}
+              />
+              <small>Minimum 10 characters required</small>
+            </div>
+            <div className="reports-page-modal-actions">
+              <button
+                type="button"
+                className="reports-page-btn reports-page-btn-secondary"
+                onClick={() => {
+                  setShowRevertModal(false)
+                  setRevertReason('')
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="reports-page-btn reports-page-btn-warning"
+                onClick={handleConfirmRevert}
+                disabled={!revertReason.trim() || revertReason.trim().length < 10}
+              >
+                Revert to Draft
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
