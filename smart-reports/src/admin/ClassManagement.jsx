@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { FaPlus, FaUsers, FaExchangeAlt, FaEdit, FaTrash, FaGraduationCap, FaFileAlt } from 'react-icons/fa'
+import { FaUsers, FaExchangeAlt, FaTrash, FaGraduationCap } from 'react-icons/fa'
 import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
 import './ClassManagement.css'
 
 const ClassManagement = () => {
-  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('classes')
   const [students, setStudents] = useState([])
   const [unassignedStudents, setUnassignedStudents] = useState([])
@@ -107,10 +105,6 @@ const ClassManagement = () => {
       
       // Store unassigned students in state
       setUnassignedStudents(unassigned)
-      
-      console.log('Assigned students:', assignedData?.length || 0)
-      console.log('Unassigned students:', unassigned.length)
-      
     } catch (error) {
       console.error('Error fetching students:', error)
       toast.error('Error loading students')
@@ -120,24 +114,10 @@ const ClassManagement = () => {
   }
 
   const generateClassStats = () => {
-    console.log('Students data for stats:', students) // Debug log
-    
-    // Debug each student's class_year value
-    students.forEach((student, index) => {
-      console.log(`Student ${index + 1}:`, {
-        name: `${student.first_name} ${student.last_name}`,
-        students_object: student.students,
-        class_year: student.students?.class_year,
-        class_year_array: student.students?.[0]?.class_year
-      })
-    })
-    
     const classStats = classStructure.map(className => {
-      // Try both potential data structures for compatibility
       const studentsInClass = students.filter(
         student => student.students?.class_year === className || student.students?.[0]?.class_year === className
       )
-      console.log(`Students in ${className}:`, studentsInClass.length) // Debug log
       return {
         name: className,
         studentCount: studentsInClass.length,
@@ -145,7 +125,6 @@ const ClassManagement = () => {
       }
     })
     setClasses(classStats)
-    console.log('Generated class stats:', classStats) // Debug log
   }
 
   useEffect(() => {
@@ -285,37 +264,11 @@ const ClassManagement = () => {
 
   const ClassOverview = () => (
     <div className="class-overview">
-      <div className="overview-header">
-        <h2>Class Overview</h2>
-        <div className="overview-stats">
-          <div className="stat-card">
-            <FaUsers className="stat-icon" />
-            <div>
-              <div className="stat-number">{students.length}</div>
-              <div className="stat-label">Total Students</div>
-            </div>
-          </div>
-          <div className="stat-card">
-            <FaGraduationCap className="stat-icon" />
-            <div>
-              <div className="stat-number">{classes.filter(c => c.studentCount > 0).length}</div>
-              <div className="stat-label">Active Classes</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div className="classes-grid">
         {classes.map(classData => (
           <div key={classData.name} className="class-card">
             <div className="class-header">
-              <h3 
-                className="class-name-clickable"
-                onClick={() => navigate(`/admin/class-reports/${encodeURIComponent(classData.name)}`)}
-                title="Click to view class reports"
-              >
-                {classData.name}
-              </h3>
+              <h3 className="class-name">{classData.name}</h3>
               <span className="student-count">{classData.studentCount} students</span>
             </div>
             <div className="class-students">
@@ -337,12 +290,6 @@ const ClassManagement = () => {
             >
               View Students
             </button>
-            <button 
-              className="view-reports-btn"
-              onClick={() => navigate(`/admin/class-reports/${encodeURIComponent(classData.name)}`)}
-            >
-              View Reports
-            </button>
           </div>
         ))}
       </div>
@@ -354,42 +301,39 @@ const ClassManagement = () => {
       ? students.filter(student => student.students?.class_year === selectedClass || student.students?.[0]?.class_year === selectedClass)
       : []
 
-    console.log('Selected class:', selectedClass)
-    console.log('All students:', students)
-    console.log('Class students for', selectedClass, ':', classStudents)
-
     return (
       <div className="student-management">
-        <div className="management-header">
-          <h2>Student Management</h2>
-          <div className="management-controls">
-            <select
-              value={selectedClass}
-              onChange={(e) => setSelectedClass(e.target.value)}
-              className="class-selector"
+        <div className="management-filters">
+          <label htmlFor="class-select" className="management-filter-label">Filter by class</label>
+          <select
+            id="class-select"
+            value={selectedClass}
+            onChange={(e) => setSelectedClass(e.target.value)}
+            className="class-selector"
+          >
+            <option value="">All Students</option>
+            {classStructure.map(className => (
+              <option key={className} value={className}>{className}</option>
+            ))}
+          </select>
+          {selectedStudents.length > 0 && (
+            <button
+              className="btn btn-primary"
+              onClick={() => setShowTransferModal(true)}
             >
-              <option value="">All Students</option>
-              {classStructure.map(className => (
-                <option key={className} value={className}>{className}</option>
-              ))}
-            </select>
-            
-            {selectedStudents.length > 0 && (
-              <button
-                className="btn btn-primary"
-                onClick={() => setShowTransferModal(true)}
-              >
-                <FaExchangeAlt /> Transfer Selected ({selectedStudents.length})
-              </button>
-            )}
-          </div>
+              <FaExchangeAlt /> Transfer Selected ({selectedStudents.length})
+            </button>
+          )}
         </div>
 
         {/* Unassigned Students Section */}
         {!selectedClass && (
           <div className="unassigned-section">
-            <h3>Unassigned Students ({unassignedStudents.length})</h3>
-            {unassignedStudents.length > 0 ? (
+            <div className="classes-table-wrap">
+              <div className="classes-table-header">
+                <h3>Unassigned Students ({unassignedStudents.length})</h3>
+              </div>
+              {unassignedStudents.length > 0 ? (
               <div className="students-table">
                 <table>
                   <thead>
@@ -416,18 +360,18 @@ const ClassManagement = () => {
                   <tbody>
                     {unassignedStudents.map(student => (
                       <tr key={student.id}>
-                        <td>
+                        <td data-label="">
                           <input
                             type="checkbox"
                             checked={selectedStudents.includes(student.id)}
                             onChange={() => handleStudentSelection(student.id)}
                           />
                         </td>
-                        <td>{student.first_name} {student.last_name}</td>
-                        <td>{student.students?.student_id || student.students?.[0]?.student_id || 'N/A'}</td>
-                        <td>{student.email}</td>
-                        <td>{student.unique_code || student.students?.unique_code || 'N/A'}</td>
-                        <td>
+                        <td data-label="Name">{student.first_name} {student.last_name}</td>
+                        <td data-label="Student ID">{student.students?.student_id || student.students?.[0]?.student_id || 'N/A'}</td>
+                        <td data-label="Email">{student.email}</td>
+                        <td data-label="Unique Code">{student.unique_code || student.students?.unique_code || 'N/A'}</td>
+                        <td data-label="Actions">
                           <select
                             onChange={(e) => {
                               if (e.target.value) {
@@ -453,13 +397,17 @@ const ClassManagement = () => {
                 <p>All students have been assigned to classes!</p>
               </div>
             )}
+            </div>
           </div>
         )}
 
         {/* Selected Class Students */}
         {selectedClass && (
           <div className="class-students-section">
-            <h3>{selectedClass} Students ({classStudents.length})</h3>
+            <div className="classes-table-wrap">
+              <div className="classes-table-header">
+                <h3>{selectedClass} Students ({classStudents.length})</h3>
+              </div>
             <div className="students-table">
               <table>
                 <thead>
@@ -483,21 +431,21 @@ const ClassManagement = () => {
                     <th>Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                  <tbody>
                   {classStudents.map(student => (
                     <tr key={student.id}>
-                      <td>
+                      <td data-label="">
                         <input
                           type="checkbox"
                           checked={selectedStudents.includes(student.id)}
                           onChange={() => handleStudentSelection(student.id)}
                         />
                       </td>
-                      <td>{student.first_name} {student.last_name}</td>
-                      <td>{student.students?.student_id || student.students?.[0]?.student_id || 'N/A'}</td>
-                      <td>{student.email}</td>
-                      <td>{student.unique_code || student.students?.unique_code || 'N/A'}</td>
-                      <td>
+                      <td data-label="Name">{student.first_name} {student.last_name}</td>
+                      <td data-label="Student ID">{student.students?.student_id || student.students?.[0]?.student_id || 'N/A'}</td>
+                      <td data-label="Email">{student.email}</td>
+                      <td data-label="Unique Code">{student.unique_code || student.students?.unique_code || 'N/A'}</td>
+                      <td data-label="Actions">
                         <button
                           className="btn btn-danger btn-sm"
                           onClick={() => removeStudentFromClass(student.id)}
@@ -511,28 +459,33 @@ const ClassManagement = () => {
                 </tbody>
               </table>
             </div>
+            </div>
           </div>
         )}
 
         {/* All Students View */}
         {!selectedClass && (
           <div className="all-students-section">
-            <h3>All Students by Class</h3>
-            <div className="students-by-class">
-              {classes.filter(c => c.studentCount > 0).map(classData => (
-                <div key={classData.name} className="class-group">
-                  <h4>{classData.name} ({classData.studentCount})</h4>
-                  <div className="class-student-list">
-                    {classData.students.map(student => (
-                      <div key={student.id} className="student-item">
-                        <span>{student.first_name} {student.last_name}</span>
-                        <small>ID: {student.students?.student_id || student.students?.[0]?.student_id}</small>
-                        <small>Code: {student.unique_code || student.students?.unique_code || 'N/A'}</small>
-                      </div>
-                    ))}
+            <div className="classes-table-wrap">
+              <div className="classes-table-header">
+                <h3>All Students by Class ({students.length})</h3>
+              </div>
+              <div className="students-by-class">
+                {classes.filter(c => c.studentCount > 0).map(classData => (
+                  <div key={classData.name} className="class-group">
+                    <h4>{classData.name} ({classData.studentCount})</h4>
+                    <div className="class-student-list">
+                      {classData.students.map(student => (
+                        <div key={student.id} className="student-item">
+                          <span>{student.first_name} {student.last_name}</span>
+                          <small>ID: {student.students?.student_id || student.students?.[0]?.student_id}</small>
+                          <small>Code: {student.unique_code || student.students?.unique_code || 'N/A'}</small>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         )}

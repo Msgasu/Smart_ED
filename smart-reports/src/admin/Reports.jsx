@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { FaPlus, FaSearch, FaTrashAlt, FaCalendarAlt, FaSave, FaPrint, FaFileExport } from 'react-icons/fa'
-import { supabase } from '../lib/supabase'
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { FaPlus, FaSearch, FaTrashAlt, FaUndo, FaSave, FaPrint, FaFileExport, FaLock, FaUnlock } from 'react-icons/fa'
 import { studentReportsAPI, studentGradesAPI, studentsAPI, coursesAPI } from '../lib/api'
+import { completeReport, revertReportToDraft, REPORT_STATUS } from '../lib/reportApi'
 import { deleteCourseAssignment, addCourseToStudent } from '../lib/courseManagement'
 import { getCurrentAcademicPeriod } from '../lib/academicPeriod'
 import toast from 'react-hot-toast'
-// Using native crypto.randomUUID() instead of uuid package
 import './Reports.css'
 import '../styles/report-enhancements.css'
 
@@ -41,9 +40,14 @@ const Reports = () => {
   const [selectedStudent, setSelectedStudent] = useState(null)
   const [students, setStudents] = useState([])
   const [studentSearchTerm, setStudentSearchTerm] = useState('')
+  const [classFilter, setClassFilter] = useState('all')
   const [selectedTerm, setSelectedTerm] = useState('Term 1')
   const [selectedYear, setSelectedYear] = useState('2024-2025')
   const [reportLoading, setReportLoading] = useState(false)
+  const [currentReportId, setCurrentReportId] = useState(null)
+  const [reportStatus, setReportStatus] = useState(REPORT_STATUS.DRAFT)
+  const [showRevertModal, setShowRevertModal] = useState(false)
+  const [revertReason, setRevertReason] = useState('')
   const [reportData, setReportData] = useState({
     studentName: '',
     studentId: '',
@@ -94,17 +98,38 @@ const Reports = () => {
     setStudentSearchTerm(e.target.value)
   }, [])
 
-  // Filter students based on search term
-  const filteredStudents = students.filter(student => {
-    if (!studentSearchTerm) return true
-    const fullName = `${student.first_name} ${student.last_name}`.toLowerCase()
-    const className = student.students?.class_year || ''
-    const searchLower = studentSearchTerm.toLowerCase()
-    
-    return fullName.includes(searchLower) || 
-           className.toLowerCase().includes(searchLower) ||
-           student.email.toLowerCase().includes(searchLower)
-  })
+  const uniqueClasses = useMemo(() => {
+    const set = new Set()
+    students.forEach(s => {
+      const c = s.students?.class_year
+      if (c) set.add(c)
+    })
+    return Array.from(set).sort()
+  }, [students])
+
+  const filteredStudents = useMemo(() => {
+    return students.filter(student => {
+      const fullName = `${student.first_name} ${student.last_name}`.toLowerCase()
+      const className = (student.students?.class_year || '').toLowerCase()
+      const searchLower = studentSearchTerm.trim().toLowerCase()
+      const matchSearch = !searchLower ||
+        fullName.includes(searchLower) ||
+        className.includes(searchLower) ||
+        (student.email || '').toLowerCase().includes(searchLower)
+      const matchClass = classFilter === 'all' || (student.students?.class_year || '') === classFilter
+      return matchSearch && matchClass
+    })
+  }, [students, studentSearchTerm, classFilter])
+
+  const resetFilters = useCallback(async () => {
+    setStudentSearchTerm('')
+    setClassFilter('all')
+    try {
+      const period = await getCurrentAcademicPeriod()
+      setSelectedTerm(period.term)
+      setSelectedYear(period.academicYear)
+    } catch (_) {}
+  }, [])
 
   // Update report data when student changes
   useEffect(() => {
@@ -141,6 +166,8 @@ const Reports = () => {
         // Load data specific to this student only
         loadStudentReport()
       } else {
+        setCurrentReportId(null)
+        setReportStatus(REPORT_STATUS.DRAFT)
         // Clear all data when no student is selected
         setSubjects([])
         setReportData({
@@ -229,7 +256,9 @@ const Reports = () => {
       }
 
       if (existingReport) {
-        console.log(`📄 Found existing report (ID: ${existingReport.id}) for this specific student + term + year`);
+        console.log(`📄 Found existing report (ID: ${existingReport.id}) for this specific student + term + year`)
+        setCurrentReportId(existingReport.id)
+        setReportStatus(existingReport.status || REPORT_STATUS.DRAFT)
         
         // Get system reopening date for current period
         const period = await getCurrentAcademicPeriod()
@@ -317,6 +346,8 @@ const Reports = () => {
           })
         }
       } else {
+        setCurrentReportId(null)
+        setReportStatus(REPORT_STATUS.DRAFT)
         // No existing report, create default subjects from enrolled courses
         console.log(`📝 No existing report found. Creating new template with ${enrolledCourses.length} enrolled courses for ${selectedStudent.first_name}`)
         const defaultSubjects = enrolledCourses.map(enrollment => ({
@@ -582,6 +613,9 @@ const Reports = () => {
 
       if (reportError) throw reportError
 
+      setCurrentReportId(savedReport.id)
+      setReportStatus(savedReport.status || REPORT_STATUS.DRAFT)
+
       // Save grades
       const gradesPayload = subjects.map(subject => ({
         report_id: savedReport.id,
@@ -630,67 +664,142 @@ const Reports = () => {
     toast.success('Export functionality will be implemented soon')
   }
 
+  const handleLockReport = async () => {
+    if (!currentReportId) return
+    try {
+      const { data, error } = await completeReport(currentReportId)
+      if (error) {
+        toast.error(error)
+        return
+      }
+      setReportStatus(REPORT_STATUS.COMPLETED)
+      toast.success('Report locked')
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to lock report')
+    }
+  }
+
+  const handleOpenRevertModal = () => {
+    setRevertReason('')
+    setShowRevertModal(true)
+  }
+
+  const handleConfirmRevert = async () => {
+    if (!currentReportId || revertReason.trim().length < 10) return
+    try {
+      const { data, error } = await revertReportToDraft(currentReportId, revertReason.trim())
+      if (error) {
+        toast.error(error)
+        return
+      }
+      setReportStatus(REPORT_STATUS.DRAFT)
+      setShowRevertModal(false)
+      setRevertReason('')
+      toast.success('Report reverted to draft')
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to revert report')
+    }
+  }
+
   return (
-    <div className="reports-container">
-      <div className="reports-header">
-        <h1>Student Reports</h1>
-        <div className="header-actions">
-          <button className="btn btn-success" onClick={saveReport} disabled={reportLoading}>
+    <div className="reports-page">
+      <div className="reports-page-header">
+        <div className="reports-page-header-content">
+          <h1>Student Reports</h1>
+          <p className="reports-page-description">Create and edit terminal reports for students</p>
+        </div>
+        <div className="reports-page-header-actions">
+          {currentReportId && reportStatus === REPORT_STATUS.DRAFT && (
+            <button type="button" className="reports-page-btn reports-page-btn-lock" onClick={handleLockReport} title="Lock report">
+              <FaLock /> Lock
+            </button>
+          )}
+          {currentReportId && reportStatus === REPORT_STATUS.COMPLETED && (
+            <button type="button" className="reports-page-btn reports-page-btn-unlock" onClick={handleOpenRevertModal} title="Unlock report">
+              <FaUnlock /> Unlock
+            </button>
+          )}
+          <button className="reports-page-btn reports-page-btn-success" onClick={saveReport} disabled={reportLoading}>
             <FaSave /> Save Report
           </button>
-          <button className="btn btn-primary" onClick={printReport}>
+          <button className="reports-page-btn reports-page-btn-primary" onClick={printReport}>
             <FaPrint /> Print
           </button>
-          <button className="btn btn-secondary" onClick={exportReport}>
+          <button className="reports-page-btn reports-page-btn-secondary" onClick={exportReport}>
             <FaFileExport /> Export
           </button>
         </div>
       </div>
 
-      {/* Student Selection */}
-      <div className="student-selection-section">
-        <div className="student-search-container">
-          <div className="form-group search-group">
-            <label>Search Students:</label>
-            <div className="search-input-container">
-              <FaSearch className="search-icon" />
-              <input
-                type="text"
-                className="form-control search-input"
-                placeholder="Search by name, class, or email..."
-                value={studentSearchTerm}
-                onChange={handleStudentSearchChange}
-              />
-            </div>
-          </div>
-          
-          <div className="form-group select-group">
-            <label>Select Student:</label>
-            <select
-              className="form-control"
-              value={selectedStudent?.id || ''}
-              onChange={(e) => {
-                const student = students.find(s => s.id === e.target.value)
-                setSelectedStudent(student)
-              }}
-            >
-              <option value="">-- Select a student ({filteredStudents.length} found) --</option>
-              {filteredStudents.map(student => (
-                <option key={student.id} value={student.id}>
-                  {student.first_name} {student.last_name} - {student.students?.class_year || 'No Class'}
-                </option>
-              ))}
-            </select>
-          </div>
+      {/* Filters - same pattern as Users */}
+      <div className="reports-page-filters">
+        <div className="reports-page-search">
+          <FaSearch className="reports-page-search-icon" aria-hidden="true" />
+          <input
+            type="text"
+            className="reports-page-search-input"
+            placeholder="Search by name, class, or email..."
+            value={studentSearchTerm}
+            onChange={handleStudentSearchChange}
+            aria-label="Search students"
+          />
         </div>
-        
-        {studentSearchTerm && (
-          <div className="search-results-info">
-            <small className="text-muted">
-              {filteredStudents.length} student(s) found for "{studentSearchTerm}"
-            </small>
-          </div>
-        )}
+        <select
+          value={classFilter}
+          onChange={(e) => setClassFilter(e.target.value)}
+          className="reports-page-filter-select"
+          aria-label="Filter by class"
+        >
+          <option value="all">All Classes</option>
+          {uniqueClasses.map(c => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+        <select
+          value={selectedTerm}
+          onChange={(e) => setSelectedTerm(e.target.value)}
+          className="reports-page-filter-select"
+          aria-label="Term"
+        >
+          <option value="Term 1">Term 1</option>
+          <option value="Term 2">Term 2</option>
+          <option value="Term 3">Term 3</option>
+        </select>
+        <input
+          type="text"
+          className="reports-page-filter-input"
+          value={selectedYear}
+          onChange={(e) => setSelectedYear(e.target.value)}
+          placeholder="Academic year"
+          aria-label="Academic year"
+        />
+        <button type="button" className="reports-page-reset-btn" onClick={resetFilters} title="Reset filters">
+          <FaUndo aria-hidden />
+          Reset
+        </button>
+      </div>
+
+      {/* Student selection card */}
+      <div className="reports-page-select-card">
+        <label className="reports-page-select-label">Select student</label>
+        <select
+          className="reports-page-student-select"
+          value={selectedStudent?.id || ''}
+          onChange={(e) => {
+            const student = students.find(s => s.id === e.target.value)
+            setSelectedStudent(student)
+          }}
+          aria-label="Select student"
+        >
+          <option value="">— Select a student ({filteredStudents.length} found) —</option>
+          {filteredStudents.map(student => (
+            <option key={student.id} value={student.id}>
+              {student.first_name} {student.last_name} — {student.students?.class_year || 'No Class'}
+            </option>
+          ))}
+        </select>
       </div>
 
       {selectedStudent && (
@@ -1111,6 +1220,58 @@ const Reports = () => {
             </div>
           </div>
         </>
+      )}
+
+      {/* Revert Report to Draft modal */}
+      {showRevertModal && (
+        <div className="reports-page-modal-overlay">
+          <div className="reports-page-modal-content">
+            <h3>Revert Report to Draft</h3>
+            <p>
+              Are you sure you want to revert this report back to draft status?
+              This will unlock the report for editing but remove its completed status.
+            </p>
+            {selectedStudent && (
+              <div className="reports-page-modal-report-info">
+                <strong>Report:</strong> {selectedYear} — {selectedTerm}
+                <br />
+                <strong>Student:</strong> {selectedStudent.first_name} {selectedStudent.last_name}
+              </div>
+            )}
+            <div className="form-group">
+              <label htmlFor="revertReason">Reason for reverting (required):</label>
+              <textarea
+                id="revertReason"
+                value={revertReason}
+                onChange={(e) => setRevertReason(e.target.value)}
+                placeholder="Please explain why this report is being reverted to draft status..."
+                className="form-control"
+                rows={4}
+              />
+              <small>Minimum 10 characters required</small>
+            </div>
+            <div className="reports-page-modal-actions">
+              <button
+                type="button"
+                className="reports-page-btn reports-page-btn-secondary"
+                onClick={() => {
+                  setShowRevertModal(false)
+                  setRevertReason('')
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="reports-page-btn reports-page-btn-warning"
+                onClick={handleConfirmRevert}
+                disabled={!revertReason.trim() || revertReason.trim().length < 10}
+              >
+                Revert to Draft
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -1,149 +1,52 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
-import toast from 'react-hot-toast'
-import { FaHome, FaUsers, FaChartBar, FaCog, FaSignOutAlt, FaBars, FaChevronLeft, FaChevronRight } from 'react-icons/fa'
+import React, { useState, useRef, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
+import AdminSidebar from './AdminSidebar'
 import '../styles/report-enhancements.css'
 
-const AdminLayout = ({ children, activeTab, setActiveTab, user, profile }) => {
-  const navigate = useNavigate()
+function getActiveKeyFromPath(pathname) {
+  if (pathname === '/' || pathname === '/dashboard') return 'dashboard'
+  if (pathname.startsWith('/admin/report-bank')) return 'report-bank'
+  if (pathname.startsWith('/admin/report-view') || pathname.startsWith('/admin/report-print')) return 'report-bank'
+  const m = pathname.match(/^\/admin\/([^/]+)/)
+  return m ? m[1] : 'dashboard'
+}
+
+function getActiveKeyFromLocation(pathname, search) {
+  if (pathname === '/' || pathname === '/dashboard') {
+    const tab = new URLSearchParams(search).get('tab')
+    const valid = ['users', 'reports', 'report-bank', 'classes', 'courses', 'settings', 'analytics']
+    return tab && valid.includes(tab) ? tab : 'dashboard'
+  }
+  return getActiveKeyFromPath(pathname)
+}
+
+const AdminLayout = ({ children, user, profile }) => {
+  const location = useLocation()
+  const mainRef = useRef(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const activeKey = getActiveKeyFromLocation(location.pathname, location.search)
 
-  const handleLogout = async () => {
-    const success = await window.handleGlobalLogout()
-    toast.success('Logged out successfully')
-  }
-
-  const menuItems = [
-    {
-      id: 'dashboard',
-      label: 'Dashboard',
-      icon: FaHome,
-      description: 'Overview & Statistics'
-    },
-    {
-      id: 'users',
-      label: 'Users',
-      icon: FaUsers,
-      description: 'Manage Users & Roles'
-    },
-    {
-      id: 'reports',
-      label: 'Reports',
-      icon: FaChartBar,
-      description: 'Generate & View Reports'
-    },
-    {
-      id: 'report-bank',
-      label: 'Report Bank',
-      icon: FaChartBar,
-      description: 'View All Student Reports'
-    },
-    {
-      id: 'classes',
-      label: 'Classes',
-      icon: FaUsers,
-      description: 'Manage Student Classes'
-    },
-    {
-      id: 'courses',
-      label: 'Courses',
-      icon: FaChartBar,
-      description: 'Assign Courses'
-    },
-    {
-      id: 'settings',
-      label: 'Settings',
-      icon: FaCog,
-      description: 'System Configuration'
-    }
-  ]
+  useEffect(() => {
+    mainRef.current?.scrollTo(0, 0)
+  }, [location.pathname, location.search])
 
   return (
     <div className="admin-layout">
-      {/* Mobile Sidebar Toggle */}
-      <button 
-        className="mobile-sidebar-toggle"
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-      >
-        <FaBars />
-      </button>
-
-      {/* Sidebar */}
-      <div className={`admin-sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'open' : ''}`}>
-        {/* Header */}
-        <div className="sidebar-header">
-          <div className="brand">
-            <span className="brand-icon"></span>
-            <span className="brand-text">Life International College</span>
-          </div>
-          <button 
-            className="sidebar-toggle"
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            {sidebarCollapsed ? <FaChevronRight /> : <FaChevronLeft />}
-          </button>
-        </div>
-
-        {/* User Profile */}
-        <div className="sidebar-profile">
-          <div className="profile-avatar">
-            {profile?.first_name?.[0] || 'U'}{profile?.last_name?.[0] || 'S'}
-          </div>
-          <div className="profile-info">
-            <div className="profile-name">
-              {profile?.first_name || 'Unknown'} {profile?.last_name || 'User'}
-            </div>
-            <div className="profile-role">
-              {profile?.role === 'admin' ? 'Administrator' : (profile?.role || 'User')}
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <nav className="sidebar-nav">
-          {menuItems.map(item => (
-            <button
-              key={item.id}
-              className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
-              onClick={() => {
-                setActiveTab(item.id)
-                setMobileMenuOpen(false) // Close mobile menu when item is clicked
-              }}
-              title={sidebarCollapsed ? item.label : ''}
-            >
-              <item.icon className="nav-icon" />
-              <div className="nav-content">
-                <span className="nav-label">{item.label}</span>
-                <span className="nav-description">{item.description}</span>
-              </div>
-            </button>
-          ))}
-        </nav>
-
-        {/* Logout */}
-        <div className="sidebar-footer">
-          <button 
-            className="logout-btn"
-            onClick={handleLogout}
-            title={sidebarCollapsed ? 'Logout' : ''}
-          >
-            <FaSignOutAlt className="logout-icon" />
-            <span className="logout-text">Logout</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="admin-main">
-        <div className="admin-content">
-          {children}
-        </div>
-      </div>
+      <AdminSidebar
+        profile={profile}
+        activeKey={activeKey}
+        onLogout={window.handleGlobalLogout}
+        collapsed={sidebarCollapsed}
+        mobileOpen={mobileMenuOpen}
+        onMobileToggle={() => setMobileMenuOpen((o) => !o)}
+        onMobileClose={() => setMobileMenuOpen(false)}
+      />
+      <main ref={mainRef} className="admin-main">
+        <div className="admin-content">{children}</div>
+      </main>
     </div>
   )
 }
 
-export default AdminLayout 
+export default AdminLayout

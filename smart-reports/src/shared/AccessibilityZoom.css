@@ -1,0 +1,94 @@
+.accessibility-zoom {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
+}
+
+.accessibility-zoom-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: #8B3D48;
+  color: white;
+  border: none;
+  border-radius: 2rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: background 0.2s, transform 0.15s;
+}
+
+.accessibility-zoom-btn:hover {
+  background: #723340;
+}
+
+.accessibility-zoom-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(139, 61, 72, 0.4);
+}
+
+.accessibility-zoom-icon {
+  font-size: 1.125rem;
+}
+
+.accessibility-zoom-label {
+  min-width: 2.5rem;
+  text-align: center;
+}
+
+.accessibility-zoom-panel {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 0.5rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  padding: 0.5rem;
+  min-width: 7rem;
+}
+
+.accessibility-zoom-panel-title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  padding: 0.375rem 0.5rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.accessibility-zoom-option {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #0f172a;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.accessibility-zoom-option:hover {
+  background: #f1f5f9;
+}
+
+.accessibility-zoom-option.active {
+  background: rgba(139, 61, 72, 0.1);
+  color: #8B3D48;
+  font-weight: 600;
+}
+
+.accessibility-zoom-option:focus {
+  outline: none;
+  background: #f1f5f9;
+}

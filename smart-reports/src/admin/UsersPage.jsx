@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
-import { FaUsers, FaGraduationCap, FaChalkboardTeacher, FaUserFriends, FaUserCheck, FaPlus, FaSearch, FaEdit, FaEllipsisV, FaTimes, FaSave, FaUser, FaIdCard, FaCode, FaVenusMars } from 'react-icons/fa'
+import { FaUsers, FaGraduationCap, FaChalkboardTeacher, FaUserCheck, FaPlus, FaSearch, FaEdit, FaEllipsisV, FaTimes, FaSave, FaUser, FaIdCard, FaCode, FaVenusMars, FaUndo } from 'react-icons/fa'
 import './UsersPage.css'
 
 const UsersPage = () => {
@@ -10,11 +10,11 @@ const UsersPage = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [classFilter, setClassFilter] = useState('all')
   const [stats, setStats] = useState({
     total: 0,
     students: 0,
     faculty: 0,
-    guardians: 0,
     admins: 0,
     active: 0,
     inactive: 0
@@ -56,23 +56,20 @@ const UsersPage = () => {
 
       setUsers(data || [])
       
-      // Calculate statistics
-      const stats = data.reduce((acc, user) => {
+      const stats = (data || []).reduce((acc, user) => {
         acc.total++
-        acc[user.role]++
-        acc[user.status]++
+        if (user.role) acc[user.role] = (acc[user.role] || 0) + 1
+        if (user.status) acc[user.status] = (acc[user.status] || 0) + 1
         return acc
       }, {
         total: 0,
         student: 0,
         faculty: 0,
-        guardian: 0,
         admin: 0,
         active: 0,
         inactive: 0,
         suspended: 0
       })
-
       setStats(stats)
     } catch (error) {
       console.error('Error fetching users:', error)
@@ -391,16 +388,37 @@ const UsersPage = () => {
     }
   }
 
+  const getStudentClass = (user) => {
+    if (user.role !== 'student') return null
+    const students = user.students
+    return Array.isArray(students) ? students[0]?.class_year : students?.class_year
+  }
+
+  const uniqueClasses = useMemo(() => {
+    const set = new Set()
+    users.forEach(user => {
+      const classYear = getStudentClass(user)
+      if (classYear) set.add(classYear)
+    })
+    return Array.from(set).sort()
+  }, [users])
   const filteredUsers = users.filter(user => {
-    const matchesSearch = 
-      `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    
+    const matchesSearch =
+      `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.email || '').toLowerCase().includes(searchTerm.toLowerCase())
     const matchesRole = roleFilter === 'all' || user.role === roleFilter
     const matchesStatus = statusFilter === 'all' || user.status === statusFilter
-
-    return matchesSearch && matchesRole && matchesStatus
+    const matchesClass = classFilter === 'all' || getStudentClass(user) === classFilter
+    return matchesSearch && matchesRole && matchesStatus && matchesClass
   })
+
+  const resetFilters = () => {
+    setSearchTerm('')
+    setRoleFilter('all')
+    setStatusFilter('all')
+    setClassFilter('all')
+    setCurrentPage(1)
+  }
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage)
@@ -408,10 +426,9 @@ const UsersPage = () => {
   const endIndex = startIndex + itemsPerPage
   const currentUsers = filteredUsers.slice(startIndex, endIndex)
 
-  // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, roleFilter, statusFilter])
+  }, [searchTerm, roleFilter, statusFilter, classFilter])
 
   // Memoized search handler to prevent re-renders
   const handleSearchChange = useCallback((e) => {
@@ -582,134 +599,119 @@ const UsersPage = () => {
       </div>
 
       {/* Statistics Cards */}
-      <div className="stats-grid">
-        <StatCard 
-          type="primary" 
-          icon={FaUsers} 
-          number={stats.total} 
-          label="Total Users" 
-        />
-        <StatCard 
-          type="success" 
-          icon={FaGraduationCap} 
-          number={stats.student || 0} 
-          label="Students" 
-        />
-        <StatCard 
-          type="info" 
-          icon={FaChalkboardTeacher} 
-          number={stats.faculty || 0} 
-          label="Faculty" 
-        />
-        <StatCard 
-          type="warning" 
-          icon={FaUserFriends} 
-          number={stats.guardian || 0} 
-          label="Guardians" 
-        />
-        <StatCard 
-          type="danger" 
-          icon={FaUserCheck} 
-          number={stats.active || 0} 
-          label="Active" 
-        />
+      <div className="users-page-stats">
+        <StatCard type="primary" icon={FaUsers} number={stats.total} label="Total Users" />
+        <StatCard type="success" icon={FaGraduationCap} number={stats.student || 0} label="Students" />
+        <StatCard type="info" icon={FaChalkboardTeacher} number={stats.faculty || 0} label="Faculty" />
+        <StatCard type="danger" icon={FaUserCheck} number={stats.active || 0} label="Active" />
       </div>
 
-      {/* Filters */}
-      <div className="filters-section">
-        <div className="search-box">
-          <FaSearch className="search-icon" />
+      {/* Filters - single row on PC */}
+      <div className="users-page-filters">
+        <div className="users-page-search">
+          <FaSearch className="users-page-search-icon" aria-hidden />
           <input
             type="text"
-            placeholder="Search users by name or email..."
+            placeholder="Search by name or email..."
             value={searchTerm}
             onChange={handleSearchChange}
-            className="search-input"
+            className="users-page-search-input"
+            aria-label="Search users"
           />
         </div>
-        <div className="filter-group">
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="filter-select"
-          >
-            <option value="all">All Roles</option>
-            <option value="student">Students</option>
-            <option value="faculty">Faculty</option>
-            <option value="guardian">Guardians</option>
-            <option value="admin">Admins</option>
-          </select>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="filter-select"
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="suspended">Suspended</option>
-          </select>
-        </div>
+        <select
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+          className="users-page-filter-select"
+          aria-label="Filter by role"
+        >
+          <option value="all">All Roles</option>
+          <option value="student">Students</option>
+          <option value="faculty">Faculty</option>
+          <option value="admin">Admins</option>
+        </select>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="users-page-filter-select"
+          aria-label="Filter by status"
+        >
+          <option value="all">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+          <option value="suspended">Suspended</option>
+        </select>
+        <select
+          value={classFilter}
+          onChange={(e) => setClassFilter(e.target.value)}
+          className="users-page-filter-select"
+          aria-label="Filter by class"
+        >
+          <option value="all">All Classes</option>
+          {uniqueClasses.map(c => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+        <button type="button" className="users-page-reset-btn" onClick={resetFilters} title="Reset filters">
+          <FaUndo aria-hidden />
+          Reset
+        </button>
       </div>
 
       {/* Users Table */}
-      <div className="users-table-container">
-        <div className="table-header">
+      <div className="users-page-table-wrap">
+        <div className="users-page-table-header">
           <h3>Users ({filteredUsers.length})</h3>
         </div>
-        <div className="users-table">
-          <div className="table-header-row">
-            <div className="table-cell">User</div>
-            <div className="table-cell">Role</div>
-            <div className="table-cell">Status</div>
-            <div className="table-cell">Details</div>
-            <div className="table-cell">Joined</div>
-            <div className="table-cell">Actions</div>
+        <div className="users-page-table">
+          <div className="users-page-thead">
+            <div className="users-page-th">User</div>
+            <div className="users-page-th">Role</div>
+            <div className="users-page-th">Status</div>
+            <div className="users-page-th">Details</div>
+            <div className="users-page-th">Joined</div>
+            <div className="users-page-th users-page-th-actions">Actions</div>
           </div>
-          
+
           {currentUsers.map(user => (
-            <div key={user.id} className="table-row">
-              <div className="table-cell user-cell">
-                <div className="user-avatar">
-                  {user.first_name?.[0]}{user.last_name?.[0]}
+            <div key={user.id} className="users-page-row">
+              <div className="users-page-cell users-page-cell-user" data-label="User">
+                <div className="users-page-avatar">
+                  {(user.first_name?.[0] || '')}{(user.last_name?.[0] || '')}
                 </div>
-                <div className="user-info">
-                  <div className="user-name">{user.first_name} {user.last_name}</div>
-                  <div className="user-email">{user.email}</div>
+                <div className="users-page-user-meta">
+                  <div className="users-page-name">{user.first_name} {user.last_name}</div>
+                  <div className="users-page-email">{user.email}</div>
                 </div>
               </div>
-              
-              <div className="table-cell">
-                <span className={`badge badge-${getRoleColor(user.role)}`}>
-                  {user.role.toUpperCase()}
+              <div className="users-page-cell" data-label="Role">
+                <span className={`users-page-badge users-page-badge-role users-page-badge-${getRoleColor(user.role)}`}>
+                  {(user.role || '').toUpperCase()}
                 </span>
               </div>
-              
-              <div className="table-cell">
-                <span className={`status-badge status-${user.status}`}>
-                  {user.status.toUpperCase()}
+              <div className="users-page-cell" data-label="Status">
+                <span className={`users-page-badge users-page-badge-status users-page-badge-${getStatusColor(user.status)}`}>
+                  {(user.status || 'active').toUpperCase()}
                 </span>
               </div>
-              
-              <div className="table-cell">
-                {user.role === 'student' && user.students && (
-                  <span className="detail-info">Class: {user.students.class_year || 'N/A'}</span>
+              <div className="users-page-cell users-page-cell-details" data-label="Details">
+                {user.role === 'student' && (
+                  <span className="users-page-detail">Class: {getStudentClass(user) || 'N/A'}</span>
                 )}
                 {user.role === 'faculty' && user.faculty && (
-                  <span className="detail-info">{user.faculty.department || 'N/A'}</span>
+                  <span className="users-page-detail">{Array.isArray(user.faculty) ? user.faculty[0]?.department : user.faculty.department || 'N/A'}</span>
                 )}
                 {user.phone_number && (
-                  <span className="detail-info">Phone: {user.phone_number}</span>
+                  <span className="users-page-detail">Phone: {user.phone_number}</span>
+                )}
+                {user.role !== 'student' && user.role !== 'faculty' && !user.phone_number && (
+                  <span className="users-page-detail">—</span>
                 )}
               </div>
-              
-              <div className="table-cell">
-                <span className="date-info">
-                  {new Date(user.created_at).toLocaleDateString()}
-                </span>
+              <div className="users-page-cell users-page-cell-date" data-label="Joined">
+                {user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}
               </div>
-              
-              <div className="table-cell actions-cell">
+              <div className="users-page-cell users-page-cell-actions" data-label="Actions">
                 <div className="action-buttons">
                   <button 
                     className="action-btn edit"
@@ -753,15 +755,15 @@ const UsersPage = () => {
             </div>
           ))}
         </div>
-        
+
         {filteredUsers.length === 0 && (
-          <div className="empty-state">
+          <div className="users-page-empty">
             <div className="empty-icon"></div>
             <h3>No users found</h3>
             <p>Try adjusting your search or filter criteria</p>
           </div>
         )}
-        
+
         {filteredUsers.length > 0 && renderPagination()}
       </div>
 

@@ -1,345 +1,485 @@
+/* Classes page - match admin dashboard / users theme */
 .class-management {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
+  --classes-primary: #8B3D48;
+  --classes-secondary: #90BE6D;
+  --classes-bg: #F8FAFC;
+  --classes-card-bg: #fff;
+  --classes-border: #e2e8f0;
+  --classes-text: #0f172a;
+  --classes-text-muted: #64748b;
+  background: var(--classes-bg);
+  min-height: 100%;
+  padding: 0;
 }
 
-.page-header {
-  margin-bottom: 2rem;
+.class-management .page-header {
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--classes-border);
 }
 
-.page-header h1 {
-  color: #2c3e50;
-  margin-bottom: 0.5rem;
-}
-
-.page-header p {
-  color: #7f8c8d;
+.class-management .page-header h1 {
   margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--classes-text);
+  letter-spacing: -0.02em;
+  line-height: 1.3;
 }
 
-.tab-navigation {
+.class-management .page-header p {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.9375rem;
+  color: var(--classes-text-muted);
+  line-height: 1.45;
+}
+
+.class-management .tab-navigation {
   display: flex;
-  border-bottom: 2px solid #e0e6ed;
-  margin-bottom: 2rem;
+  gap: 0.375rem;
+  margin-bottom: 1.5rem;
+  padding: 0.5rem;
+  background: var(--classes-card-bg);
+  border-radius: 0.75rem;
+  border: 1px solid var(--classes-border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
-.tab-btn {
-  padding: 1rem 2rem;
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-weight: 500;
-  color: #7f8c8d;
-  border-bottom: 3px solid transparent;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.tab-btn.active {
-  color: #3498db;
-  border-bottom-color: #3498db;
-  background-color: #f8f9fa;
-}
-
-.tab-btn:hover {
-  color: #3498db;
-  background-color: #f8f9fa;
-}
-
-/* Class Overview Styles */
-.class-overview {
-  padding: 2rem;
-}
-
-.overview-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-}
-
-.overview-stats {
-  display: flex;
-  gap: 1rem;
-}
-
-.stat-card {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  border-left: 4px solid #3498db;
-}
-
-.stat-icon {
-  font-size: 2rem;
-  color: #3498db;
-}
-
-.stat-number {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-.stat-label {
-  color: #7f8c8d;
-  font-size: 0.9rem;
-}
-
-.classes-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
-}
-
-.class-card {
-  background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  border: 1px solid #e0e6ed;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.class-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.class-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.class-header h3 {
-  color: #2c3e50;
-  margin: 0;
-  font-size: 1.1rem;
-}
-
-.student-count {
-  background: #3498db;
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.class-students {
-  margin-bottom: 1rem;
-}
-
-.student-preview {
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #f0f0f0;
-  color: #555;
-  font-size: 0.9rem;
-}
-
-.more-students {
-  color: #7f8c8d;
-  font-style: italic;
-  padding: 0.5rem 0;
-  font-size: 0.8rem;
-}
-
-.view-class-btn {
-  width: 100%;
-  padding: 0.75rem;
-  background: #3498db;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.3s ease;
-}
-
-.view-class-btn:hover {
-  background: #2980b9;
-}
-
-/* Student Management Styles */
-.student-management {
-  padding: 2rem;
-}
-
-.management-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.management-controls {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
-.class-selector {
-  padding: 0.5rem 1rem;
-  border: 2px solid #e0e6ed;
-  border-radius: 6px;
-  background: white;
-  min-width: 200px;
-}
-
-.btn {
+.class-management .tab-btn {
   padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 6px;
+  background: transparent;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--classes-text-muted);
+  border-radius: 0.5rem;
+  transition: color 0.2s, background 0.2s;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.3s ease;
 }
 
-.btn-primary {
-  background: #3498db;
+.class-management .tab-btn.active {
+  color: var(--classes-primary);
+  background: rgba(139, 61, 72, 0.08);
+}
+
+.class-management .tab-btn:hover:not(.active) {
+  color: var(--classes-text);
+  background: var(--classes-bg);
+}
+
+/* Class Overview */
+.class-management .class-overview {
+  padding: 0;
+}
+
+.class-management .overview-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--classes-border);
+}
+
+.class-management .overview-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--classes-text);
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.class-management .overview-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.class-management .stat-card {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.25rem 1.5rem;
+  min-width: 0;
+  background: var(--classes-card-bg);
+  border-radius: 0.75rem;
+  border: 1px solid var(--classes-border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.class-management .stat-icon {
+  font-size: 1.75rem;
+  color: var(--classes-secondary);
+}
+
+.class-management .stat-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--classes-text);
+  line-height: 1.2;
+}
+
+.class-management .stat-label {
+  color: var(--classes-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 0.125rem;
+}
+
+.class-management .classes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.class-management .class-card {
+  background: var(--classes-card-bg);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  border: 1px solid var(--classes-border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.class-management .class-card:hover {
+  border-color: var(--classes-primary);
+  box-shadow: 0 2px 8px rgba(139, 61, 72, 0.1);
+}
+
+.class-management .class-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.class-management .class-header h3 {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--classes-text);
+  line-height: 1.3;
+}
+
+.class-management .student-count {
+  background: rgba(144, 190, 109, 0.2);
+  color: var(--classes-secondary);
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.class-management .class-students {
+  margin-bottom: 1.25rem;
+}
+
+.class-management .student-preview {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--classes-border);
+  color: var(--classes-text-muted);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
+.class-management .more-students {
+  color: var(--classes-text-muted);
+  font-style: italic;
+  padding: 0.5rem 0;
+  font-size: 0.875rem;
+}
+
+.class-management .view-class-btn {
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  background: var(--classes-primary);
   color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  transition: opacity 0.2s;
 }
 
-.btn-primary:hover {
-  background: #2980b9;
+.class-management .view-class-btn:hover {
+  opacity: 0.9;
 }
 
-.btn-secondary {
-  background: #95a5a6;
-  color: white;
+/* Student Management */
+.class-management .student-management {
+  padding: 0;
 }
 
-.btn-secondary:hover {
-  background: #7f8c8d;
-}
-
-.btn-danger {
-  background: #e74c3c;
-  color: white;
-}
-
-.btn-danger:hover {
-  background: #c0392b;
-}
-
-.btn-sm {
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-}
-
-.unassigned-section,
-.class-students-section,
-.all-students-section {
-  margin-bottom: 2rem;
-}
-
-.unassigned-section h3,
-.class-students-section h3,
-.all-students-section h3 {
-  color: #2c3e50;
+.class-management .management-header {
   margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid #3498db;
-  display: inline-block;
+  padding-bottom: 0;
+  border-bottom: none;
 }
 
-.students-table {
-  background: white;
-  border-radius: 8px;
+.class-management .management-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--classes-text);
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.class-management .management-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  background: var(--classes-card-bg);
+  border: 1px solid var(--classes-border);
+  border-radius: 0.75rem;
+}
+
+.class-management .management-filter-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--classes-text-muted);
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.class-management .management-filters .class-selector {
+  min-width: 200px;
+  flex: 1;
+  max-width: 280px;
+}
+
+.class-management .class-selector {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--classes-border);
+  border-radius: 0.5rem;
+  background: var(--classes-card-bg);
+  font-size: 0.9375rem;
+  color: var(--classes-text);
+}
+
+.class-management .class-selector:focus {
+  outline: none;
+  border-color: var(--classes-primary);
+}
+
+.class-management .btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.class-management .btn-primary {
+  background: var(--classes-primary);
+  color: white;
+}
+
+.class-management .btn-primary:hover {
+  opacity: 0.9;
+}
+
+.class-management .btn-secondary {
+  background: var(--classes-border);
+  color: var(--classes-text);
+}
+
+.class-management .btn-secondary:hover {
+  background: #cbd5e1;
+}
+
+.class-management .btn-danger {
+  background: rgba(139, 61, 72, 0.15);
+  color: var(--classes-primary);
+}
+
+.class-management .btn-danger:hover {
+  background: rgba(139, 61, 72, 0.25);
+}
+
+.class-management .btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.class-management .unassigned-section,
+.class-management .class-students-section,
+.class-management .all-students-section {
+  margin-top: 0;
+  margin-bottom: 1.75rem;
+  padding-top: 1.5rem;
+}
+
+.class-management .unassigned-section:first-of-type,
+.class-management .class-students-section:first-of-type {
+  padding-top: 0;
+}
+
+.class-management .all-students-section {
+  padding-top: 2rem;
+  border-top: 1px solid var(--classes-border);
+}
+
+/* Table wrap + header - match Users "Users (243)" style */
+.class-management .classes-table-wrap {
+  background: var(--classes-card-bg);
+  border: 1px solid var(--classes-border);
+  border-radius: 1rem;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.students-table table {
+.class-management .classes-table-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--classes-border);
+  background: #f1f5f9;
+}
+
+.class-management .classes-table-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--classes-text);
+}
+
+.class-management .classes-table-wrap > .students-by-class {
+  padding: 1rem 1.25rem;
+}
+
+.class-management .students-table {
+  overflow: hidden;
+}
+
+.class-management .students-table table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.students-table th,
-.students-table td {
-  padding: 1rem;
+.class-management .students-table th,
+.class-management .students-table td {
+  padding: 1rem 1.25rem;
   text-align: left;
-  border-bottom: 1px solid #e0e6ed;
+  border-bottom: 1px solid var(--classes-border);
+  font-size: 0.9375rem;
+  line-height: 1.4;
 }
 
-.students-table th {
-  background: #f8f9fa;
-  font-weight: 600;
-  color: #2c3e50;
+.class-management .students-table th {
+  background: #f1f5f9;
+  font-weight: 700;
+  color: var(--classes-text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.students-table tbody tr:hover {
-  background: #f8f9fa;
+.class-management .students-table tbody tr:hover {
+  background: var(--classes-bg);
 }
 
-.assign-select {
-  padding: 0.5rem;
-  border: 1px solid #e0e6ed;
-  border-radius: 4px;
-  background: white;
+.class-management .assign-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--classes-border);
+  border-radius: 0.5rem;
+  background: var(--classes-card-bg);
+  font-size: 0.9375rem;
+  color: var(--classes-text);
 }
 
-.students-by-class {
+.class-management .assign-select:focus {
+  outline: none;
+  border-color: var(--classes-primary);
+}
+
+.class-management .students-by-class {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
 }
 
-.class-group {
-  background: white;
-  border-radius: 8px;
+.class-management .class-group {
+  background: var(--classes-card-bg);
+  border-radius: 1rem;
   padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border: 1px solid var(--classes-border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
-.class-group h4 {
-  color: #2c3e50;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #e0e6ed;
+.class-management .class-group h4 {
+  color: var(--classes-text);
+  margin: 0 0 1.25rem 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  padding-bottom: 0.625rem;
+  border-bottom: 1px solid var(--classes-border);
+  line-height: 1.3;
 }
 
-.class-student-list {
+.class-management .class-student-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.625rem;
 }
 
-.student-item {
+.class-management .student-item {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
-  padding: 0.5rem;
-  background: #f8f9fa;
-  border-radius: 4px;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--classes-bg);
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.4;
 }
 
-.student-item span {
-  font-weight: 500;
-  color: #2c3e50;
+.class-management .student-item span {
+  font-weight: 600;
+  color: var(--classes-text);
 }
 
-.student-item small {
-  color: #7f8c8d;
-  font-size: 0.8rem;
+.class-management .student-item small {
+  color: var(--classes-text-muted);
+  font-size: 0.8125rem;
 }
 
-/* Modal Styles */
-.modal-overlay {
+.class-management .no-students {
+  padding: 2.5rem 2rem;
+  text-align: center;
+  color: var(--classes-text-muted);
+  background: var(--classes-card-bg);
+  border-radius: 1rem;
+  border: 1px solid var(--classes-border);
+}
+
+.class-management .no-students p {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+
+/* Modals */
+.class-management .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -350,138 +490,167 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  padding: 1rem;
 }
 
-.modal-content {
-  background: white;
+.class-management .modal-content {
+  background: var(--classes-card-bg);
   padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  max-width: 500px;
-  width: 90%;
+  border-radius: 1rem;
+  border: 1px solid var(--classes-border);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  max-width: 440px;
+  width: 100%;
 }
 
-.modal-content h3 {
-  color: #2c3e50;
-  margin-bottom: 1rem;
+.class-management .modal-content h3 {
+  color: var(--classes-text);
+  margin: 0 0 0.75rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
 }
 
-.modal-content p {
-  color: #7f8c8d;
-  margin-bottom: 1rem;
+.class-management .modal-content p {
+  color: var(--classes-text-muted);
+  margin: 0 0 1.25rem 0;
+  font-size: 0.9375rem;
+  line-height: 1.45;
 }
 
-.modal-actions {
+.class-management .modal-actions {
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
   margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--classes-border);
 }
 
-.form-control {
+.class-management .modal-content .form-control {
   width: 100%;
-  padding: 0.75rem;
-  border: 2px solid #e0e6ed;
-  border-radius: 6px;
-  font-size: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--classes-border);
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
   margin-bottom: 1rem;
+  background: var(--classes-card-bg);
+  color: var(--classes-text);
+  line-height: 1.4;
 }
 
-.form-control:focus {
+.class-management .modal-content .form-control:focus {
   outline: none;
-  border-color: #3498db;
+  border-color: var(--classes-primary);
 }
 
-.loading-spinner {
+.class-management .loading-spinner {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 4rem;
-  color: #7f8c8d;
+  padding: 3.5rem;
+  color: var(--classes-text-muted);
+  font-size: 0.9375rem;
 }
 
-.loading-spinner::before {
+.class-management .loading-spinner::before {
   content: '';
-  width: 32px;
-  height: 32px;
-  border: 3px solid #e0e6ed;
-  border-top: 3px solid #3498db;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--classes-border);
+  border-top-color: var(--classes-primary);
   border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-right: 1rem;
+  animation: class-mgmt-spin 0.8s linear infinite;
+  margin-right: 0.75rem;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+@keyframes class-mgmt-spin {
+  to { transform: rotate(360deg); }
 }
 
-/* Responsive Design */
+.class-management .class-name {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--classes-text);
+  line-height: 1.3;
+}
+
+/* Mobile */
 @media (max-width: 768px) {
-  .class-management {
-    padding: 1rem;
-  }
-  
-  .management-header {
+  .class-management .management-filters {
     flex-direction: column;
     align-items: stretch;
   }
-  
-  .management-controls {
-    flex-direction: column;
+  .class-management .management-filters .class-selector {
+    max-width: none;
   }
-  
-  .overview-header {
+  .class-management .overview-header {
     flex-direction: column;
     gap: 1rem;
   }
-  
-  .overview-stats {
-    flex-direction: column;
+  .class-management .overview-stats {
+    flex-direction: row;
+    flex-wrap: wrap;
   }
-  
-  .classes-grid {
+  .class-management .stat-card {
+    flex: 1;
+    min-width: 140px;
+  }
+  .class-management .classes-grid {
     grid-template-columns: 1fr;
   }
-  
-  .students-by-class {
+  .class-management .students-by-class {
     grid-template-columns: 1fr;
   }
-  
-  .students-table {
-    overflow-x: auto;
+  .class-management .students-table {
+    overflow: visible;
+    border-radius: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
   }
-  
-  .tab-navigation {
+  .class-management .students-table thead {
+    display: none;
+  }
+  .class-management .students-table tbody tr {
+    display: flex;
     flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    background: var(--classes-card-bg);
+    border: 1px solid var(--classes-border);
+    border-radius: 1rem;
   }
-}
-
-/* New Class Report Features */
-.class-name-clickable {
-  cursor: pointer;
-  color: #3498db;
-  transition: all 0.2s ease;
-}
-
-.class-name-clickable:hover {
-  color: #2980b9;
-  text-decoration: underline;
-}
-
-.view-reports-btn {
-  width: 100%;
-  padding: 0.75rem;
-  background: #e67e22;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.3s ease;
-  margin-top: 0.5rem;
-}
-
-.view-reports-btn:hover {
-  background: #d68910;
+  .class-management .students-table tbody tr:last-child {
+    margin-bottom: 0;
+  }
+  .class-management .students-table td {
+    padding: 0;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .class-management .students-table td::before {
+    content: attr(data-label);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--classes-text-muted);
+    flex-shrink: 0;
+  }
+  .class-management .students-table td:first-child {
+    display: flex;
+    justify-content: flex-start;
+  }
+  .class-management .students-table td:first-child::before {
+    display: none;
+  }
+  .class-management .tab-navigation {
+    flex-direction: row;
+  }
 } 
