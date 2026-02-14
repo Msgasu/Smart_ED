@@ -18,7 +18,6 @@ const MENU_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: FaThLarge },
   { id: 'users', label: 'Users', icon: FaUsers },
   { id: 'reports', label: 'Reports', icon: FaChartBar },
-  { id: 'report-bank', label: 'Report Bank', icon: FaBook },
   { id: 'classes', label: 'Classes', icon: FaSchool },
   { id: 'courses', label: 'Courses', icon: FaBookOpen },
   { id: 'settings', label: 'Settings', icon: FaCog },
