@@ -60,6 +60,10 @@ const AdminDashboard = ({ user, profile }) => {
       })
       
       Promise.race([fetchDashboardData(), timeoutPromise])
+        .catch((error) => {
+          // Handle any errors from fetchDashboardData
+          console.error('Error in dashboard data fetch:', error)
+        })
         .finally(() => {
           if (!cancelled) setLoading(false)
         })
@@ -70,6 +74,7 @@ const AdminDashboard = ({ user, profile }) => {
     } else {
       setLoading(false)
     }
+    // fetchDashboardData is stable and doesn't need to be in deps - we only want to run when activeTab changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab])
 
