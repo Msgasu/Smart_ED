@@ -54,15 +54,25 @@ const AdminDashboard = ({ user, profile }) => {
   useEffect(() => {
     if (activeTab === 'dashboard') {
       let cancelled = false
+      let timeoutId = null
       
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Dashboard data fetch timed out after 15 seconds')), 15000)
+        timeoutId = setTimeout(() => {
+          const error = new Error('Dashboard data fetch timed out after 15 seconds')
+          error.isTimeout = true
+          reject(error)
+        }, 15000)
       })
       
       Promise.race([fetchDashboardData(), timeoutPromise])
+        .then(() => {
+          // fetchDashboardData completed successfully, clear the timeout
+          if (timeoutId) clearTimeout(timeoutId)
+        })
         .catch((error) => {
           // Handle timeout or other errors not caught by fetchDashboardData
-          if (!cancelled && error.message.includes('timed out')) {
+          if (timeoutId) clearTimeout(timeoutId)
+          if (!cancelled && error.isTimeout) {
             setLoading(false)
             toast.error('Dashboard loading timed out. Please refresh.')
           }
@@ -70,11 +80,12 @@ const AdminDashboard = ({ user, profile }) => {
       
       return () => {
         cancelled = true
+        if (timeoutId) clearTimeout(timeoutId)
       }
     } else {
       setLoading(false)
     }
-    // fetchDashboardData is stable and doesn't need to be in deps - we only want to run when activeTab changes
+    // fetchDashboardData is stable and doesn't need to be in dependencies - we only want to run when activeTab changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab])
 
