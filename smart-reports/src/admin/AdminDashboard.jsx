@@ -54,20 +54,23 @@ const AdminDashboard = ({ user, profile }) => {
   useEffect(() => {
     if (activeTab === 'dashboard') {
       let cancelled = false
-      const timeoutId = setTimeout(() => {
-        if (!cancelled) setLoading(false)
-      }, 15000)
-      fetchDashboardData().finally(() => {
-        if (!cancelled) setLoading(false)
-        clearTimeout(timeoutId)
+      
+      const timeoutPromise = new Promise((resolve) => {
+        setTimeout(() => resolve('timeout'), 15000)
       })
+      
+      Promise.race([fetchDashboardData(), timeoutPromise])
+        .finally(() => {
+          if (!cancelled) setLoading(false)
+        })
+      
       return () => {
         cancelled = true
-        clearTimeout(timeoutId)
       }
     } else {
       setLoading(false)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab])
 
   const fetchDashboardData = async () => {
