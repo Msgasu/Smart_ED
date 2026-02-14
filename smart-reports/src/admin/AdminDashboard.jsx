@@ -65,17 +65,16 @@ const AdminDashboard = ({ user, profile }) => {
       })
       
       Promise.race([fetchDashboardData(), timeoutPromise])
-        .then(() => {
-          // fetchDashboardData completed successfully, clear the timeout
-          if (timeoutId) clearTimeout(timeoutId)
-        })
         .catch((error) => {
           // Handle timeout or other errors not caught by fetchDashboardData
-          if (timeoutId) clearTimeout(timeoutId)
           if (!cancelled && error.isTimeout) {
             setLoading(false)
             toast.error('Dashboard loading timed out. Please refresh.')
           }
+        })
+        .finally(() => {
+          // Clear the timeout after promise completes (success or error)
+          if (timeoutId) clearTimeout(timeoutId)
         })
       
       return () => {
@@ -85,7 +84,7 @@ const AdminDashboard = ({ user, profile }) => {
     } else {
       setLoading(false)
     }
-    // fetchDashboardData is stable and doesn't need to be in dependencies - we only want to run when activeTab changes
+    // fetchDashboardData may close over changing state/props, but we only want to trigger this effect when activeTab changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab])
 
