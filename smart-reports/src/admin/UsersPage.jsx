@@ -388,23 +388,20 @@ const UsersPage = () => {
     }
   }
 
+  const getStudentClass = (user) => {
+    if (user.role !== 'student') return null
+    const students = user.students
+    return Array.isArray(students) ? students[0]?.class_year : students?.class_year
+  }
+
   const uniqueClasses = useMemo(() => {
     const set = new Set()
     users.forEach(user => {
-      if (user.role !== 'student') return
-      const students = user.students
-      const classYear = Array.isArray(students) ? students[0]?.class_year : students?.class_year
+      const classYear = getStudentClass(user)
       if (classYear) set.add(classYear)
     })
     return Array.from(set).sort()
   }, [users])
-
-  const getStudentClass = (user) => {
-    if (user.role !== 'student') return null
-    const s = user.students
-    return Array.isArray(s) ? s[0]?.class_year : s?.class_year
-  }
-
   const filteredUsers = users.filter(user => {
     const matchesSearch =
       `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
