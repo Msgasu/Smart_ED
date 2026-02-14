@@ -54,20 +54,43 @@ const AdminDashboard = ({ user, profile }) => {
   useEffect(() => {
     if (activeTab === 'dashboard') {
       let cancelled = false
-      const timeoutId = setTimeout(() => {
-        if (!cancelled) setLoading(false)
-      }, 15000)
-      fetchDashboardData().finally(() => {
-        if (!cancelled) setLoading(false)
-        clearTimeout(timeoutId)
+      let timeoutId = null
+      
+      const timeoutPromise = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => {
+          const error = new Error('Dashboard data fetch timed out after 15 seconds')
+          error.isTimeout = true
+          reject(error)
+        }, 15000)
       })
+      
+      Promise.race([fetchDashboardData(), timeoutPromise])
+        .catch((error) => {
+          // Early return if component unmounted
+          if (cancelled) return
+          
+          // Handle timeout errors - other errors are already handled by fetchDashboardData's internal try-catch
+          // Note: fetchDashboardData has comprehensive error handling and sets loading=false in its finally block (line 180)
+          // This timeout handler only runs if the timeout occurs before fetchDashboardData completes
+          if (error.isTimeout) {
+            setLoading(false)
+            toast.error('Dashboard loading timed out. Please refresh.')
+          }
+        })
+        .finally(() => {
+          // Clear the timeout after promise completes (success or error)
+          if (timeoutId) clearTimeout(timeoutId)
+        })
+      
       return () => {
         cancelled = true
-        clearTimeout(timeoutId)
+        if (timeoutId) clearTimeout(timeoutId)
       }
     } else {
       setLoading(false)
     }
+    // fetchDashboardData may close over changing state/props, but we only want to trigger this effect when activeTab changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab])
 
   const fetchDashboardData = async () => {
