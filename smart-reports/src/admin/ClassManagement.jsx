@@ -264,26 +264,6 @@ const ClassManagement = () => {
 
   const ClassOverview = () => (
     <div className="class-overview">
-      <div className="overview-header">
-        <h2>Class Overview</h2>
-        <div className="overview-stats">
-          <div className="stat-card">
-            <FaUsers className="stat-icon" />
-            <div>
-              <div className="stat-number">{students.length}</div>
-              <div className="stat-label">Total Students</div>
-            </div>
-          </div>
-          <div className="stat-card">
-            <FaGraduationCap className="stat-icon" />
-            <div>
-              <div className="stat-number">{classes.filter(c => c.studentCount > 0).length}</div>
-              <div className="stat-label">Active Classes</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div className="classes-grid">
         {classes.map(classData => (
           <div key={classData.name} className="class-card">
@@ -323,9 +303,6 @@ const ClassManagement = () => {
 
     return (
       <div className="student-management">
-        <div className="management-header">
-          <h2>Student Management</h2>
-        </div>
         <div className="management-filters">
           <label htmlFor="class-select" className="management-filter-label">Filter by class</label>
           <select
