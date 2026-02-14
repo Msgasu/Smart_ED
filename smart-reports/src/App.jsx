@@ -19,14 +19,34 @@ import ReportBankContent from './admin/ReportBankContent'
 import TeacherReportViewer from './teacher/TeacherReportViewer'
 import TeacherReportEditor from './teacher/TeacherReportEditor'
 import TeacherClassReportsPage from './teacher/TeacherClassReportsPage'
+import AccessibilityZoom from './shared/AccessibilityZoom'
+
+const STORAGE_ZOOM_KEY = 'appZoom'
+const VALID_ZOOM = [0.75, 0.9, 1, 1.1, 1.25]
+
+function getStoredZoom() {
+  try {
+    const v = parseFloat(localStorage.getItem(STORAGE_ZOOM_KEY))
+    return VALID_ZOOM.includes(v) ? v : 1
+  } catch {
+    return 1
+  }
+}
 
 function App() {
   const [user, setUser] = useState(null)
   const [userProfile, setUserProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [isCreatingUser, setIsCreatingUser] = useState(false)
+  const [zoomLevel, setZoomLevel] = useState(getStoredZoom)
   const location = useLocation()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (VALID_ZOOM.includes(zoomLevel)) {
+      localStorage.setItem(STORAGE_ZOOM_KEY, String(zoomLevel))
+    }
+  }, [zoomLevel])
 
   // Make the flag available globally
   window.setIsCreatingUser = setIsCreatingUser
@@ -157,21 +177,23 @@ function App() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    )
+  const zoomStyle = {
+    width: `${100 / zoomLevel}vw`,
+    height: `${100 / zoomLevel}vh`,
+    minHeight: zoomLevel > 1 ? '100%' : undefined,
+    transform: `scale(${zoomLevel})`,
+    transformOrigin: 'top left',
+    overflow: zoomLevel > 1 ? 'visible' : undefined,
   }
 
-  // Always render the full routing structure
-  // This allows public routes to work without authentication
-  return (
-    <div className="App">
-      <Routes>
+  const mainContent = loading ? (
+    <div className="d-flex justify-content-center align-items-center vh-100">
+      <div className="spinner-border text-primary" role="status">
+        <span className="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  ) : (
+    <Routes>
         {/* Public routes - always accessible regardless of auth state */}
         <Route path="/guardian-portal" element={<GuardianPortalPublic />} />
         <Route path="/signup" element={user && userProfile ? <Navigate to="/" /> : <Signup />} />
@@ -231,7 +253,22 @@ function App() {
         
         {/* Final catch-all for unauthenticated users (except public routes) */}
         {(!user || !userProfile) && <Route path="*" element={<Login />} />}
-      </Routes>
+    </Routes>
+  )
+
+  return (
+    <div className="App">
+      <div
+        className="App-zoom-container"
+        style={zoomLevel > 1 ? { overflow: 'auto' } : undefined}
+      >
+        <div className="App-zoom-wrapper" style={zoomStyle}>
+          <div className="App-zoom-inner">
+            {mainContent}
+          </div>
+        </div>
+        <AccessibilityZoom zoom={zoomLevel} setZoom={setZoomLevel} />
+      </div>
     </div>
   )
 }
