@@ -32,18 +32,15 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
   
   // Helper function to get display percentages based on form level (text only)
   const getDisplayPercentages = (classYear) => {
-    if (!classYear) return { classText: '30%', examText: '70%' }; // Default: Class 30%, Exam 70%
+    if (!classYear) return { classText: '30%', examText: '70%' };
     
     const classYearStr = classYear.toString().toLowerCase();
     
-    if (classYearStr.includes('form1') || classYearStr.includes('form 1')) {
-      return { classText: '30%', examText: '70%' }; // Class 30%, Exam 70%
-    } else if (classYearStr.includes('form2') || classYearStr.includes('form 2')) {
-      return { classText: '30%', examText: '70%' }; // Class 30%, Exam 70%
+    if (classYearStr.includes('form3') || classYearStr.includes('form 3')) {
+      return { classText: '40%', examText: '60%' };
     }
     
-    // Default for other forms/grades
-    return { classText: '30%', examText: '70%' }; // Class 30%, Exam 70%
+    return { classText: '30%', examText: '70%' };
   };
 
   const [report, setReport] = useState(null)

@@ -8,7 +8,12 @@ import TeacherLayout from './TeacherLayout'
 
 // Helper function to get max values for input validation
 const getMaxValues = (classYear) => {
-  // All classes use Class 30, Exam 70
+  if (classYear) {
+    const cy = classYear.toString().toLowerCase();
+    if (cy.includes('form3') || cy.includes('form 3')) {
+      return { classMax: 40, examMax: 60 };
+    }
+  }
   return { classMax: 30, examMax: 70 };
 };
 
