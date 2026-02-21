@@ -11,23 +11,25 @@ import '../styles/report-enhancements.css'
 const Reports = () => {
   // Helper function to get display percentages based on form level (text only)
   const getDisplayPercentages = (classYear) => {
-    if (!classYear) return { classText: '30%', examText: '70%' }; // Default: Class 30%, Exam 70%
+    if (!classYear) return { classText: '30%', examText: '70%' };
     
     const classYearStr = classYear.toString().toLowerCase();
     
-    if (classYearStr.includes('form1') || classYearStr.includes('form 1')) {
-      return { classText: '30%', examText: '70%' }; // Class 30%, Exam 70%
-    } else if (classYearStr.includes('form2') || classYearStr.includes('form 2')) {
-      return { classText: '30%', examText: '70%' }; // Class 30%, Exam 70%
+    if (classYearStr.includes('form3') || classYearStr.includes('form 3')) {
+      return { classText: '40%', examText: '60%' };
     }
     
-    // Default for other forms/grades
-    return { classText: '30%', examText: '70%' }; // Class 30%, Exam 70%
+    return { classText: '30%', examText: '70%' };
   };
 
   // Helper function to get max values for input validation
   const getMaxValues = (classYear) => {
-    // All classes use Class 30, Exam 70
+    if (classYear) {
+      const cy = classYear.toString().toLowerCase();
+      if (cy.includes('form3') || cy.includes('form 3')) {
+        return { classMax: 40, examMax: 60 };
+      }
+    }
     return { classMax: 30, examMax: 70 };
   };
 

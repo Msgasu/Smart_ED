@@ -10,6 +10,15 @@ import { Bar, Line, Radar } from 'react-chartjs-2'
 // Register ChartJS components
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, RadialLinearScale, ArcElement, Title, Tooltip, Legend)
 
+const getDisplayPercentages = (classYear) => {
+  if (!classYear) return { classText: '30%', examText: '70%', classMax: 30, examMax: 70 };
+  const cy = classYear.toString().toLowerCase();
+  if (cy.includes('form3') || cy.includes('form 3')) {
+    return { classText: '40%', examText: '60%', classMax: 40, examMax: 60 };
+  }
+  return { classText: '30%', examText: '70%', classMax: 30, examMax: 70 };
+};
+
 const TeacherReportViewer = ({ user, profile }) => {
   const { reportId } = useParams()
   const navigate = useNavigate()
@@ -284,9 +293,9 @@ const TeacherReportViewer = ({ user, profile }) => {
                         <thead className="table-light">
                           <tr>
                             <th>Subject</th>
-                            <th>Class Score (30)</th>
-                            <th>Exam Score (70)</th>
-                            <th>Total Score (100)</th>
+                            <th>Class Score ({getDisplayPercentages(report?.class_year).classMax})</th>
+                            <th>Exam Score ({getDisplayPercentages(report?.class_year).examMax})</th>
+                            <th>Total Score ({getDisplayPercentages(report?.class_year).classMax + getDisplayPercentages(report?.class_year).examMax})</th>
                             <th>Grade</th>
                             <th>Position</th>
                             <th>Remark</th>
@@ -356,14 +365,14 @@ const TeacherReportViewer = ({ user, profile }) => {
                                 labels: report.student_grades.map(grade => grade.courses?.name || 'Unknown'),
                                 datasets: [
                                   {
-                                    label: 'Class Score (30%)',
+                                    label: `Class Score (${getDisplayPercentages(report?.class_year).classText})`,
                                     data: report.student_grades.map(grade => grade.class_score || 0),
                                     backgroundColor: 'rgba(54, 162, 235, 0.5)',
                                     borderColor: 'rgba(54, 162, 235, 1)',
                                     borderWidth: 1
                                   },
                                   {
-                                    label: 'Exam Score (70%)',
+                                    label: `Exam Score (${getDisplayPercentages(report?.class_year).examText})`,
                                     data: report.student_grades.map(grade => grade.exam_score || 0),
                                     backgroundColor: 'rgba(255, 99, 132, 0.5)',
                                     borderColor: 'rgba(255, 99, 132, 1)',
