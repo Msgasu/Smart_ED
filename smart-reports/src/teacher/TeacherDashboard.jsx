@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { FaPlus, FaSearch, FaTrashAlt, FaCalendarAlt, FaSave, FaPrint, FaFileExport, FaUsers, FaFileAlt, FaChartBar, FaHome, FaEye, FaEdit, FaLock, FaClock, FaFilter, FaUser, FaBook, FaExclamationTriangle } from 'react-icons/fa'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { FaPlus, FaSearch, FaTrashAlt, FaCalendarAlt, FaSave, FaPrint, FaFileExport, FaUsers, FaFileAlt, FaChartBar, FaHome, FaEye, FaEdit, FaLock, FaClock, FaFilter, FaUser, FaBook, FaExclamationTriangle, FaThumbsUp, FaChevronDown, FaChevronUp, FaUndo } from 'react-icons/fa'
 import { supabase } from '../lib/supabase'
 import { studentReportsAPI, studentGradesAPI, studentsAPI, coursesAPI } from '../lib/api'
 import { getReportsByStatus, getReportById, REPORT_STATUS } from '../lib/reportApi'
@@ -16,10 +16,21 @@ import { Bar, Line, Radar } from 'react-chartjs-2'
 // Register ChartJS components
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, RadialLinearScale, ArcElement, Title, Tooltip, Legend)
 import './TeacherDashboard.css'
+import '../admin/Reports.css'
+import '../admin/ClassManagement.css'
+import '../styles/report-enhancements.css'
 
 const TeacherDashboard = ({ user, profile }) => {
   const navigate = useNavigate()
+  const location = useLocation()
   const [activeTab, setActiveTab] = useState('dashboard')
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const tab = params.get('tab')
+    const valid = ['dashboard', 'reports', 'manage-reports', 'classes', 'students']
+    if (tab && valid.includes(tab)) setActiveTab(tab)
+  }, [location.search])
   
   // Helper function to get display percentages based on form level (text only)
   const getDisplayPercentages = (classYear) => {
@@ -55,6 +66,7 @@ const TeacherDashboard = ({ user, profile }) => {
   const [selectedStudent, setSelectedStudent] = useState(null)
   const [students, setStudents] = useState([])
   const [studentSearchTerm, setStudentSearchTerm] = useState('')
+  const [classFilter, setClassFilter] = useState('all')
   const [selectedTerm, setSelectedTerm] = useState('Term 1')
   const [selectedYear, setSelectedYear] = useState('2024-2025')
   const [currentPeriod, setCurrentPeriod] = useState({ term: 'Term 1', academicYear: '2024-2025', reopening_date: null })
@@ -89,6 +101,9 @@ const TeacherDashboard = ({ user, profile }) => {
   const [studentsWithMissingGrades, setStudentsWithMissingGrades] = useState([])
   const [missingGradesCurrentPage, setMissingGradesCurrentPage] = useState(1)
   const [missingGradesItemsPerPage] = useState(10)
+  const [accordionGradesOpen, setAccordionGradesOpen] = useState(true)
+  const [accordionCoursesOpen, setAccordionCoursesOpen] = useState(true)
+  const [accordionBreakdownOpen, setAccordionBreakdownOpen] = useState(true)
 
   // Reports Management state (for viewing complete report cards)
   const [allReports, setAllReports] = useState([])
@@ -191,17 +206,37 @@ const TeacherDashboard = ({ user, profile }) => {
     setStudentSearchTerm(e.target.value)
   }, [])
 
-  // Filter students based on search term
+  // Filter students based on search term and class
+  const uniqueClasses = React.useMemo(() => {
+    const set = new Set()
+    students.forEach(s => {
+      const c = s.students?.class_year
+      if (c) set.add(c)
+    })
+    return Array.from(set).sort()
+  }, [students])
+
   const filteredStudents = students.filter(student => {
-    if (!studentSearchTerm) return true
     const fullName = `${student.first_name} ${student.last_name}`.toLowerCase()
-    const className = student.students?.class_year || ''
-    const searchLower = studentSearchTerm.toLowerCase()
-    
-    return fullName.includes(searchLower) || 
-           className.toLowerCase().includes(searchLower) ||
-           student.email.toLowerCase().includes(searchLower)
+    const className = (student.students?.class_year || '').toLowerCase()
+    const searchLower = studentSearchTerm.trim().toLowerCase()
+    const matchSearch = !searchLower ||
+      fullName.includes(searchLower) ||
+      className.includes(searchLower) ||
+      (student.email || '').toLowerCase().includes(searchLower)
+    const matchClass = classFilter === 'all' || (student.students?.class_year || '') === classFilter
+    return matchSearch && matchClass
   })
+
+  const resetFilters = useCallback(async () => {
+    setStudentSearchTerm('')
+    setClassFilter('all')
+    try {
+      const period = await getCurrentAcademicPeriod()
+      setSelectedTerm(period.term)
+      setSelectedYear(period.academicYear)
+    } catch (_) {}
+  }, [])
 
   // Fetch reports when active tab changes to reports management
   useEffect(() => {
@@ -789,7 +824,7 @@ const TeacherDashboard = ({ user, profile }) => {
     const student = classStudents.find(s => s.id === studentId)
     if (student) {
       setSelectedStudent(student)
-      setActiveTab('reports')
+      navigate('/?tab=reports')
     }
   }
 
@@ -1766,286 +1801,290 @@ const TeacherDashboard = ({ user, profile }) => {
   }
 
   const renderDashboardContent = () => (
-    <div className="container-fluid p-4">
-      <div className="row mb-4">
-        <div className="col">
-          <h1>Teacher Dashboard</h1>
-          <p className="text-muted">Welcome back, {profile?.first_name}! Here's your teaching overview.</p>
+    <div className="teacher-dashboard">
+      <header className="teacher-dashboard-header">
+        <div>
+          <h2>Teacher Dashboard</h2>
+          <p>Welcome back, {profile?.first_name}! Here's your teaching overview.</p>
           {currentPeriod.term && currentPeriod.academicYear && (
-            <div style={{ 
-              marginTop: '0.5rem', 
-              padding: '0.5rem 1rem', 
-              background: '#f0f0f0', 
-              borderRadius: '4px', 
-              display: 'inline-block',
-              fontSize: '0.875rem'
-            }}>
+            <div className="teacher-dashboard-period">
               <strong>Current Period:</strong> {currentPeriod.term} {currentPeriod.academicYear}
-              <small style={{ marginLeft: '0.5rem', color: '#666' }}>
+              <small style={{ marginLeft: '0.5rem' }}>
                 (Configured by Administrator)
               </small>
             </div>
           )}
         </div>
-      </div>
+      </header>
 
-      {/* Teacher-Specific Statistics Cards */}
-      <div className="row g-3 mb-4">
-        <div className="col-md-3">
-          <div className="card bg-primary text-white">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <FaUsers className="fs-2 me-3" />
-                <div>
-                  <h3 className="mb-1">{statistics.myStudents}</h3>
-                  <small>My Students</small>
-                </div>
-              </div>
-            </div>
+      {/* Teacher-Specific Statistics Cards - admin style */}
+      <div className="teacher-dashboard-stats">
+        <div className="teacher-dashboard-stat-card">
+          <div className="teacher-dashboard-stat-icon"><FaUsers aria-hidden /></div>
+          <div>
+            <p className="teacher-dashboard-stat-value">{statistics.myStudents}</p>
+            <p className="teacher-dashboard-stat-label">My Students</p>
           </div>
         </div>
-        <div className="col-md-3">
-          <div className="card bg-info text-white">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <FaChartBar className="fs-2 me-3" />
-                <div>
-                  <h3 className="mb-1">{statistics.myCourses}</h3>
-                  <small>My Courses</small>
-                </div>
-              </div>
-            </div>
+        <div className="teacher-dashboard-stat-card">
+          <div className="teacher-dashboard-stat-icon"><FaChartBar aria-hidden /></div>
+          <div>
+            <p className="teacher-dashboard-stat-value">{statistics.myCourses}</p>
+            <p className="teacher-dashboard-stat-label">My Courses</p>
           </div>
         </div>
-        <div className="col-md-3">
-          <div className="card bg-success text-white">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <FaFileAlt className="fs-2 me-3" />
-                <div>
-                  <h3 className="mb-1">{statistics.reportsIFilled}</h3>
-                  <small>Reports I've Filled</small>
-                </div>
-              </div>
-            </div>
+        <div className="teacher-dashboard-stat-card">
+          <div className="teacher-dashboard-stat-icon"><FaFileAlt aria-hidden /></div>
+          <div>
+            <p className="teacher-dashboard-stat-value">{statistics.reportsIFilled}</p>
+            <p className="teacher-dashboard-stat-label">Reports I've Filled</p>
           </div>
         </div>
-        <div className="col-md-3">
-          <div className="card bg-warning text-white">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <FaEdit className="fs-2 me-3" />
-                <div>
-                  <h3 className="mb-1">{statistics.fieldsICompleted}</h3>
-                  <small>Grade Fields Completed</small>
-                </div>
-              </div>
-            </div>
+        <div className="teacher-dashboard-stat-card">
+          <div className="teacher-dashboard-stat-icon"><FaEdit aria-hidden /></div>
+          <div>
+            <p className="teacher-dashboard-stat-value">{statistics.fieldsICompleted}</p>
+            <p className="teacher-dashboard-stat-label">Grade Fields Completed</p>
           </div>
         </div>
       </div>
 
       {/* Course-Specific Breakdown */}
-      <div className="row mb-4">
-        <div className="col-12">
-          <div className="card">
-            <div className="card-header">
-              <h5 className="mb-0">
-                <FaChartBar className="me-2" />
-                Course Breakdown
-              </h5>
-              <small className="text-muted">Detailed statistics for each of your courses</small>
-            </div>
-            <div className="card-body">
-              {courseBreakdown.length > 0 ? (
-                <div className="row">
-                  {courseBreakdown.map((courseData, index) => (
-                    <div key={courseData.course.id} className="col-md-6 col-lg-4 mb-3">
-                      <div className="card border-start border-4 border-info">
-                        <div className="card-body">
-                          <h6 className="card-title text-info">
-                            {courseData.course.code}
-                          </h6>
-                          <p className="card-text text-muted small">
-                            {courseData.course.name}
-                          </p>
-                          <div className="row text-center">
-                            <div className="col-4">
-                              <div className="h5 mb-0 text-primary">{courseData.studentCount}</div>
-                              <small className="text-muted">Students</small>
-                            </div>
-                            <div className="col-4">
-                              <div className="h5 mb-0 text-success">{courseData.reportsFilledCount}</div>
-                              <small className="text-muted">Reports</small>
-                            </div>
-                            <div className="col-4">
-                              <div className="h5 mb-0 text-warning">{courseData.gradesFilledCount}</div>
-                              <small className="text-muted">Grades</small>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <FaChartBar className="fs-1 text-muted mb-3" />
-                  <h6 className="text-muted">No course data available yet</h6>
-                  <p className="text-muted small">Course breakdown will appear once you have students and grades entered.</p>
-                </div>
-              )}
-            </div>
+      <div className="teacher-dashboard-card teacher-dashboard-accordion">
+        <div
+          className="teacher-dashboard-card-header teacher-dashboard-accordion-header"
+          onClick={() => setAccordionBreakdownOpen((o) => !o)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setAccordionBreakdownOpen((o) => !o); } }}
+          aria-expanded={accordionBreakdownOpen}
+          aria-controls="accordion-breakdown-body"
+          id="accordion-breakdown-heading"
+        >
+          <div>
+            <h3 className="teacher-dashboard-card-title">Course Breakdown</h3>
+            <p className="teacher-dashboard-card-subtitle">Detailed statistics for each of your courses</p>
           </div>
+          <span className="teacher-dashboard-accordion-icon" aria-hidden>
+            {accordionBreakdownOpen ? <FaChevronUp /> : <FaChevronDown />}
+          </span>
+        </div>
+        <div
+          id="accordion-breakdown-body"
+          role="region"
+          aria-labelledby="accordion-breakdown-heading"
+          className={`teacher-dashboard-card-body teacher-dashboard-accordion-body ${accordionBreakdownOpen ? 'open' : ''}`}
+        >
+          {courseBreakdown.length > 0 ? (
+            <div className="teacher-dashboard-course-grid">
+              {courseBreakdown.map((courseData) => (
+                <div key={courseData.course.id} className="teacher-dashboard-course-item">
+                  <h6 className="teacher-dashboard-course-item-title">{courseData.course.code}</h6>
+                  <p className="teacher-dashboard-course-item-name">{courseData.course.name}</p>
+                  <div className="teacher-dashboard-course-stats">
+                    <div>
+                      <span>{courseData.studentCount}</span>
+                      <small>Students</small>
+                    </div>
+                    <div>
+                      <span>{courseData.reportsFilledCount}</span>
+                      <small>Reports</small>
+                    </div>
+                    <div>
+                      <span>{courseData.gradesFilledCount}</span>
+                      <small>Grades</small>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="teacher-dashboard-empty">
+              <div className="teacher-dashboard-empty-icon"><FaChartBar aria-hidden /></div>
+              <h6>No course data available yet</h6>
+              <p>Course breakdown will appear once you have students and grades entered.</p>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Students with Missing Grades */}
-      <div className="row mb-4">
-        <div className="col-12">
-          <div className="card border-start border-4 border-warning">
-            <div className="card-header bg-light">
-              <h5 className="mb-0 text-warning">
-                <FaExclamationTriangle className="me-2" />
-                Students Requiring Grade Entry
-              </h5>
-              <small className="text-muted">
-                {studentsWithMissingGrades.length > 0 
-                  ? `${studentsWithMissingGrades.length} student(s) have draft reports that need your grades`
-                  : "All students have their grades completed"
-                }
-              </small>
-            </div>
-            <div className="card-body">
-              {studentsWithMissingGrades.length > 0 ? (
-                <>
-                  {/* Pagination calculation */}
-                  {(() => {
-                    const totalPages = Math.ceil(studentsWithMissingGrades.length / missingGradesItemsPerPage)
-                    const startIndex = (missingGradesCurrentPage - 1) * missingGradesItemsPerPage
-                    const endIndex = startIndex + missingGradesItemsPerPage
-                    const currentStudents = studentsWithMissingGrades.slice(startIndex, endIndex)
-
-                    const handlePageChange = (pageNumber) => {
-                      setMissingGradesCurrentPage(pageNumber)
-                    }
-
-                    const renderPagination = () => {
-                      if (totalPages <= 1) return null
-
-                      return (
-                        <div className="pagination-container d-flex justify-content-between align-items-center mt-3">
-                          <div className="pagination-info">
-                            <small className="text-muted">
-                              Showing {startIndex + 1}-{Math.min(endIndex, studentsWithMissingGrades.length)} of {studentsWithMissingGrades.length} students
-                            </small>
-                          </div>
-                          <div className="pagination-buttons">
-                            <button 
-                              className="pagination-btn me-2"
-                              onClick={() => handlePageChange(missingGradesCurrentPage - 1)}
-                              disabled={missingGradesCurrentPage === 1}
-                            >
-                              Previous
-                            </button>
-                            
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
-                              <button
-                                key={pageNumber}
-                                className={`pagination-btn me-1 ${pageNumber === missingGradesCurrentPage ? 'active' : ''}`}
-                                onClick={() => handlePageChange(pageNumber)}
-                              >
-                                {pageNumber}
-                              </button>
-                            ))}
-                            
-                            <button 
-                              className="pagination-btn ms-2"
-                              onClick={() => handlePageChange(missingGradesCurrentPage + 1)}
-                              disabled={missingGradesCurrentPage === totalPages}
-                            >
-                              Next
-                            </button>
-                          </div>
-                        </div>
-                      )
-                    }
-
-                    return (
-                      <>
-                        <div className="table-responsive">
-                          <table className="table table-hover">
-                            <thead>
-                              <tr>
-                                <th>Student Name</th>
-                                <th>Class</th>
-                                <th>Term</th>
-                                <th>Academic Year</th>
-                                <th>Your Course(s)</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {currentStudents.map((student, index) => (
-                                <tr key={`${student.student_id}-${startIndex + index}`}>
-                                  <td className="fw-medium">{student.studentName}</td>
-                                  <td>
-                                    <span className="badge bg-secondary">{student.classYear}</span>
-                                  </td>
-                                  <td>{student.term}</td>
-                                  <td>{student.academic_year}</td>
-                                  <td>
-                                    <div className="d-flex flex-wrap gap-1">
-                                      {student.courses.map((course, idx) => (
-                                        <span key={idx} className="badge bg-info text-white">
-                                          {course.code}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                        {renderPagination()}
-                      </>
-                    )
-                  })()}
-                </>
+      <div className={`teacher-dashboard-card teacher-dashboard-accordion ${studentsWithMissingGrades.length === 0 ? 'teacher-dashboard-section-success' : 'teacher-dashboard-section-warning'}`}>
+        <div
+          className="teacher-dashboard-card-header teacher-dashboard-accordion-header"
+          onClick={() => setAccordionGradesOpen((o) => !o)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setAccordionGradesOpen((o) => !o); } }}
+          aria-expanded={accordionGradesOpen}
+          aria-controls="accordion-grades-body"
+          id="accordion-grades-heading"
+        >
+          <div>
+            <h3 className="teacher-dashboard-card-title">
+              {studentsWithMissingGrades.length === 0 ? (
+                <FaThumbsUp className="me-2" aria-hidden />
               ) : (
-                <div className="text-center py-4">
-                  <FaExclamationTriangle className="fs-1 text-success mb-3" />
-                  <h6 className="text-success">Great work! No missing grades</h6>
-                  <p className="text-muted small">All your students have their grades entered, or there are no draft reports requiring your input.</p>
-                </div>
+                <FaExclamationTriangle className="me-2" aria-hidden />
               )}
-            </div>
+              Students Requiring Grade Entry
+            </h3>
+            <p className="teacher-dashboard-card-subtitle">
+              {studentsWithMissingGrades.length > 0
+                ? `${studentsWithMissingGrades.length} student(s) have draft reports that need your grades`
+                : 'All students have their grades completed'}
+            </p>
           </div>
+          <span className="teacher-dashboard-accordion-icon" aria-hidden>
+            {accordionGradesOpen ? <FaChevronUp /> : <FaChevronDown />}
+          </span>
+        </div>
+        <div
+          id="accordion-grades-body"
+          role="region"
+          aria-labelledby="accordion-grades-heading"
+          className={`teacher-dashboard-card-body teacher-dashboard-accordion-body ${accordionGradesOpen ? 'open' : ''}`}
+        >
+          {studentsWithMissingGrades.length > 0 ? (
+            <>
+              {(() => {
+                const totalPages = Math.ceil(studentsWithMissingGrades.length / missingGradesItemsPerPage)
+                const startIndex = (missingGradesCurrentPage - 1) * missingGradesItemsPerPage
+                const endIndex = startIndex + missingGradesItemsPerPage
+                const currentStudents = studentsWithMissingGrades.slice(startIndex, endIndex)
+
+                const handlePageChange = (pageNumber) => {
+                  setMissingGradesCurrentPage(pageNumber)
+                }
+
+                const renderPagination = () => {
+                  if (totalPages <= 1) return null
+
+                  return (
+                    <div className="pagination-container d-flex justify-content-between align-items-center mt-3">
+                      <div className="pagination-info">
+                        <small className="text-muted">
+                          Showing {startIndex + 1}-{Math.min(endIndex, studentsWithMissingGrades.length)} of {studentsWithMissingGrades.length} students
+                        </small>
+                      </div>
+                      <div className="pagination-buttons">
+                        <button
+                          className="pagination-btn me-2"
+                          onClick={() => handlePageChange(missingGradesCurrentPage - 1)}
+                          disabled={missingGradesCurrentPage === 1}
+                        >
+                          Previous
+                        </button>
+
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
+                          <button
+                            key={pageNumber}
+                            className={`pagination-btn me-1 ${pageNumber === missingGradesCurrentPage ? 'active' : ''}`}
+                            onClick={() => handlePageChange(pageNumber)}
+                          >
+                            {pageNumber}
+                          </button>
+                        ))}
+
+                        <button
+                          className="pagination-btn ms-2"
+                          onClick={() => handlePageChange(missingGradesCurrentPage + 1)}
+                          disabled={missingGradesCurrentPage === totalPages}
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )
+                }
+
+                return (
+                  <>
+                    <div className="table-responsive">
+                      <table className="table table-hover">
+                        <thead>
+                          <tr>
+                            <th>Student Name</th>
+                            <th>Class</th>
+                            <th>Term</th>
+                            <th>Academic Year</th>
+                            <th>Your Course(s)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {currentStudents.map((student, index) => (
+                            <tr key={`${student.student_id}-${startIndex + index}`}>
+                              <td className="fw-medium">{student.studentName}</td>
+                              <td>
+                                <span className="badge bg-secondary">{student.classYear}</span>
+                              </td>
+                              <td>{student.term}</td>
+                              <td>{student.academic_year}</td>
+                              <td>
+                                <div className="d-flex flex-wrap gap-1">
+                                  {student.courses.map((course, idx) => (
+                                    <span key={idx} className="badge bg-info text-white">
+                                      {course.code}
+                                    </span>
+                                  ))}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {renderPagination()}
+                  </>
+                )
+              })()}
+            </>
+          ) : (
+            <div className="teacher-dashboard-success-msg">
+              <div className="teacher-dashboard-empty-icon"><FaThumbsUp aria-hidden /></div>
+              <h6>Great work! No missing grades</h6>
+              <p>All your students have their grades entered, or there are no draft reports requiring your input.</p>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Your Courses Summary */}
-      <div className="row">
-        <div className="col-12">
-          <div className="card">
-            <div className="card-header">
-              <h5 className="mb-0">
-                <FaBook className="me-2" />
-                Your Courses
-              </h5>
-            </div>
-            <div className="card-body">
+      <div className="teacher-dashboard-card teacher-dashboard-accordion">
+        <div
+          className="teacher-dashboard-card-header teacher-dashboard-accordion-header"
+          onClick={() => setAccordionCoursesOpen((o) => !o)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setAccordionCoursesOpen((o) => !o); } }}
+          aria-expanded={accordionCoursesOpen}
+          aria-controls="accordion-courses-body"
+          id="accordion-courses-heading"
+        >
+          <div>
+            <h3 className="teacher-dashboard-card-title">
+              <FaBook className="me-2" aria-hidden />
+              Your Courses
+            </h3>
+            <p className="teacher-dashboard-card-subtitle">Courses you are assigned to teach</p>
+          </div>
+          <span className="teacher-dashboard-accordion-icon" aria-hidden>
+            {accordionCoursesOpen ? <FaChevronUp /> : <FaChevronDown />}
+          </span>
+        </div>
+        <div
+          id="accordion-courses-body"
+          role="region"
+          aria-labelledby="accordion-courses-heading"
+          className={`teacher-dashboard-card-body teacher-dashboard-accordion-body ${accordionCoursesOpen ? 'open' : ''}`}
+        >
               {courses.length > 0 ? (
-                <div className="row">
+                <div className="teacher-dashboard-course-list">
                   {courses.map(course => (
-                    <div key={course.id} className="col-md-4 mb-3">
-                      <div className="card h-100">
-                        <div className="card-body">
-                          <h6 className="card-title">{course.code}</h6>
-                          <p className="card-text">{course.name}</p>
-                          <small className="text-muted">{course.description}</small>
-                        </div>
-                      </div>
+                    <div key={course.id} className="teacher-dashboard-course-list-item">
+                      <h6>{course.code}</h6>
+                      <p>{course.name}</p>
+                      <small>{course.description}</small>
                     </div>
                   ))}
                 </div>
@@ -2053,75 +2092,99 @@ const TeacherDashboard = ({ user, profile }) => {
                 <p className="text-muted">No courses assigned yet.</p>
               )}
             </div>
-          </div>
-        </div>
       </div>
     </div>
   )
 
   // Exact replica of admin Reports.jsx interface
   const renderReportsContent = () => (
-    <div className="reports-container">
-      <div className="reports-header">
-        <h1>Student Reports</h1>
-        <p className="text-muted">View ALL subjects • Green = Editable • Gray = View Only</p>
-        <div className="header-actions">
-          <button className="btn btn-success" onClick={saveReport} disabled={reportLoading}>
+    <div className="reports-page">
+      <div className="reports-page-header">
+        <div className="reports-page-header-content">
+          <h1>Student Reports</h1>
+          <p className="reports-page-description">View ALL subjects • Green = Editable • Gray = View Only</p>
+        </div>
+        <div className="reports-page-header-actions">
+          <button className="reports-page-btn reports-page-btn-success" onClick={saveReport} disabled={reportLoading}>
             <FaSave /> Save Report
           </button>
-          <button className="btn btn-primary" onClick={printReport}>
+          <button className="reports-page-btn reports-page-btn-primary" onClick={printReport}>
             <FaPrint /> Print
           </button>
-          <button className="btn btn-secondary" onClick={exportReport}>
+          <button className="reports-page-btn reports-page-btn-secondary" onClick={exportReport}>
             <FaFileExport /> Export
           </button>
         </div>
       </div>
 
-      {/* Student Selection */}
-      <div className="student-selection-section">
-        <div className="student-search-container">
-          <div className="form-group search-group">
-            <label>Search Students:</label>
-            <div className="search-input-container">
-              <FaSearch className="search-icon" />
-              <input
-                type="text"
-                className="form-control search-input"
-                placeholder="Search by name, class, or email..."
-                value={studentSearchTerm}
-                onChange={handleStudentSearchChange}
-              />
-            </div>
-          </div>
-          
-          <div className="form-group select-group">
-          <label>Select Student:</label>
-          <select
-            className="form-control"
-            value={selectedStudent?.id || ''}
-            onChange={(e) => {
-              const student = students.find(s => s.id === e.target.value)
-              setSelectedStudent(student)
-            }}
-          >
-              <option value="">-- Select a student ({filteredStudents.length} found) --</option>
-              {filteredStudents.map(student => (
-              <option key={student.id} value={student.id}>
-                {student.first_name} {student.last_name} - {student.students?.class_year || 'No Class'}
-              </option>
-            ))}
-          </select>
+      <div className="reports-page-filters">
+        <div className="reports-page-search">
+          <FaSearch className="reports-page-search-icon" aria-hidden="true" />
+          <input
+            type="text"
+            className="reports-page-search-input"
+            placeholder="Search by name, class, or email..."
+            value={studentSearchTerm}
+            onChange={handleStudentSearchChange}
+            aria-label="Search students"
+          />
         </div>
-        </div>
-        
-        {studentSearchTerm && (
-          <div className="search-results-info">
-            <small className="text-muted">
-              {filteredStudents.length} student(s) found for "{studentSearchTerm}"
-            </small>
-          </div>
-        )}
+        <select
+          value={classFilter}
+          onChange={(e) => setClassFilter(e.target.value)}
+          className="reports-page-filter-select"
+          aria-label="Filter by class"
+        >
+          <option value="all">All Classes</option>
+          {uniqueClasses.map(c => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+        <select
+          value={selectedTerm}
+          disabled
+          className="reports-page-filter-select"
+          aria-label="Term (configured by admin)"
+          title="Term is configured by administrator"
+        >
+          <option value="Term 1">Term 1</option>
+          <option value="Term 2">Term 2</option>
+          <option value="Term 3">Term 3</option>
+        </select>
+        <input
+          type="text"
+          className="reports-page-filter-input"
+          value={selectedYear}
+          readOnly
+          placeholder="Academic year"
+          aria-label="Academic year (configured by admin)"
+          title="Academic year is configured by administrator"
+          style={{ backgroundColor: 'var(--reports-bg)', cursor: 'not-allowed' }}
+        />
+        <button type="button" className="reports-page-reset-btn" onClick={resetFilters} title="Reset filters">
+          <FaUndo aria-hidden />
+          Reset
+        </button>
+      </div>
+
+      <div className="reports-page-select-card">
+        <label className="reports-page-select-label">Select student</label>
+        <select
+          className="reports-page-student-select"
+          value={selectedStudent?.id || ''}
+          onChange={(e) => {
+            const student = students.find(s => s.id === e.target.value)
+            setSelectedStudent(student)
+          }}
+          aria-label="Select student"
+        >
+          <option value="">— Select a student ({filteredStudents.length} found) —</option>
+          {filteredStudents.map(student => (
+            <option key={student.id} value={student.id}>
+              {student.first_name} {student.last_name} — {student.students?.class_year || 'No Class'}
+            </option>
+          ))}
+        </select>
       </div>
 
       {selectedStudent && (
@@ -2591,8 +2654,9 @@ const TeacherDashboard = ({ user, profile }) => {
             className="btn btn-primary"
             onClick={fetchAllTeacherReports}
             disabled={loading}
+            aria-label="Refresh reports list"
           >
-            <FaSearch className="me-2" />
+            <FaSearch className="me-2" aria-hidden />
             Refresh Reports
           </button>
         </div>
@@ -2611,6 +2675,7 @@ const TeacherDashboard = ({ user, profile }) => {
                     placeholder="Search by student name..."
                     value={reportSearchTerm}
                     onChange={(e) => setReportSearchTerm(e.target.value)}
+                    aria-label="Search reports by student name"
                   />
                 </div>
                 <div className="col-md-2">
@@ -2618,6 +2683,7 @@ const TeacherDashboard = ({ user, profile }) => {
                     className="form-control"
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
+                    aria-label="Filter by status"
                   >
                     <option value="all">All Reports</option>
                     <option value="completed">Completed</option>
@@ -2629,6 +2695,7 @@ const TeacherDashboard = ({ user, profile }) => {
                     className="form-control"
                     value={termFilter}
                     onChange={(e) => setTermFilter(e.target.value)}
+                    aria-label="Filter by term"
                   >
                     <option value="all">All Terms</option>
                     {getAvailableTerms().map(term => (
@@ -2641,6 +2708,7 @@ const TeacherDashboard = ({ user, profile }) => {
                     className="form-control"
                     value={yearFilter}
                     onChange={(e) => setYearFilter(e.target.value)}
+                    aria-label="Filter by year"
                   >
                     <option value="all">All Years</option>
                     {getAvailableYears().map(year => (
@@ -2650,7 +2718,7 @@ const TeacherDashboard = ({ user, profile }) => {
                 </div>
                 <div className="col-md-3">
                   <div className="d-flex align-items-center">
-                    <FaFilter className="me-2 text-muted" />
+                    <FaFilter className="me-2 text-muted" aria-hidden />
                     <span className="text-muted">
                       {filteredReports.length} of {allReports.length} reports
                     </span>
@@ -3016,11 +3084,9 @@ const TeacherDashboard = ({ user, profile }) => {
                                 <button
                                   className="btn btn-outline-secondary btn-sm"
                                   onClick={() => {
-                                    setActiveTab('reports')
+                                    navigate('/?tab=reports')
                                     const student = students.find(s => s.id === report.student_id)
-                                    if (student) {
-                                      setSelectedStudent(student)
-                                    }
+                                    if (student) setSelectedStudent(student)
                                   }}
                                   title="Edit Grades"
                                 >
@@ -3848,76 +3914,63 @@ const TeacherDashboard = ({ user, profile }) => {
     )
   }
 
-  // Class Reports Content - Shows all classes assigned to teacher
+  // Class Reports Content - Same structure as admin ClassManagement / ClassReportsPage
   const renderClassReportsContent = () => {
 
     if (!selectedClass) {
       return (
-        <div className="container-fluid p-4">
-          <div className="row mb-4">
-            <div className="col">
-              <h2 className="mb-3">Class Reports</h2>
-              <p className="text-muted">Select a class to view and manage student reports</p>
-            </div>
+        <div className="class-management">
+          <div className="page-header">
+            <h1>Class Reports</h1>
+            <p>Select a class to view and manage student reports</p>
           </div>
 
           {loadingCourses ? (
-            <div className="text-center py-5">
-              <div className="spinner-border text-primary" role="status"></div>
-              <p className="mt-3">Loading your classes...</p>
-            </div>
+            <div className="loading-spinner">Loading your classes...</div>
           ) : teacherCourses.length === 0 ? (
-            <div className="row">
-              <div className="col-12">
-                <div className="alert alert-info text-center">
-                  <FaUsers className="mb-3" style={{ fontSize: '3rem', opacity: 0.5 }} />
-                  <h4>No Classes Assigned</h4>
-                  <p className="mb-0">You don't have any classes assigned yet. Contact your administrator for assistance.</p>
-                </div>
-              </div>
+            <div className="no-students">
+              <p><FaUsers style={{ fontSize: '2rem', opacity: 0.5 }} aria-hidden /></p>
+              <p><strong>No Classes Assigned</strong></p>
+              <p>You don&apos;t have any classes assigned yet. Contact your administrator for assistance.</p>
             </div>
           ) : (
-            <div className="row">
-              {teacherCourses.map((course) => (
-                <div key={course.id} className="col-lg-4 col-md-6 mb-4">
-                  <div 
-                    className="card h-100 border-0 shadow-sm class-card"
-                    style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
+            <div className="class-overview">
+              <div className="classes-grid">
+                {teacherCourses.map((course) => (
+                  <div
+                    key={course.id}
+                    className="class-card"
+                    style={{ cursor: 'pointer' }}
                     onClick={() => handleClassSelect(course)}
-                    onMouseEnter={(e) => e.target.closest('.card').style.transform = 'translateY(-5px)'}
-                    onMouseLeave={(e) => e.target.closest('.card').style.transform = 'translateY(0)'}
+                    onKeyDown={(e) => e.key === 'Enter' && handleClassSelect(course)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`View ${course.displayName}, ${course.studentCount} students`}
                   >
-                    <div className="card-body">
-                      <div className="d-flex align-items-center mb-3">
-                        <div 
-                          className="rounded-circle d-flex align-items-center justify-content-center me-3"
-                          style={{ 
-                            width: '50px', 
-                            height: '50px', 
-                            background: 'linear-gradient(135deg, var(--wine), var(--wine-light))',
-                            color: 'white'
-                          }}
-                        >
-                          <FaUsers />
-                        </div>
-                        <div className="flex-grow-1">
-                          <h5 className="card-title mb-1">{course.displayName}</h5>
-                          <small className="text-muted">{course.displayCode}</small>
-                        </div>
-                      </div>
-                      
-                      <p className="card-text text-muted small mb-3">
-                        {course.courseDescription || 'No description available'}
-                      </p>
-                      
-                      <div className="d-flex justify-content-between align-items-center">
-                        <span className="badge bg-primary">{course.studentCount} students</span>
-                        <small className="text-muted">Click to view →</small>
-                      </div>
+                    <div className="class-header">
+                      <h3 className="class-name">{course.displayName}</h3>
+                      <span className="student-count">{course.studentCount} students</span>
                     </div>
+                    <div className="class-students">
+                      {course.students && course.students.slice(0, 3).map(student => (
+                        <div key={student.id} className="student-preview">
+                          {student.first_name} {student.last_name}
+                        </div>
+                      ))}
+                      {course.studentCount > 3 && (
+                        <div className="more-students">+{course.studentCount - 3} more</div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      className="view-class-btn"
+                      onClick={(e) => { e.stopPropagation(); handleClassSelect(course) }}
+                    >
+                      View students
+                    </button>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -3925,117 +3978,114 @@ const TeacherDashboard = ({ user, profile }) => {
     }
 
     return (
-      <div className="container-fluid p-4">
-        <div className="row mb-4">
-          <div className="col">
-            <div className="d-flex align-items-center mb-3">
-              <button 
-                className="btn btn-outline-secondary me-3"
-                onClick={() => setSelectedClass(null)}
-              >
-                ← Back to Classes
-              </button>
-              <div>
-                <h2 className="mb-1">{selectedClass.displayName}</h2>
-                <p className="text-muted mb-0">{selectedClass.displayCode} • Manage student reports</p>
-              </div>
-            </div>
+      <div className="class-management">
+        <div className="page-header" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '1rem' }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setSelectedClass(null)}
+            aria-label="Back to classes"
+          >
+            ← Back to Classes
+          </button>
+          <div>
+            <h1 style={{ margin: 0 }}>{selectedClass.displayName}</h1>
+            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9375rem', color: 'var(--classes-text-muted)' }}>{selectedClass.displayCode} — Manage student reports</p>
           </div>
         </div>
 
         {loadingStudents ? (
-          <div className="text-center py-5">
-            <div className="spinner-border text-primary" role="status"></div>
-            <p className="mt-3">Loading students...</p>
-          </div>
+          <div className="loading-spinner">Loading students...</div>
         ) : classStudents.length === 0 ? (
-          <div className="alert alert-info text-center">
-            <FaUsers className="mb-3" style={{ fontSize: '3rem', opacity: 0.5 }} />
-            <h4>No Students Enrolled</h4>
-            <p className="mb-0">This class doesn't have any students enrolled yet.</p>
+          <div className="no-students">
+            <p><FaUsers style={{ fontSize: '2rem', opacity: 0.5 }} aria-hidden /></p>
+            <p><strong>No Students Enrolled</strong></p>
+            <p>This class doesn&apos;t have any students enrolled yet.</p>
           </div>
         ) : (
-          <div className="row">
-            <div className="col-12">
-              <div className="card">
-                <div className="card-body">
-                  <div className="table-responsive">
-                    <table className="table table-hover">
-                      <thead>
-                        <tr>
-                          <th>Student</th>
-                          <th>Student ID</th>
-                          <th>Latest Report</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {classStudents.map((student) => (
-                          <tr key={student.id}>
-                            <td>
-                              <div className="d-flex align-items-center">
-                                <div 
-                                  className="rounded-circle d-flex align-items-center justify-content-center me-3"
-                                  style={{ 
-                                    width: '40px', 
-                                    height: '40px', 
-                                    background: 'var(--wine)',
-                                    color: 'white',
-                                    fontSize: '14px',
-                                    fontWeight: '600'
-                                  }}
-                                >
-                                  {student.first_name[0]}{student.last_name[0]}
-                                </div>
-                                <div>
-                                  <div className="fw-medium">{student.first_name} {student.last_name}</div>
-                                  <small className="text-muted">{student.email}</small>
-                                </div>
-                              </div>
-                            </td>
-                            <td>
-                              <span className="badge bg-light text-dark">{student.student_id}</span>
-                            </td>
-                            <td>
-                              {student.latestReport ? (
-                                <div>
-                                  <div className="fw-medium">{student.latestReport.term} {student.latestReport.academic_year}</div>
-                                  <small className="text-muted">Grade: {student.latestReport.overall_grade}</small>
-                                </div>
-                              ) : (
-                                <span className="text-muted">No reports yet</span>
-                              )}
-                            </td>
-                            <td>
-                              <button 
-                                className="btn btn-primary btn-sm me-2"
-                                onClick={() => handleCreateReport(student.id)}
-                                title="Create/Edit Report"
-                              >
-                                <FaEdit className="me-1" />
-                                Edit Report
-                              </button>
-                              {student.latestReport && (
-                                <button 
-                                  className="btn btn-outline-secondary btn-sm"
-                                  onClick={() => {
-                                    setSelectedReport(student.latestReport)
-                                    setShowReportViewer(true)
-                                  }}
-                                  title="View Latest Report"
-                                >
-                                  <FaEye className="me-1" />
-                                  View
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
+          <div className="classes-table-wrap">
+            <div className="classes-table-header">
+              <h3>Students ({classStudents.length})</h3>
+            </div>
+            <div className="students-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Student ID</th>
+                    <th>Latest Report</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {classStudents.map((student) => (
+                    <tr key={student.id}>
+                      <td data-label="Student">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div
+                            style={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: '50%',
+                              background: 'var(--classes-primary, #8B3D48)',
+                              color: '#fff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.875rem',
+                              fontWeight: 600
+                            }}
+                          >
+                            {student.first_name?.[0]}{student.last_name?.[0]}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 600 }}>{student.first_name} {student.last_name}</div>
+                            <small style={{ color: 'var(--classes-text-muted)', fontSize: '0.875rem' }}>{student.email}</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td data-label="Student ID">
+                        <span>{student.students?.student_id || '—'}</span>
+                      </td>
+                      <td data-label="Latest Report">
+                        {student.latestReport ? (
+                          <div>
+                            <div style={{ fontWeight: 500 }}>{student.latestReport.term} {student.latestReport.academic_year}</div>
+                            <small style={{ color: 'var(--classes-text-muted)', fontSize: '0.875rem' }}>Grade: {student.latestReport.overall_grade || '—'}</small>
+                          </div>
+                        ) : (
+                          <span style={{ color: 'var(--classes-text-muted)' }}>No reports yet</span>
+                        )}
+                      </td>
+                      <td data-label="Actions">
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            onClick={() => handleCreateReport(student.id)}
+                            title="Create/Edit Report"
+                          >
+                            <FaEdit /> Edit Report
+                          </button>
+                          {student.latestReport && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              onClick={() => {
+                                setSelectedReport(student.latestReport)
+                                setShowReportViewer(true)
+                              }}
+                              title="View Latest Report"
+                            >
+                              <FaEye /> View
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
@@ -4081,12 +4131,7 @@ const TeacherDashboard = ({ user, profile }) => {
   }
 
   return (
-    <TeacherLayout 
-      activeTab={activeTab} 
-      setActiveTab={setActiveTab}
-      user={user}
-      profile={profile}
-    >
+    <TeacherLayout user={user} profile={profile}>
       {renderContent()}
     </TeacherLayout>
   )
