@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
 import { FaUsers, FaGraduationCap, FaChalkboardTeacher, FaUserCheck, FaPlus, FaSearch, FaEdit, FaEllipsisV, FaTimes, FaSave, FaUser, FaIdCard, FaCode, FaVenusMars, FaUndo } from 'react-icons/fa'
@@ -767,10 +768,10 @@ const UsersPage = () => {
         {filteredUsers.length > 0 && renderPagination()}
       </div>
 
-      {/* Add User Modal */}
-      {showAddUserModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
+      {/* Add User Modal - portaled to body so parent opacity doesn't make it transparent */}
+      {showAddUserModal && createPortal(
+        <div className="modal-overlay add-student-modal-overlay">
+          <div className="modal-content add-student-modal-content">
             {addUserLoading && (
               <div className="modal-loading-overlay">
                 <div className="modal-loading-spinner">
@@ -886,7 +887,8 @@ const UsersPage = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
