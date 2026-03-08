@@ -17,7 +17,6 @@ function getActiveKeyFromLocation(pathname, search) {
 const TeacherLayout = ({ children, user, profile }) => {
   const location = useLocation()
   const mainRef = useRef(null)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const activeKey = getActiveKeyFromLocation(location.pathname, location.search)
 
@@ -31,11 +30,9 @@ const TeacherLayout = ({ children, user, profile }) => {
         profile={profile}
         activeKey={activeKey}
         onLogout={window.handleGlobalLogout}
-        collapsed={sidebarCollapsed}
         mobileOpen={mobileMenuOpen}
         onMobileToggle={() => setMobileMenuOpen((o) => !o)}
         onMobileClose={() => setMobileMenuOpen(false)}
-        onCollapseToggle={() => setSidebarCollapsed((c) => !c)}
       />
       <main ref={mainRef} className="teacher-main">
         <div className="teacher-content">{children}</div>

@@ -1,4 +1,4 @@
-/* Teacher Sidebar - match admin portal (primary #8B3D48, secondary #90BE6D) */
+/* Teacher Sidebar - same as admin (primary #8B3D48, secondary #90BE6D), fixed width, no collapse. Font/icon sizes match admin for 100% and zoom. */
 :root {
   --teacher-primary: #8B3D48;
   --teacher-primary-10: rgba(139, 61, 72, 0.1);
@@ -44,12 +44,7 @@
   flex-direction: column;
   position: relative;
   z-index: 1000;
-  transition: width 0.2s ease;
   overflow: hidden;
-}
-
-.teacher-sidebar-wrap.collapsed {
-  width: 4.5rem;
 }
 
 .teacher-sidebar-wrap .teacher-sidebar-inner {
@@ -60,53 +55,43 @@
   overflow: hidden;
 }
 
-/* Brand - ensure collapse button stays visible when collapsed */
+/* Brand - same padding/sizes as admin */
 .teacher-sidebar-brand {
-  padding: 1rem 0.75rem;
+  padding: 1.5rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  border-bottom: 1px solid var(--teacher-sidebar-border);
-  min-width: 0;
+  gap: 0.75rem;
 }
 
 .teacher-sidebar-logo {
   width: 2.5rem;
   height: 2.5rem;
-  flex-shrink: 0;
   background: var(--teacher-primary);
   border-radius: 0.75rem;
   color: white;
   font-weight: 700;
-  font-size: 0.625rem;
+  font-size: 1.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.teacher-sidebar-collapse-btn {
-  margin-left: auto;
   flex-shrink: 0;
-  min-width: 2rem;
-  width: 2rem;
-  height: 2rem;
-  background: none;
-  border: none;
-  padding: 0.375rem;
-  border-radius: 0.5rem;
+}
+
+.teacher-sidebar-title {
+  font-weight: 700;
+  color: var(--teacher-text);
+  font-size: 1rem;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.teacher-sidebar-subtitle {
+  font-size: 0.75rem;
   color: var(--teacher-text-muted);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s, color 0.2s;
+  margin: 0.125rem 0 0 0;
 }
 
-.teacher-sidebar-wrap.collapsed .teacher-sidebar-collapse-btn {
-  margin-left: 0;
-}
-
-/* Nav */
+/* Nav - same as admin */
 .teacher-sidebar-nav {
   flex: 1;
   min-height: 0;
@@ -133,13 +118,8 @@
   width: 100%;
   text-align: left;
   transition: background 0.2s, color 0.2s;
-  box-sizing: border-box;
   text-decoration: none;
-}
-
-.teacher-sidebar-wrap.collapsed .teacher-sidebar-nav-item {
-  justify-content: center;
-  padding: 0.75rem;
+  box-sizing: border-box;
 }
 
 .teacher-sidebar-nav-item:hover {
@@ -171,37 +151,7 @@
   white-space: nowrap;
 }
 
-.teacher-sidebar-wrap.collapsed .teacher-sidebar-nav-label {
-  display: none;
-}
-
-.teacher-sidebar-wrap.collapsed .teacher-sidebar-brand-text {
-  display: none;
-}
-
-.teacher-sidebar-title {
-  font-weight: 700;
-  color: var(--teacher-text);
-  font-size: 1rem;
-  line-height: 1.25;
-  margin: 0;
-}
-
-.teacher-sidebar-subtitle {
-  font-size: 0.75rem;
-  color: var(--teacher-text-muted);
-  margin: 0.125rem 0 0 0;
-}
-
-.teacher-sidebar-collapse-btn:hover {
-  background: var(--teacher-hover);
-  color: var(--teacher-text);
-}
-
-.teacher-sidebar-collapse-btn:focus {
-  outline: 2px solid var(--teacher-primary);
-  outline-offset: 2px;
-}
+/* Footer - same as admin */
 .teacher-sidebar-footer {
   padding: 1rem;
   margin-top: auto;
@@ -280,15 +230,6 @@
   font-size: 1.125rem;
 }
 
-.teacher-sidebar-wrap.collapsed .teacher-sidebar-profile,
-.teacher-sidebar-wrap.collapsed .teacher-sidebar-logout span {
-  display: none;
-}
-
-.teacher-sidebar-wrap.collapsed .teacher-sidebar-logout {
-  justify-content: center;
-}
-
 /* Backdrop (mobile) */
 .teacher-sidebar-backdrop {
   display: block;
@@ -302,7 +243,7 @@
   outline: none;
 }
 
-/* Mobile */
+/* Mobile - same breakpoint as admin */
 @media (max-width: 1023px) {
   .teacher-sidebar-mobile-toggle {
     display: flex;
@@ -320,9 +261,5 @@
 
   .teacher-sidebar-wrap.mobile-open {
     transform: translateX(0);
-  }
-
-  .teacher-sidebar-wrap.collapsed {
-    width: 16rem;
   }
 }

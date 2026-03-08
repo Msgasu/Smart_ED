@@ -7,8 +7,6 @@ import {
   FaChartBar,
   FaSignOutAlt,
   FaBars,
-  FaChevronLeft,
-  FaChevronRight,
 } from 'react-icons/fa'
 import './TeacherSidebar.css'
 
@@ -28,11 +26,9 @@ const TeacherSidebar = ({
   profile,
   activeKey,
   onLogout,
-  collapsed = false,
   mobileOpen = false,
   onMobileToggle,
   onMobileClose,
-  onCollapseToggle,
 }) => {
   const handleLinkClick = () => onMobileClose?.()
 
@@ -61,32 +57,21 @@ const TeacherSidebar = ({
       </button>
 
       <div
-        className={`teacher-sidebar-wrap ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}
+        className={`teacher-sidebar-wrap ${mobileOpen ? 'mobile-open' : ''}`}
         role="navigation"
         aria-label="Teacher navigation"
       >
         <div className="teacher-sidebar-inner">
-          {/* Brand */}
+          {/* Brand - same structure as admin, no collapse control */}
           <div className="teacher-sidebar-brand">
             <div className="teacher-sidebar-logo">L</div>
-            {!collapsed && (
-              <div className="teacher-sidebar-brand-text">
-                <h1 className="teacher-sidebar-title">Life International</h1>
-                <p className="teacher-sidebar-subtitle">College Portal</p>
-              </div>
-            )}
-            <button
-              type="button"
-              className="teacher-sidebar-collapse-btn"
-              onClick={onCollapseToggle}
-              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              {collapsed ? <FaChevronRight aria-hidden /> : <FaChevronLeft aria-hidden />}
-            </button>
+            <div className="teacher-sidebar-brand-text">
+              <h1 className="teacher-sidebar-title">Life International</h1>
+              <p className="teacher-sidebar-subtitle">College Portal</p>
+            </div>
           </div>
 
-          {/* Nav */}
+          {/* Nav - same font/icon sizes as admin */}
           <nav className="teacher-sidebar-nav">
             {MENU_ITEMS.map(({ id, label, icon: Icon }) => {
               const isActive = activeKey === id
@@ -99,23 +84,21 @@ const TeacherSidebar = ({
                   title={label}
                 >
                   <Icon className="teacher-sidebar-nav-icon" aria-hidden />
-                  {!collapsed && <span className="teacher-sidebar-nav-label">{label}</span>}
+                  <span className="teacher-sidebar-nav-label">{label}</span>
                 </Link>
               )
             })}
           </nav>
 
-          {/* Profile & Logout */}
+          {/* Profile & Logout - same as admin */}
           <div className="teacher-sidebar-footer">
-            {!collapsed && (
-              <div className="teacher-sidebar-profile">
-                <div className="teacher-sidebar-avatar">{initials}</div>
-                <div className="teacher-sidebar-profile-text">
-                  <p className="teacher-sidebar-profile-name">{displayName}</p>
-                  <p className="teacher-sidebar-profile-role">Teacher</p>
-                </div>
+            <div className="teacher-sidebar-profile">
+              <div className="teacher-sidebar-avatar">{initials}</div>
+              <div className="teacher-sidebar-profile-text">
+                <p className="teacher-sidebar-profile-name">{displayName}</p>
+                <p className="teacher-sidebar-profile-role">Teacher</p>
               </div>
-            )}
+            </div>
             <button
               type="button"
               className="teacher-sidebar-logout"
@@ -123,7 +106,7 @@ const TeacherSidebar = ({
               title="Logout"
             >
               <FaSignOutAlt className="teacher-sidebar-logout-icon" aria-hidden />
-              {!collapsed && <span>Logout</span>}
+              <span>Logout</span>
             </button>
           </div>
         </div>
