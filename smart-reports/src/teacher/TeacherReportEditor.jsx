@@ -481,7 +481,8 @@ const TeacherReportEditor = ({ user, profile }) => {
                       className="form-control"
                       value={reportData.student_id}
                       onChange={(e) => handleReportDataChange('student_id', e.target.value)}
-                      disabled={!!reportId} // Can't change student for existing reports
+                      disabled={!!reportId}
+                      aria-label="Select student"
                     >
                       <option value="">Choose a student...</option>
                       {students.map(student => (

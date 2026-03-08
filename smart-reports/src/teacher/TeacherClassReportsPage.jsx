@@ -25,8 +25,9 @@ const TeacherClassReportsPage = ({ user, profile }) => {
               <button 
                 className="btn btn-outline-secondary me-3"
                 onClick={() => navigate('/dashboard')}
+                aria-label="Back to Dashboard"
               >
-                <FaArrowLeft className="me-2" />
+                <FaArrowLeft className="me-2" aria-hidden />
                 Back to Dashboard
               </button>
               <div>

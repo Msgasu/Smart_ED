@@ -2084,13 +2084,14 @@ const TeacherDashboard = ({ user, profile }) => {
           <div className="form-group search-group">
             <label>Search Students:</label>
             <div className="search-input-container">
-              <FaSearch className="search-icon" />
+              <FaSearch className="search-icon" aria-hidden />
               <input
                 type="text"
                 className="form-control search-input"
                 placeholder="Search by name, class, or email..."
                 value={studentSearchTerm}
                 onChange={handleStudentSearchChange}
+                aria-label="Search students by name, class, or email"
               />
             </div>
           </div>
@@ -2104,6 +2105,7 @@ const TeacherDashboard = ({ user, profile }) => {
               const student = students.find(s => s.id === e.target.value)
               setSelectedStudent(student)
             }}
+            aria-label="Select student"
           >
               <option value="">-- Select a student ({filteredStudents.length} found) --</option>
               {filteredStudents.map(student => (
@@ -2591,8 +2593,9 @@ const TeacherDashboard = ({ user, profile }) => {
             className="btn btn-primary"
             onClick={fetchAllTeacherReports}
             disabled={loading}
+            aria-label="Refresh reports list"
           >
-            <FaSearch className="me-2" />
+            <FaSearch className="me-2" aria-hidden />
             Refresh Reports
           </button>
         </div>
@@ -2611,6 +2614,7 @@ const TeacherDashboard = ({ user, profile }) => {
                     placeholder="Search by student name..."
                     value={reportSearchTerm}
                     onChange={(e) => setReportSearchTerm(e.target.value)}
+                    aria-label="Search reports by student name"
                   />
                 </div>
                 <div className="col-md-2">
@@ -2618,6 +2622,7 @@ const TeacherDashboard = ({ user, profile }) => {
                     className="form-control"
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
+                    aria-label="Filter by status"
                   >
                     <option value="all">All Reports</option>
                     <option value="completed">Completed</option>
@@ -2629,6 +2634,7 @@ const TeacherDashboard = ({ user, profile }) => {
                     className="form-control"
                     value={termFilter}
                     onChange={(e) => setTermFilter(e.target.value)}
+                    aria-label="Filter by term"
                   >
                     <option value="all">All Terms</option>
                     {getAvailableTerms().map(term => (
@@ -2641,6 +2647,7 @@ const TeacherDashboard = ({ user, profile }) => {
                     className="form-control"
                     value={yearFilter}
                     onChange={(e) => setYearFilter(e.target.value)}
+                    aria-label="Filter by year"
                   >
                     <option value="all">All Years</option>
                     {getAvailableYears().map(year => (
@@ -2650,7 +2657,7 @@ const TeacherDashboard = ({ user, profile }) => {
                 </div>
                 <div className="col-md-3">
                   <div className="d-flex align-items-center">
-                    <FaFilter className="me-2 text-muted" />
+                    <FaFilter className="me-2 text-muted" aria-hidden />
                     <span className="text-muted">
                       {filteredReports.length} of {allReports.length} reports
                     </span>
@@ -3863,14 +3870,16 @@ const TeacherDashboard = ({ user, profile }) => {
 
           {loadingCourses ? (
             <div className="text-center py-5">
-              <div className="spinner-border text-primary" role="status"></div>
+              <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
               <p className="mt-3">Loading your classes...</p>
             </div>
           ) : teacherCourses.length === 0 ? (
             <div className="row">
               <div className="col-12">
                 <div className="alert alert-info text-center">
-                  <FaUsers className="mb-3" style={{ fontSize: '3rem', opacity: 0.5 }} />
+                  <FaUsers className="mb-3" style={{ fontSize: '3rem', opacity: 0.5 }} aria-hidden />
                   <h4>No Classes Assigned</h4>
                   <p className="mb-0">You don't have any classes assigned yet. Contact your administrator for assistance.</p>
                 </div>
@@ -3898,7 +3907,7 @@ const TeacherDashboard = ({ user, profile }) => {
                             color: 'white'
                           }}
                         >
-                          <FaUsers />
+                          <FaUsers aria-hidden />
                         </div>
                         <div className="flex-grow-1">
                           <h5 className="card-title mb-1">{course.displayName}</h5>
@@ -3945,12 +3954,14 @@ const TeacherDashboard = ({ user, profile }) => {
 
         {loadingStudents ? (
           <div className="text-center py-5">
-            <div className="spinner-border text-primary" role="status"></div>
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
             <p className="mt-3">Loading students...</p>
           </div>
         ) : classStudents.length === 0 ? (
           <div className="alert alert-info text-center">
-            <FaUsers className="mb-3" style={{ fontSize: '3rem', opacity: 0.5 }} />
+            <FaUsers className="mb-3" style={{ fontSize: '3rem', opacity: 0.5 }} aria-hidden />
             <h4>No Students Enrolled</h4>
             <p className="mb-0">This class doesn't have any students enrolled yet.</p>
           </div>
