@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { FaPlus, FaSearch, FaTrashAlt, FaCalendarAlt, FaSave, FaPrint, FaFileExport, FaUsers, FaFileAlt, FaChartBar, FaHome, FaEye, FaEdit, FaLock, FaClock, FaFilter, FaUser, FaBook, FaExclamationTriangle } from 'react-icons/fa'
+import { FaPlus, FaSearch, FaTrashAlt, FaCalendarAlt, FaSave, FaPrint, FaFileExport, FaUsers, FaFileAlt, FaChartBar, FaHome, FaEye, FaEdit, FaLock, FaClock, FaFilter, FaUser, FaBook, FaExclamationTriangle, FaThumbsUp, FaChevronDown, FaChevronUp } from 'react-icons/fa'
 import { supabase } from '../lib/supabase'
 import { studentReportsAPI, studentGradesAPI, studentsAPI, coursesAPI } from '../lib/api'
 import { getReportsByStatus, getReportById, REPORT_STATUS } from '../lib/reportApi'
@@ -97,6 +97,9 @@ const TeacherDashboard = ({ user, profile }) => {
   const [studentsWithMissingGrades, setStudentsWithMissingGrades] = useState([])
   const [missingGradesCurrentPage, setMissingGradesCurrentPage] = useState(1)
   const [missingGradesItemsPerPage] = useState(10)
+  const [accordionGradesOpen, setAccordionGradesOpen] = useState(true)
+  const [accordionCoursesOpen, setAccordionCoursesOpen] = useState(true)
+  const [accordionBreakdownOpen, setAccordionBreakdownOpen] = useState(true)
 
   // Reports Management state (for viewing complete report cards)
   const [allReports, setAllReports] = useState([])
@@ -1774,286 +1777,290 @@ const TeacherDashboard = ({ user, profile }) => {
   }
 
   const renderDashboardContent = () => (
-    <div className="container-fluid p-4">
-      <div className="row mb-4">
-        <div className="col">
-          <h1>Teacher Dashboard</h1>
-          <p className="text-muted">Welcome back, {profile?.first_name}! Here's your teaching overview.</p>
+    <div className="teacher-dashboard">
+      <header className="teacher-dashboard-header">
+        <div>
+          <h2>Teacher Dashboard</h2>
+          <p>Welcome back, {profile?.first_name}! Here's your teaching overview.</p>
           {currentPeriod.term && currentPeriod.academicYear && (
-            <div style={{ 
-              marginTop: '0.5rem', 
-              padding: '0.5rem 1rem', 
-              background: '#f0f0f0', 
-              borderRadius: '4px', 
-              display: 'inline-block',
-              fontSize: '0.875rem'
-            }}>
+            <div className="teacher-dashboard-period">
               <strong>Current Period:</strong> {currentPeriod.term} {currentPeriod.academicYear}
-              <small style={{ marginLeft: '0.5rem', color: '#666' }}>
+              <small style={{ marginLeft: '0.5rem' }}>
                 (Configured by Administrator)
               </small>
             </div>
           )}
         </div>
-      </div>
+      </header>
 
-      {/* Teacher-Specific Statistics Cards */}
-      <div className="row g-3 mb-4">
-        <div className="col-md-3">
-          <div className="card bg-primary text-white">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <FaUsers className="fs-2 me-3" />
-                <div>
-                  <h3 className="mb-1">{statistics.myStudents}</h3>
-                  <small>My Students</small>
-                </div>
-              </div>
-            </div>
+      {/* Teacher-Specific Statistics Cards - admin style */}
+      <div className="teacher-dashboard-stats">
+        <div className="teacher-dashboard-stat-card">
+          <div className="teacher-dashboard-stat-icon"><FaUsers aria-hidden /></div>
+          <div>
+            <p className="teacher-dashboard-stat-value">{statistics.myStudents}</p>
+            <p className="teacher-dashboard-stat-label">My Students</p>
           </div>
         </div>
-        <div className="col-md-3">
-          <div className="card bg-info text-white">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <FaChartBar className="fs-2 me-3" />
-                <div>
-                  <h3 className="mb-1">{statistics.myCourses}</h3>
-                  <small>My Courses</small>
-                </div>
-              </div>
-            </div>
+        <div className="teacher-dashboard-stat-card">
+          <div className="teacher-dashboard-stat-icon"><FaChartBar aria-hidden /></div>
+          <div>
+            <p className="teacher-dashboard-stat-value">{statistics.myCourses}</p>
+            <p className="teacher-dashboard-stat-label">My Courses</p>
           </div>
         </div>
-        <div className="col-md-3">
-          <div className="card bg-success text-white">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <FaFileAlt className="fs-2 me-3" />
-                <div>
-                  <h3 className="mb-1">{statistics.reportsIFilled}</h3>
-                  <small>Reports I've Filled</small>
-                </div>
-              </div>
-            </div>
+        <div className="teacher-dashboard-stat-card">
+          <div className="teacher-dashboard-stat-icon"><FaFileAlt aria-hidden /></div>
+          <div>
+            <p className="teacher-dashboard-stat-value">{statistics.reportsIFilled}</p>
+            <p className="teacher-dashboard-stat-label">Reports I've Filled</p>
           </div>
         </div>
-        <div className="col-md-3">
-          <div className="card bg-warning text-white">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <FaEdit className="fs-2 me-3" />
-                <div>
-                  <h3 className="mb-1">{statistics.fieldsICompleted}</h3>
-                  <small>Grade Fields Completed</small>
-                </div>
-              </div>
-            </div>
+        <div className="teacher-dashboard-stat-card">
+          <div className="teacher-dashboard-stat-icon"><FaEdit aria-hidden /></div>
+          <div>
+            <p className="teacher-dashboard-stat-value">{statistics.fieldsICompleted}</p>
+            <p className="teacher-dashboard-stat-label">Grade Fields Completed</p>
           </div>
         </div>
       </div>
 
       {/* Course-Specific Breakdown */}
-      <div className="row mb-4">
-        <div className="col-12">
-          <div className="card">
-            <div className="card-header">
-              <h5 className="mb-0">
-                <FaChartBar className="me-2" />
-                Course Breakdown
-              </h5>
-              <small className="text-muted">Detailed statistics for each of your courses</small>
-            </div>
-            <div className="card-body">
-              {courseBreakdown.length > 0 ? (
-                <div className="row">
-                  {courseBreakdown.map((courseData, index) => (
-                    <div key={courseData.course.id} className="col-md-6 col-lg-4 mb-3">
-                      <div className="card border-start border-4 border-info">
-                        <div className="card-body">
-                          <h6 className="card-title text-info">
-                            {courseData.course.code}
-                          </h6>
-                          <p className="card-text text-muted small">
-                            {courseData.course.name}
-                          </p>
-                          <div className="row text-center">
-                            <div className="col-4">
-                              <div className="h5 mb-0 text-primary">{courseData.studentCount}</div>
-                              <small className="text-muted">Students</small>
-                            </div>
-                            <div className="col-4">
-                              <div className="h5 mb-0 text-success">{courseData.reportsFilledCount}</div>
-                              <small className="text-muted">Reports</small>
-                            </div>
-                            <div className="col-4">
-                              <div className="h5 mb-0 text-warning">{courseData.gradesFilledCount}</div>
-                              <small className="text-muted">Grades</small>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <FaChartBar className="fs-1 text-muted mb-3" />
-                  <h6 className="text-muted">No course data available yet</h6>
-                  <p className="text-muted small">Course breakdown will appear once you have students and grades entered.</p>
-                </div>
-              )}
-            </div>
+      <div className="teacher-dashboard-card teacher-dashboard-accordion">
+        <div
+          className="teacher-dashboard-card-header teacher-dashboard-accordion-header"
+          onClick={() => setAccordionBreakdownOpen((o) => !o)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setAccordionBreakdownOpen((o) => !o); } }}
+          aria-expanded={accordionBreakdownOpen}
+          aria-controls="accordion-breakdown-body"
+          id="accordion-breakdown-heading"
+        >
+          <div>
+            <h3 className="teacher-dashboard-card-title">Course Breakdown</h3>
+            <p className="teacher-dashboard-card-subtitle">Detailed statistics for each of your courses</p>
           </div>
+          <span className="teacher-dashboard-accordion-icon" aria-hidden>
+            {accordionBreakdownOpen ? <FaChevronUp /> : <FaChevronDown />}
+          </span>
+        </div>
+        <div
+          id="accordion-breakdown-body"
+          role="region"
+          aria-labelledby="accordion-breakdown-heading"
+          className={`teacher-dashboard-card-body teacher-dashboard-accordion-body ${accordionBreakdownOpen ? 'open' : ''}`}
+        >
+          {courseBreakdown.length > 0 ? (
+            <div className="teacher-dashboard-course-grid">
+              {courseBreakdown.map((courseData) => (
+                <div key={courseData.course.id} className="teacher-dashboard-course-item">
+                  <h6 className="teacher-dashboard-course-item-title">{courseData.course.code}</h6>
+                  <p className="teacher-dashboard-course-item-name">{courseData.course.name}</p>
+                  <div className="teacher-dashboard-course-stats">
+                    <div>
+                      <span>{courseData.studentCount}</span>
+                      <small>Students</small>
+                    </div>
+                    <div>
+                      <span>{courseData.reportsFilledCount}</span>
+                      <small>Reports</small>
+                    </div>
+                    <div>
+                      <span>{courseData.gradesFilledCount}</span>
+                      <small>Grades</small>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="teacher-dashboard-empty">
+              <div className="teacher-dashboard-empty-icon"><FaChartBar aria-hidden /></div>
+              <h6>No course data available yet</h6>
+              <p>Course breakdown will appear once you have students and grades entered.</p>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Students with Missing Grades */}
-      <div className="row mb-4">
-        <div className="col-12">
-          <div className="card border-start border-4 border-warning">
-            <div className="card-header bg-light">
-              <h5 className="mb-0 text-warning">
-                <FaExclamationTriangle className="me-2" />
-                Students Requiring Grade Entry
-              </h5>
-              <small className="text-muted">
-                {studentsWithMissingGrades.length > 0 
-                  ? `${studentsWithMissingGrades.length} student(s) have draft reports that need your grades`
-                  : "All students have their grades completed"
-                }
-              </small>
-            </div>
-            <div className="card-body">
-              {studentsWithMissingGrades.length > 0 ? (
-                <>
-                  {/* Pagination calculation */}
-                  {(() => {
-                    const totalPages = Math.ceil(studentsWithMissingGrades.length / missingGradesItemsPerPage)
-                    const startIndex = (missingGradesCurrentPage - 1) * missingGradesItemsPerPage
-                    const endIndex = startIndex + missingGradesItemsPerPage
-                    const currentStudents = studentsWithMissingGrades.slice(startIndex, endIndex)
-
-                    const handlePageChange = (pageNumber) => {
-                      setMissingGradesCurrentPage(pageNumber)
-                    }
-
-                    const renderPagination = () => {
-                      if (totalPages <= 1) return null
-
-                      return (
-                        <div className="pagination-container d-flex justify-content-between align-items-center mt-3">
-                          <div className="pagination-info">
-                            <small className="text-muted">
-                              Showing {startIndex + 1}-{Math.min(endIndex, studentsWithMissingGrades.length)} of {studentsWithMissingGrades.length} students
-                            </small>
-                          </div>
-                          <div className="pagination-buttons">
-                            <button 
-                              className="pagination-btn me-2"
-                              onClick={() => handlePageChange(missingGradesCurrentPage - 1)}
-                              disabled={missingGradesCurrentPage === 1}
-                            >
-                              Previous
-                            </button>
-                            
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
-                              <button
-                                key={pageNumber}
-                                className={`pagination-btn me-1 ${pageNumber === missingGradesCurrentPage ? 'active' : ''}`}
-                                onClick={() => handlePageChange(pageNumber)}
-                              >
-                                {pageNumber}
-                              </button>
-                            ))}
-                            
-                            <button 
-                              className="pagination-btn ms-2"
-                              onClick={() => handlePageChange(missingGradesCurrentPage + 1)}
-                              disabled={missingGradesCurrentPage === totalPages}
-                            >
-                              Next
-                            </button>
-                          </div>
-                        </div>
-                      )
-                    }
-
-                    return (
-                      <>
-                        <div className="table-responsive">
-                          <table className="table table-hover">
-                            <thead>
-                              <tr>
-                                <th>Student Name</th>
-                                <th>Class</th>
-                                <th>Term</th>
-                                <th>Academic Year</th>
-                                <th>Your Course(s)</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {currentStudents.map((student, index) => (
-                                <tr key={`${student.student_id}-${startIndex + index}`}>
-                                  <td className="fw-medium">{student.studentName}</td>
-                                  <td>
-                                    <span className="badge bg-secondary">{student.classYear}</span>
-                                  </td>
-                                  <td>{student.term}</td>
-                                  <td>{student.academic_year}</td>
-                                  <td>
-                                    <div className="d-flex flex-wrap gap-1">
-                                      {student.courses.map((course, idx) => (
-                                        <span key={idx} className="badge bg-info text-white">
-                                          {course.code}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                        {renderPagination()}
-                      </>
-                    )
-                  })()}
-                </>
+      <div className={`teacher-dashboard-card teacher-dashboard-accordion ${studentsWithMissingGrades.length === 0 ? 'teacher-dashboard-section-success' : 'teacher-dashboard-section-warning'}`}>
+        <div
+          className="teacher-dashboard-card-header teacher-dashboard-accordion-header"
+          onClick={() => setAccordionGradesOpen((o) => !o)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setAccordionGradesOpen((o) => !o); } }}
+          aria-expanded={accordionGradesOpen}
+          aria-controls="accordion-grades-body"
+          id="accordion-grades-heading"
+        >
+          <div>
+            <h3 className="teacher-dashboard-card-title">
+              {studentsWithMissingGrades.length === 0 ? (
+                <FaThumbsUp className="me-2" aria-hidden />
               ) : (
-                <div className="text-center py-4">
-                  <FaExclamationTriangle className="fs-1 text-success mb-3" />
-                  <h6 className="text-success">Great work! No missing grades</h6>
-                  <p className="text-muted small">All your students have their grades entered, or there are no draft reports requiring your input.</p>
-                </div>
+                <FaExclamationTriangle className="me-2" aria-hidden />
               )}
-            </div>
+              Students Requiring Grade Entry
+            </h3>
+            <p className="teacher-dashboard-card-subtitle">
+              {studentsWithMissingGrades.length > 0
+                ? `${studentsWithMissingGrades.length} student(s) have draft reports that need your grades`
+                : 'All students have their grades completed'}
+            </p>
           </div>
+          <span className="teacher-dashboard-accordion-icon" aria-hidden>
+            {accordionGradesOpen ? <FaChevronUp /> : <FaChevronDown />}
+          </span>
+        </div>
+        <div
+          id="accordion-grades-body"
+          role="region"
+          aria-labelledby="accordion-grades-heading"
+          className={`teacher-dashboard-card-body teacher-dashboard-accordion-body ${accordionGradesOpen ? 'open' : ''}`}
+        >
+          {studentsWithMissingGrades.length > 0 ? (
+            <>
+              {(() => {
+                const totalPages = Math.ceil(studentsWithMissingGrades.length / missingGradesItemsPerPage)
+                const startIndex = (missingGradesCurrentPage - 1) * missingGradesItemsPerPage
+                const endIndex = startIndex + missingGradesItemsPerPage
+                const currentStudents = studentsWithMissingGrades.slice(startIndex, endIndex)
+
+                const handlePageChange = (pageNumber) => {
+                  setMissingGradesCurrentPage(pageNumber)
+                }
+
+                const renderPagination = () => {
+                  if (totalPages <= 1) return null
+
+                  return (
+                    <div className="pagination-container d-flex justify-content-between align-items-center mt-3">
+                      <div className="pagination-info">
+                        <small className="text-muted">
+                          Showing {startIndex + 1}-{Math.min(endIndex, studentsWithMissingGrades.length)} of {studentsWithMissingGrades.length} students
+                        </small>
+                      </div>
+                      <div className="pagination-buttons">
+                        <button
+                          className="pagination-btn me-2"
+                          onClick={() => handlePageChange(missingGradesCurrentPage - 1)}
+                          disabled={missingGradesCurrentPage === 1}
+                        >
+                          Previous
+                        </button>
+
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
+                          <button
+                            key={pageNumber}
+                            className={`pagination-btn me-1 ${pageNumber === missingGradesCurrentPage ? 'active' : ''}`}
+                            onClick={() => handlePageChange(pageNumber)}
+                          >
+                            {pageNumber}
+                          </button>
+                        ))}
+
+                        <button
+                          className="pagination-btn ms-2"
+                          onClick={() => handlePageChange(missingGradesCurrentPage + 1)}
+                          disabled={missingGradesCurrentPage === totalPages}
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )
+                }
+
+                return (
+                  <>
+                    <div className="table-responsive">
+                      <table className="table table-hover">
+                        <thead>
+                          <tr>
+                            <th>Student Name</th>
+                            <th>Class</th>
+                            <th>Term</th>
+                            <th>Academic Year</th>
+                            <th>Your Course(s)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {currentStudents.map((student, index) => (
+                            <tr key={`${student.student_id}-${startIndex + index}`}>
+                              <td className="fw-medium">{student.studentName}</td>
+                              <td>
+                                <span className="badge bg-secondary">{student.classYear}</span>
+                              </td>
+                              <td>{student.term}</td>
+                              <td>{student.academic_year}</td>
+                              <td>
+                                <div className="d-flex flex-wrap gap-1">
+                                  {student.courses.map((course, idx) => (
+                                    <span key={idx} className="badge bg-info text-white">
+                                      {course.code}
+                                    </span>
+                                  ))}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {renderPagination()}
+                  </>
+                )
+              })()}
+            </>
+          ) : (
+            <div className="teacher-dashboard-success-msg">
+              <div className="teacher-dashboard-empty-icon"><FaThumbsUp aria-hidden /></div>
+              <h6>Great work! No missing grades</h6>
+              <p>All your students have their grades entered, or there are no draft reports requiring your input.</p>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Your Courses Summary */}
-      <div className="row">
-        <div className="col-12">
-          <div className="card">
-            <div className="card-header">
-              <h5 className="mb-0">
-                <FaBook className="me-2" />
-                Your Courses
-              </h5>
-            </div>
-            <div className="card-body">
+      <div className="teacher-dashboard-card teacher-dashboard-accordion">
+        <div
+          className="teacher-dashboard-card-header teacher-dashboard-accordion-header"
+          onClick={() => setAccordionCoursesOpen((o) => !o)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setAccordionCoursesOpen((o) => !o); } }}
+          aria-expanded={accordionCoursesOpen}
+          aria-controls="accordion-courses-body"
+          id="accordion-courses-heading"
+        >
+          <div>
+            <h3 className="teacher-dashboard-card-title">
+              <FaBook className="me-2" aria-hidden />
+              Your Courses
+            </h3>
+            <p className="teacher-dashboard-card-subtitle">Courses you are assigned to teach</p>
+          </div>
+          <span className="teacher-dashboard-accordion-icon" aria-hidden>
+            {accordionCoursesOpen ? <FaChevronUp /> : <FaChevronDown />}
+          </span>
+        </div>
+        <div
+          id="accordion-courses-body"
+          role="region"
+          aria-labelledby="accordion-courses-heading"
+          className={`teacher-dashboard-card-body teacher-dashboard-accordion-body ${accordionCoursesOpen ? 'open' : ''}`}
+        >
               {courses.length > 0 ? (
-                <div className="row">
+                <div className="teacher-dashboard-course-list">
                   {courses.map(course => (
-                    <div key={course.id} className="col-md-4 mb-3">
-                      <div className="card h-100">
-                        <div className="card-body">
-                          <h6 className="card-title">{course.code}</h6>
-                          <p className="card-text">{course.name}</p>
-                          <small className="text-muted">{course.description}</small>
-                        </div>
-                      </div>
+                    <div key={course.id} className="teacher-dashboard-course-list-item">
+                      <h6>{course.code}</h6>
+                      <p>{course.name}</p>
+                      <small>{course.description}</small>
                     </div>
                   ))}
                 </div>
@@ -2061,8 +2068,6 @@ const TeacherDashboard = ({ user, profile }) => {
                 <p className="text-muted">No courses assigned yet.</p>
               )}
             </div>
-          </div>
-        </div>
       </div>
     </div>
   )

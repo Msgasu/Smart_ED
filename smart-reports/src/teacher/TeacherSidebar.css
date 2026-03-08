@@ -29,8 +29,7 @@
 }
 
 .teacher-sidebar-mobile-toggle:focus {
-  outline: 2px solid var(--teacher-secondary);
-  outline-offset: 2px;
+  outline: none;
 }
 
 .teacher-sidebar-wrap {
@@ -133,8 +132,7 @@
 }
 
 .teacher-sidebar-nav-item:focus {
-  outline: 2px solid var(--teacher-primary);
-  outline-offset: 2px;
+  outline: none;
 }
 
 .teacher-sidebar-nav-icon {
@@ -222,8 +220,7 @@
 }
 
 .teacher-sidebar-logout:focus {
-  outline: 2px solid var(--teacher-primary);
-  outline-offset: 2px;
+  outline: none;
 }
 
 .teacher-sidebar-logout-icon {
