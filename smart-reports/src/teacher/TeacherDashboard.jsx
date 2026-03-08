@@ -17,6 +17,7 @@ import { Bar, Line, Radar } from 'react-chartjs-2'
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, RadialLinearScale, ArcElement, Title, Tooltip, Legend)
 import './TeacherDashboard.css'
 import '../admin/Reports.css'
+import '../admin/ClassManagement.css'
 import '../styles/report-enhancements.css'
 
 const TeacherDashboard = ({ user, profile }) => {
@@ -3913,78 +3914,63 @@ const TeacherDashboard = ({ user, profile }) => {
     )
   }
 
-  // Class Reports Content - Shows all classes assigned to teacher
+  // Class Reports Content - Same structure as admin ClassManagement / ClassReportsPage
   const renderClassReportsContent = () => {
 
     if (!selectedClass) {
       return (
-        <div className="container-fluid p-4">
-          <div className="row mb-4">
-            <div className="col">
-              <h2 className="mb-3">Class Reports</h2>
-              <p className="text-muted">Select a class to view and manage student reports</p>
-            </div>
+        <div className="class-management">
+          <div className="page-header">
+            <h1>Class Reports</h1>
+            <p>Select a class to view and manage student reports</p>
           </div>
 
           {loadingCourses ? (
-            <div className="text-center py-5">
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
-              <p className="mt-3">Loading your classes...</p>
-            </div>
+            <div className="loading-spinner">Loading your classes...</div>
           ) : teacherCourses.length === 0 ? (
-            <div className="row">
-              <div className="col-12">
-                <div className="alert alert-info text-center">
-                  <FaUsers className="mb-3" style={{ fontSize: '3rem', opacity: 0.5 }} aria-hidden />
-                  <h4>No Classes Assigned</h4>
-                  <p className="mb-0">You don't have any classes assigned yet. Contact your administrator for assistance.</p>
-                </div>
-              </div>
+            <div className="no-students">
+              <p><FaUsers style={{ fontSize: '2rem', opacity: 0.5 }} aria-hidden /></p>
+              <p><strong>No Classes Assigned</strong></p>
+              <p>You don&apos;t have any classes assigned yet. Contact your administrator for assistance.</p>
             </div>
           ) : (
-            <div className="row">
-              {teacherCourses.map((course) => (
-                <div key={course.id} className="col-lg-4 col-md-6 mb-4">
-                  <div 
-                    className="card h-100 border-0 shadow-sm class-card"
-                    style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
+            <div className="class-overview">
+              <div className="classes-grid">
+                {teacherCourses.map((course) => (
+                  <div
+                    key={course.id}
+                    className="class-card"
+                    style={{ cursor: 'pointer' }}
                     onClick={() => handleClassSelect(course)}
-                    onMouseEnter={(e) => e.target.closest('.card').style.transform = 'translateY(-5px)'}
-                    onMouseLeave={(e) => e.target.closest('.card').style.transform = 'translateY(0)'}
+                    onKeyDown={(e) => e.key === 'Enter' && handleClassSelect(course)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`View ${course.displayName}, ${course.studentCount} students`}
                   >
-                    <div className="card-body">
-                      <div className="d-flex align-items-center mb-3">
-                        <div 
-                          className="rounded-circle d-flex align-items-center justify-content-center me-3"
-                          style={{ 
-                            width: '50px', 
-                            height: '50px', 
-                            background: 'linear-gradient(135deg, var(--wine), var(--wine-light))',
-                            color: 'white'
-                          }}
-                        >
-                          <FaUsers aria-hidden />
-                        </div>
-                        <div className="flex-grow-1">
-                          <h5 className="card-title mb-1">{course.displayName}</h5>
-                          <small className="text-muted">{course.displayCode}</small>
-                        </div>
-                      </div>
-                      
-                      <p className="card-text text-muted small mb-3">
-                        {course.courseDescription || 'No description available'}
-                      </p>
-                      
-                      <div className="d-flex justify-content-between align-items-center">
-                        <span className="badge bg-primary">{course.studentCount} students</span>
-                        <small className="text-muted">Click to view →</small>
-                      </div>
+                    <div className="class-header">
+                      <h3 className="class-name">{course.displayName}</h3>
+                      <span className="student-count">{course.studentCount} students</span>
                     </div>
+                    <div className="class-students">
+                      {course.students && course.students.slice(0, 3).map(student => (
+                        <div key={student.id} className="student-preview">
+                          {student.first_name} {student.last_name}
+                        </div>
+                      ))}
+                      {course.studentCount > 3 && (
+                        <div className="more-students">+{course.studentCount - 3} more</div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      className="view-class-btn"
+                      onClick={(e) => { e.stopPropagation(); handleClassSelect(course) }}
+                    >
+                      View students
+                    </button>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -3992,119 +3978,114 @@ const TeacherDashboard = ({ user, profile }) => {
     }
 
     return (
-      <div className="container-fluid p-4">
-        <div className="row mb-4">
-          <div className="col">
-            <div className="d-flex align-items-center mb-3">
-              <button 
-                className="btn btn-outline-secondary me-3"
-                onClick={() => setSelectedClass(null)}
-              >
-                ← Back to Classes
-              </button>
-              <div>
-                <h2 className="mb-1">{selectedClass.displayName}</h2>
-                <p className="text-muted mb-0">{selectedClass.displayCode} • Manage student reports</p>
-              </div>
-            </div>
+      <div className="class-management">
+        <div className="page-header" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '1rem' }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setSelectedClass(null)}
+            aria-label="Back to classes"
+          >
+            ← Back to Classes
+          </button>
+          <div>
+            <h1 style={{ margin: 0 }}>{selectedClass.displayName}</h1>
+            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9375rem', color: 'var(--classes-text-muted)' }}>{selectedClass.displayCode} — Manage student reports</p>
           </div>
         </div>
 
         {loadingStudents ? (
-          <div className="text-center py-5">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p className="mt-3">Loading students...</p>
-          </div>
+          <div className="loading-spinner">Loading students...</div>
         ) : classStudents.length === 0 ? (
-          <div className="alert alert-info text-center">
-            <FaUsers className="mb-3" style={{ fontSize: '3rem', opacity: 0.5 }} aria-hidden />
-            <h4>No Students Enrolled</h4>
-            <p className="mb-0">This class doesn't have any students enrolled yet.</p>
+          <div className="no-students">
+            <p><FaUsers style={{ fontSize: '2rem', opacity: 0.5 }} aria-hidden /></p>
+            <p><strong>No Students Enrolled</strong></p>
+            <p>This class doesn&apos;t have any students enrolled yet.</p>
           </div>
         ) : (
-          <div className="row">
-            <div className="col-12">
-              <div className="card">
-                <div className="card-body">
-                  <div className="table-responsive">
-                    <table className="table table-hover">
-                      <thead>
-                        <tr>
-                          <th>Student</th>
-                          <th>Student ID</th>
-                          <th>Latest Report</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {classStudents.map((student) => (
-                          <tr key={student.id}>
-                            <td>
-                              <div className="d-flex align-items-center">
-                                <div 
-                                  className="rounded-circle d-flex align-items-center justify-content-center me-3"
-                                  style={{ 
-                                    width: '40px', 
-                                    height: '40px', 
-                                    background: 'var(--wine)',
-                                    color: 'white',
-                                    fontSize: '14px',
-                                    fontWeight: '600'
-                                  }}
-                                >
-                                  {student.first_name[0]}{student.last_name[0]}
-                                </div>
-                                <div>
-                                  <div className="fw-medium">{student.first_name} {student.last_name}</div>
-                                  <small className="text-muted">{student.email}</small>
-                                </div>
-                              </div>
-                            </td>
-                            <td>
-                              <span className="badge bg-light text-dark">{student.student_id}</span>
-                            </td>
-                            <td>
-                              {student.latestReport ? (
-                                <div>
-                                  <div className="fw-medium">{student.latestReport.term} {student.latestReport.academic_year}</div>
-                                  <small className="text-muted">Grade: {student.latestReport.overall_grade}</small>
-                                </div>
-                              ) : (
-                                <span className="text-muted">No reports yet</span>
-                              )}
-                            </td>
-                            <td>
-                              <button 
-                                className="btn btn-primary btn-sm me-2"
-                                onClick={() => handleCreateReport(student.id)}
-                                title="Create/Edit Report"
-                              >
-                                <FaEdit className="me-1" />
-                                Edit Report
-                              </button>
-                              {student.latestReport && (
-                                <button 
-                                  className="btn btn-outline-secondary btn-sm"
-                                  onClick={() => {
-                                    setSelectedReport(student.latestReport)
-                                    setShowReportViewer(true)
-                                  }}
-                                  title="View Latest Report"
-                                >
-                                  <FaEye className="me-1" />
-                                  View
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
+          <div className="classes-table-wrap">
+            <div className="classes-table-header">
+              <h3>Students ({classStudents.length})</h3>
+            </div>
+            <div className="students-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Student ID</th>
+                    <th>Latest Report</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {classStudents.map((student) => (
+                    <tr key={student.id}>
+                      <td data-label="Student">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div
+                            style={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: '50%',
+                              background: 'var(--classes-primary, #8B3D48)',
+                              color: '#fff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.875rem',
+                              fontWeight: 600
+                            }}
+                          >
+                            {student.first_name?.[0]}{student.last_name?.[0]}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 600 }}>{student.first_name} {student.last_name}</div>
+                            <small style={{ color: 'var(--classes-text-muted)', fontSize: '0.875rem' }}>{student.email}</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td data-label="Student ID">
+                        <span>{student.students?.student_id || '—'}</span>
+                      </td>
+                      <td data-label="Latest Report">
+                        {student.latestReport ? (
+                          <div>
+                            <div style={{ fontWeight: 500 }}>{student.latestReport.term} {student.latestReport.academic_year}</div>
+                            <small style={{ color: 'var(--classes-text-muted)', fontSize: '0.875rem' }}>Grade: {student.latestReport.overall_grade || '—'}</small>
+                          </div>
+                        ) : (
+                          <span style={{ color: 'var(--classes-text-muted)' }}>No reports yet</span>
+                        )}
+                      </td>
+                      <td data-label="Actions">
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            onClick={() => handleCreateReport(student.id)}
+                            title="Create/Edit Report"
+                          >
+                            <FaEdit /> Edit Report
+                          </button>
+                          {student.latestReport && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              onClick={() => {
+                                setSelectedReport(student.latestReport)
+                                setShowReportViewer(true)
+                              }}
+                              title="View Latest Report"
+                            >
+                              <FaEye /> View
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
