@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { FaPlus, FaSearch, FaTrashAlt, FaCalendarAlt, FaSave, FaPrint, FaFileExport, FaUsers, FaFileAlt, FaChartBar, FaHome, FaEye, FaEdit, FaLock, FaClock, FaFilter, FaUser, FaBook, FaExclamationTriangle, FaThumbsUp, FaChevronDown, FaChevronUp } from 'react-icons/fa'
+import { FaPlus, FaSearch, FaTrashAlt, FaCalendarAlt, FaSave, FaPrint, FaFileExport, FaUsers, FaFileAlt, FaChartBar, FaHome, FaEye, FaEdit, FaLock, FaClock, FaFilter, FaUser, FaBook, FaExclamationTriangle, FaThumbsUp, FaChevronDown, FaChevronUp, FaUndo } from 'react-icons/fa'
 import { supabase } from '../lib/supabase'
 import { studentReportsAPI, studentGradesAPI, studentsAPI, coursesAPI } from '../lib/api'
 import { getReportsByStatus, getReportById, REPORT_STATUS } from '../lib/reportApi'
@@ -16,6 +16,8 @@ import { Bar, Line, Radar } from 'react-chartjs-2'
 // Register ChartJS components
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, RadialLinearScale, ArcElement, Title, Tooltip, Legend)
 import './TeacherDashboard.css'
+import '../admin/Reports.css'
+import '../styles/report-enhancements.css'
 
 const TeacherDashboard = ({ user, profile }) => {
   const navigate = useNavigate()
@@ -63,6 +65,7 @@ const TeacherDashboard = ({ user, profile }) => {
   const [selectedStudent, setSelectedStudent] = useState(null)
   const [students, setStudents] = useState([])
   const [studentSearchTerm, setStudentSearchTerm] = useState('')
+  const [classFilter, setClassFilter] = useState('all')
   const [selectedTerm, setSelectedTerm] = useState('Term 1')
   const [selectedYear, setSelectedYear] = useState('2024-2025')
   const [currentPeriod, setCurrentPeriod] = useState({ term: 'Term 1', academicYear: '2024-2025', reopening_date: null })
@@ -202,17 +205,37 @@ const TeacherDashboard = ({ user, profile }) => {
     setStudentSearchTerm(e.target.value)
   }, [])
 
-  // Filter students based on search term
+  // Filter students based on search term and class
+  const uniqueClasses = React.useMemo(() => {
+    const set = new Set()
+    students.forEach(s => {
+      const c = s.students?.class_year
+      if (c) set.add(c)
+    })
+    return Array.from(set).sort()
+  }, [students])
+
   const filteredStudents = students.filter(student => {
-    if (!studentSearchTerm) return true
     const fullName = `${student.first_name} ${student.last_name}`.toLowerCase()
-    const className = student.students?.class_year || ''
-    const searchLower = studentSearchTerm.toLowerCase()
-    
-    return fullName.includes(searchLower) || 
-           className.toLowerCase().includes(searchLower) ||
-           student.email.toLowerCase().includes(searchLower)
+    const className = (student.students?.class_year || '').toLowerCase()
+    const searchLower = studentSearchTerm.trim().toLowerCase()
+    const matchSearch = !searchLower ||
+      fullName.includes(searchLower) ||
+      className.includes(searchLower) ||
+      (student.email || '').toLowerCase().includes(searchLower)
+    const matchClass = classFilter === 'all' || (student.students?.class_year || '') === classFilter
+    return matchSearch && matchClass
   })
+
+  const resetFilters = useCallback(async () => {
+    setStudentSearchTerm('')
+    setClassFilter('all')
+    try {
+      const period = await getCurrentAcademicPeriod()
+      setSelectedTerm(period.term)
+      setSelectedYear(period.academicYear)
+    } catch (_) {}
+  }, [])
 
   // Fetch reports when active tab changes to reports management
   useEffect(() => {
@@ -2074,69 +2097,93 @@ const TeacherDashboard = ({ user, profile }) => {
 
   // Exact replica of admin Reports.jsx interface
   const renderReportsContent = () => (
-    <div className="reports-container">
-      <div className="reports-header">
-        <h1>Student Reports</h1>
-        <p className="text-muted">View ALL subjects • Green = Editable • Gray = View Only</p>
-        <div className="header-actions">
-          <button className="btn btn-success" onClick={saveReport} disabled={reportLoading}>
+    <div className="reports-page">
+      <div className="reports-page-header">
+        <div className="reports-page-header-content">
+          <h1>Student Reports</h1>
+          <p className="reports-page-description">View ALL subjects • Green = Editable • Gray = View Only</p>
+        </div>
+        <div className="reports-page-header-actions">
+          <button className="reports-page-btn reports-page-btn-success" onClick={saveReport} disabled={reportLoading}>
             <FaSave /> Save Report
           </button>
-          <button className="btn btn-primary" onClick={printReport}>
+          <button className="reports-page-btn reports-page-btn-primary" onClick={printReport}>
             <FaPrint /> Print
           </button>
-          <button className="btn btn-secondary" onClick={exportReport}>
+          <button className="reports-page-btn reports-page-btn-secondary" onClick={exportReport}>
             <FaFileExport /> Export
           </button>
         </div>
       </div>
 
-      {/* Student Selection */}
-      <div className="student-selection-section">
-        <div className="student-search-container">
-          <div className="form-group search-group">
-            <label>Search Students:</label>
-            <div className="search-input-container">
-              <FaSearch className="search-icon" aria-hidden />
-              <input
-                type="text"
-                className="form-control search-input"
-                placeholder="Search by name, class, or email..."
-                value={studentSearchTerm}
-                onChange={handleStudentSearchChange}
-                aria-label="Search students by name, class, or email"
-              />
-            </div>
-          </div>
-          
-          <div className="form-group select-group">
-          <label>Select Student:</label>
-          <select
-            className="form-control"
-            value={selectedStudent?.id || ''}
-            onChange={(e) => {
-              const student = students.find(s => s.id === e.target.value)
-              setSelectedStudent(student)
-            }}
-            aria-label="Select student"
-          >
-              <option value="">-- Select a student ({filteredStudents.length} found) --</option>
-              {filteredStudents.map(student => (
-              <option key={student.id} value={student.id}>
-                {student.first_name} {student.last_name} - {student.students?.class_year || 'No Class'}
-              </option>
-            ))}
-          </select>
+      <div className="reports-page-filters">
+        <div className="reports-page-search">
+          <FaSearch className="reports-page-search-icon" aria-hidden="true" />
+          <input
+            type="text"
+            className="reports-page-search-input"
+            placeholder="Search by name, class, or email..."
+            value={studentSearchTerm}
+            onChange={handleStudentSearchChange}
+            aria-label="Search students"
+          />
         </div>
-        </div>
-        
-        {studentSearchTerm && (
-          <div className="search-results-info">
-            <small className="text-muted">
-              {filteredStudents.length} student(s) found for "{studentSearchTerm}"
-            </small>
-          </div>
-        )}
+        <select
+          value={classFilter}
+          onChange={(e) => setClassFilter(e.target.value)}
+          className="reports-page-filter-select"
+          aria-label="Filter by class"
+        >
+          <option value="all">All Classes</option>
+          {uniqueClasses.map(c => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+        <select
+          value={selectedTerm}
+          disabled
+          className="reports-page-filter-select"
+          aria-label="Term (configured by admin)"
+          title="Term is configured by administrator"
+        >
+          <option value="Term 1">Term 1</option>
+          <option value="Term 2">Term 2</option>
+          <option value="Term 3">Term 3</option>
+        </select>
+        <input
+          type="text"
+          className="reports-page-filter-input"
+          value={selectedYear}
+          readOnly
+          placeholder="Academic year"
+          aria-label="Academic year (configured by admin)"
+          title="Academic year is configured by administrator"
+          style={{ backgroundColor: 'var(--reports-bg)', cursor: 'not-allowed' }}
+        />
+        <button type="button" className="reports-page-reset-btn" onClick={resetFilters} title="Reset filters">
+          <FaUndo aria-hidden />
+          Reset
+        </button>
+      </div>
+
+      <div className="reports-page-select-card">
+        <label className="reports-page-select-label">Select student</label>
+        <select
+          className="reports-page-student-select"
+          value={selectedStudent?.id || ''}
+          onChange={(e) => {
+            const student = students.find(s => s.id === e.target.value)
+            setSelectedStudent(student)
+          }}
+          aria-label="Select student"
+        >
+          <option value="">— Select a student ({filteredStudents.length} found) —</option>
+          {filteredStudents.map(student => (
+            <option key={student.id} value={student.id}>
+              {student.first_name} {student.last_name} — {student.students?.class_year || 'No Class'}
+            </option>
+          ))}
+        </select>
       </div>
 
       {selectedStudent && (
