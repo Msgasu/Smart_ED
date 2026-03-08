@@ -1,8 +1,8 @@
-/* Teacher Sidebar - Wine (#722F37) and Lime (#8BC34A) */
+/* Teacher Sidebar - match admin portal (primary #8B3D48, secondary #90BE6D) */
 :root {
-  --teacher-primary: #722F37;
-  --teacher-primary-10: rgba(114, 47, 55, 0.1);
-  --teacher-secondary: #8BC34A;
+  --teacher-primary: #8B3D48;
+  --teacher-primary-10: rgba(139, 61, 72, 0.1);
+  --teacher-secondary: #90BE6D;
   --teacher-sidebar-bg: #fff;
   --teacher-sidebar-border: #e2e8f0;
   --teacher-text: #0f172a;
@@ -60,18 +60,20 @@
   overflow: hidden;
 }
 
-/* Brand */
+/* Brand - ensure collapse button stays visible when collapsed */
 .teacher-sidebar-brand {
-  padding: 1rem 1.5rem;
+  padding: 1rem 0.75rem;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   border-bottom: 1px solid var(--teacher-sidebar-border);
+  min-width: 0;
 }
 
 .teacher-sidebar-logo {
   width: 2.5rem;
   height: 2.5rem;
+  flex-shrink: 0;
   background: var(--teacher-primary);
   border-radius: 0.75rem;
   color: white;
@@ -80,29 +82,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-}
-
-.teacher-sidebar-title {
-  font-weight: 700;
-  color: var(--teacher-text);
-  font-size: 1rem;
-  line-height: 1.25;
-  margin: 0;
-}
-
-.teacher-sidebar-subtitle {
-  font-size: 0.75rem;
-  color: var(--teacher-text-muted);
-  margin: 0.125rem 0 0 0;
-}
-
-.teacher-sidebar-wrap.collapsed .teacher-sidebar-brand-text {
-  display: none;
 }
 
 .teacher-sidebar-collapse-btn {
   margin-left: auto;
+  flex-shrink: 0;
+  min-width: 2rem;
+  width: 2rem;
+  height: 2rem;
   background: none;
   border: none;
   padding: 0.375rem;
@@ -113,16 +100,6 @@
   align-items: center;
   justify-content: center;
   transition: background 0.2s, color 0.2s;
-}
-
-.teacher-sidebar-collapse-btn:hover {
-  background: var(--teacher-hover);
-  color: var(--teacher-text);
-}
-
-.teacher-sidebar-collapse-btn:focus {
-  outline: 2px solid var(--teacher-primary);
-  outline-offset: 2px;
 }
 
 .teacher-sidebar-wrap.collapsed .teacher-sidebar-collapse-btn {
@@ -157,6 +134,12 @@
   text-align: left;
   transition: background 0.2s, color 0.2s;
   box-sizing: border-box;
+  text-decoration: none;
+}
+
+.teacher-sidebar-wrap.collapsed .teacher-sidebar-nav-item {
+  justify-content: center;
+  padding: 0.75rem;
 }
 
 .teacher-sidebar-nav-item:hover {
@@ -184,37 +167,41 @@
   justify-content: center;
 }
 
-.teacher-sidebar-nav-content {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-
 .teacher-sidebar-nav-label {
   white-space: nowrap;
-  font-weight: 500;
 }
 
-.teacher-sidebar-nav-description {
-  font-size: 0.75rem;
-  color: var(--teacher-text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.teacher-sidebar-wrap.collapsed .teacher-sidebar-nav-content {
+.teacher-sidebar-wrap.collapsed .teacher-sidebar-nav-label {
   display: none;
 }
 
-.teacher-sidebar-wrap.collapsed .teacher-sidebar-nav-item {
-  justify-content: center;
-  padding: 0.75rem;
+.teacher-sidebar-wrap.collapsed .teacher-sidebar-brand-text {
+  display: none;
 }
 
-/* Footer */
+.teacher-sidebar-title {
+  font-weight: 700;
+  color: var(--teacher-text);
+  font-size: 1rem;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.teacher-sidebar-subtitle {
+  font-size: 0.75rem;
+  color: var(--teacher-text-muted);
+  margin: 0.125rem 0 0 0;
+}
+
+.teacher-sidebar-collapse-btn:hover {
+  background: var(--teacher-hover);
+  color: var(--teacher-text);
+}
+
+.teacher-sidebar-collapse-btn:focus {
+  outline: 2px solid var(--teacher-primary);
+  outline-offset: 2px;
+}
 .teacher-sidebar-footer {
   padding: 1rem;
   margin-top: auto;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { FaPlus, FaSearch, FaTrashAlt, FaCalendarAlt, FaSave, FaPrint, FaFileExport, FaUsers, FaFileAlt, FaChartBar, FaHome, FaEye, FaEdit, FaLock, FaClock, FaFilter, FaUser, FaBook, FaExclamationTriangle } from 'react-icons/fa'
 import { supabase } from '../lib/supabase'
 import { studentReportsAPI, studentGradesAPI, studentsAPI, coursesAPI } from '../lib/api'
@@ -19,7 +19,15 @@ import './TeacherDashboard.css'
 
 const TeacherDashboard = ({ user, profile }) => {
   const navigate = useNavigate()
+  const location = useLocation()
   const [activeTab, setActiveTab] = useState('dashboard')
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const tab = params.get('tab')
+    const valid = ['dashboard', 'reports', 'manage-reports', 'classes', 'students']
+    if (tab && valid.includes(tab)) setActiveTab(tab)
+  }, [location.search])
   
   // Helper function to get display percentages based on form level (text only)
   const getDisplayPercentages = (classYear) => {
@@ -789,7 +797,7 @@ const TeacherDashboard = ({ user, profile }) => {
     const student = classStudents.find(s => s.id === studentId)
     if (student) {
       setSelectedStudent(student)
-      setActiveTab('reports')
+      navigate('/?tab=reports')
     }
   }
 
@@ -3023,11 +3031,9 @@ const TeacherDashboard = ({ user, profile }) => {
                                 <button
                                   className="btn btn-outline-secondary btn-sm"
                                   onClick={() => {
-                                    setActiveTab('reports')
+                                    navigate('/?tab=reports')
                                     const student = students.find(s => s.id === report.student_id)
-                                    if (student) {
-                                      setSelectedStudent(student)
-                                    }
+                                    if (student) setSelectedStudent(student)
                                   }}
                                   title="Edit Grades"
                                 >
@@ -4092,12 +4098,7 @@ const TeacherDashboard = ({ user, profile }) => {
   }
 
   return (
-    <TeacherLayout 
-      activeTab={activeTab} 
-      setActiveTab={setActiveTab}
-      user={user}
-      profile={profile}
-    >
+    <TeacherLayout user={user} profile={profile}>
       {renderContent()}
     </TeacherLayout>
   )

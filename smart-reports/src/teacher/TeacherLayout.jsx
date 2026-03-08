@@ -1,27 +1,35 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import TeacherSidebar from './TeacherSidebar'
 import '../styles/teacher.css'
 import '../styles/report-enhancements.css'
 
-const TeacherLayout = ({ children, activeTab: activeTabProp, setActiveTab: setActiveTabProp, user, profile }) => {
-  const mainRef = useRef(null)
-  const [internalTab, setInternalTab] = useState('dashboard')
-  const activeTab = activeTabProp ?? internalTab
-  const setActiveTab = setActiveTabProp ?? setInternalTab
+const TEACHER_TABS = ['dashboard', 'reports', 'classes', 'students']
 
+function getActiveKeyFromLocation(pathname, search) {
+  if (pathname === '/' || pathname === '/dashboard') {
+    const tab = new URLSearchParams(search).get('tab')
+    return tab && TEACHER_TABS.includes(tab) ? tab : 'dashboard'
+  }
+  return 'dashboard'
+}
+
+const TeacherLayout = ({ children, user, profile }) => {
+  const location = useLocation()
+  const mainRef = useRef(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const activeKey = getActiveKeyFromLocation(location.pathname, location.search)
 
   useEffect(() => {
     mainRef.current?.scrollTo(0, 0)
-  }, [activeTab])
+  }, [location.pathname, location.search])
 
   return (
     <div className="teacher-layout">
       <TeacherSidebar
         profile={profile}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
+        activeKey={activeKey}
         onLogout={window.handleGlobalLogout}
         collapsed={sidebarCollapsed}
         mobileOpen={mobileMenuOpen}

@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import {
   FaHome,
@@ -12,16 +13,20 @@ import {
 import './TeacherSidebar.css'
 
 const MENU_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', icon: FaHome, description: 'Overview & Statistics' },
-  { id: 'reports', label: 'Reports', icon: FaChartBar, description: 'Generate & View Reports' },
-  { id: 'classes', label: 'Class Reports', icon: FaUsers, description: 'View Class Reports' },
-  { id: 'students', label: 'Students', icon: FaUsers, description: 'View Student Lists' },
+  { id: 'dashboard', label: 'Dashboard', icon: FaHome },
+  { id: 'reports', label: 'Reports', icon: FaChartBar },
+  { id: 'classes', label: 'Class Reports', icon: FaUsers },
+  { id: 'students', label: 'Students', icon: FaUsers },
 ]
+
+function getTo(id) {
+  if (id === 'dashboard') return { pathname: '/' }
+  return { pathname: '/', search: `?tab=${id}` }
+}
 
 const TeacherSidebar = ({
   profile,
-  activeTab,
-  onTabChange,
+  activeKey,
   onLogout,
   collapsed = false,
   mobileOpen = false,
@@ -29,10 +34,7 @@ const TeacherSidebar = ({
   onMobileClose,
   onCollapseToggle,
 }) => {
-  const handleNavClick = (id) => {
-    onTabChange?.(id)
-    onMobileClose?.()
-  }
+  const handleLinkClick = () => onMobileClose?.()
 
   const handleLogout = async () => {
     const fn = onLogout || (() => window.handleGlobalLogout?.())
@@ -66,49 +68,39 @@ const TeacherSidebar = ({
         <div className="teacher-sidebar-inner">
           {/* Brand */}
           <div className="teacher-sidebar-brand">
-            <div className="teacher-sidebar-logo">LIC</div>
+            <div className="teacher-sidebar-logo">L</div>
             {!collapsed && (
               <div className="teacher-sidebar-brand-text">
                 <h1 className="teacher-sidebar-title">Life International</h1>
                 <p className="teacher-sidebar-subtitle">College Portal</p>
               </div>
             )}
-            {onCollapseToggle && (
-              <button
-                type="button"
-                className="teacher-sidebar-collapse-btn"
-                onClick={onCollapseToggle}
-                title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              >
-                {collapsed ? <FaChevronRight aria-hidden /> : <FaChevronLeft aria-hidden />}
-              </button>
-            )}
+            <button
+              type="button"
+              className="teacher-sidebar-collapse-btn"
+              onClick={onCollapseToggle}
+              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {collapsed ? <FaChevronRight aria-hidden /> : <FaChevronLeft aria-hidden />}
+            </button>
           </div>
 
           {/* Nav */}
           <nav className="teacher-sidebar-nav">
-            {MENU_ITEMS.map(({ id, label, icon: Icon, description }) => {
-              const isActive = activeTab === id
+            {MENU_ITEMS.map(({ id, label, icon: Icon }) => {
+              const isActive = activeKey === id
               return (
-                <button
+                <Link
                   key={id}
-                  type="button"
+                  to={getTo(id)}
                   className={`teacher-sidebar-nav-item ${isActive ? 'active' : ''}`}
-                  onClick={() => handleNavClick(id)}
+                  onClick={handleLinkClick}
                   title={label}
-                  aria-current={isActive ? 'page' : undefined}
                 >
                   <Icon className="teacher-sidebar-nav-icon" aria-hidden />
-                  {!collapsed && (
-                    <div className="teacher-sidebar-nav-content">
-                      <span className="teacher-sidebar-nav-label">{label}</span>
-                      {description && (
-                        <span className="teacher-sidebar-nav-description">{description}</span>
-                      )}
-                    </div>
-                  )}
-                </button>
+                  {!collapsed && <span className="teacher-sidebar-nav-label">{label}</span>}
+                </Link>
               )
             })}
           </nav>
