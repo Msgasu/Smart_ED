@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { flushSync } from 'react-dom'
 import { supabase } from './lib/supabase'
 import toast from 'react-hot-toast'
 
@@ -40,6 +41,7 @@ function App() {
   const [zoomLevel, setZoomLevel] = useState(getStoredZoom)
   const location = useLocation()
   const navigate = useNavigate()
+  const isLoggingOutRef = useRef(false)
 
   useEffect(() => {
     if (VALID_ZOOM.includes(zoomLevel)) {
@@ -50,32 +52,38 @@ function App() {
   // Make the flag available globally
   window.setIsCreatingUser = setIsCreatingUser
   
-  // Global logout function
+  // Global logout function - clear session and state before navigating so login page shows
   const handleGlobalLogout = async () => {
+    isLoggingOutRef.current = true
     try {
-      // Check if there's an active session before trying to sign out
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (session) {
-        const { error } = await supabase.auth.signOut()
-        if (error) throw error
-      }
-      
-      // Clear local state immediately
-      setUser(null)
-      setUserProfile(null)
-      
-      // Navigate to login
+      await supabase.auth.signOut()
+      // Clear any Supabase auth keys so no cached session can restore state
+      try {
+        const keysToRemove = []
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i)
+          if (key && key.startsWith('sb-')) keysToRemove.push(key)
+        }
+        keysToRemove.forEach(k => localStorage.removeItem(k))
+      } catch (_) {}
+      // Force state to clear before navigate so /login renders Login, not Navigate to /
+      flushSync(() => {
+        setUser(null)
+        setUserProfile(null)
+      })
       navigate('/login', { replace: true })
-      
       return true
     } catch (error) {
       console.error('Logout error:', error)
-      // Even if logout fails, clear local state and redirect
-      setUser(null)
-      setUserProfile(null)
+      flushSync(() => {
+        setUser(null)
+        setUserProfile(null)
+      })
       navigate('/login', { replace: true })
       return false
+    } finally {
+      // Allow auth listener to run again after a tick so we don't re-accept a stale session
+      setTimeout(() => { isLoggingOutRef.current = false }, 500)
     }
   }
   
@@ -96,6 +104,10 @@ function App() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        // Ignore any session restore while we're in the middle of logout
+        if (isLoggingOutRef.current) {
+          return
+        }
         console.log('Auth state change:', event, 'Session:', session ? 'exists' : 'null')
         
         // Handle password recovery event

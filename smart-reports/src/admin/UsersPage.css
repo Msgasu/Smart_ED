@@ -409,7 +409,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -417,8 +418,20 @@
   padding: 1rem;
 }
 
+/* Add New Student modal - force solid background (overrides any global modal styles) */
+.add-student-modal-overlay {
+  background: rgba(0, 0, 0, 0.6) !important;
+  background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+.add-student-modal-content {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
 .modal-content {
-  background: white;
+  background: #ffffff;
+  background-color: #ffffff;
   border-radius: 12px;
   width: 100%;
   max-width: 600px;
