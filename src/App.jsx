@@ -33,7 +33,6 @@ import StudentAnalysis from './pages/teacher/StudentsAnalysis';
 import GradeAssignment from './pages/teacher/GradeAssignment';
 import AssignmentsCourseSelect from './pages/teacher/AssignmentsCourseSelect';
 import TeacherReport from './pages/teacher/TeacherReport';
-import ReportsList from './pages/teacher/ReportsList';
 import ReportView from './pages/teacher/ReportView';
 
 
@@ -100,7 +99,7 @@ function App() {
             <Route path="/teacher/students/:studentId" element={<StudentAnalysis />} />
             <Route path="/teacher/assignments/:assignmentId/grade" element={<GradeAssignment />} />
             <Route path="/teacher/report/:studentId/:courseId" element={<TeacherReport />} />
-            <Route path="/teacher/reports" element={<ReportsList />} />
+            <Route path="/teacher/reports" element={<Navigate to="/teacher/dashboard" />} />
             <Route path="/teacher/report-view/:reportId" element={<ReportView />} />
             
             {/* Notifications route */}

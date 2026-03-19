@@ -8,6 +8,7 @@ import AdminLayout from './AdminLayout'
 import UsersPage from './UsersPage'
 import Reports from './Reports'
 import ReportBankContent from './ReportBankContent'
+import AssignmentsMonitor from './AssignmentsMonitor'
 import ClassManagement from './ClassManagement'
 import CourseAssignment from './CourseAssignment'
 import AcademicSettings from './AcademicSettings'
@@ -16,6 +17,7 @@ import {
   FaChalkboardTeacher,
   FaBook,
   FaFileAlt,
+  FaClipboardCheck,
   FaSync,
   FaUserPlus,
   FaChartLine,
@@ -34,6 +36,7 @@ const AdminDashboard = ({ user, profile }) => {
     totalStudents: 0,
     totalTeachers: 0,
     totalCourses: 0,
+    totalAssignments: 0,
     reportsGenerated: 0,
     activeUsers: 0,
     pendingReports: 0
@@ -47,7 +50,7 @@ const AdminDashboard = ({ user, profile }) => {
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search)
     const tabParam = urlParams.get('tab')
-    const nextTab = tabParam && ['users', 'reports', 'report-bank', 'classes', 'courses', 'settings', 'analytics'].includes(tabParam) ? tabParam : 'dashboard'
+    const nextTab = tabParam && ['users', 'reports', 'report-bank', 'assignments-monitor', 'classes', 'courses', 'settings', 'analytics'].includes(tabParam) ? tabParam : 'dashboard'
     setActiveTab(nextTab)
   }, [location.search])
 
@@ -79,21 +82,37 @@ const AdminDashboard = ({ user, profile }) => {
         studentsRes,
         teachersRes, 
         coursesRes,
+        assignmentsRes,
         reportsRes,
         activeUsersRes,
         classDataRes,
-        recentReportsRes
+        recentReportsRes,
+        recentAssignmentsRes
       ] = await Promise.all([
         supabase.from('profiles').select('*', { count: 'exact' }).eq('role', 'student'),
         supabase.from('profiles').select('*', { count: 'exact' }).eq('role', 'faculty'),
         supabase.from('courses').select('*', { count: 'exact' }),
+        supabase.from('assignments').select('*', { count: 'exact' }),
         supabase.from('student_reports').select('*', { count: 'exact' }),
         supabase.from('profiles').select('*', { count: 'exact' }).eq('status', 'active'),
         supabase.from('profiles').select(`
           id, first_name, last_name,
           students!inner(class_year)
         `).eq('role', 'student'),
-        studentReportsAPI.getReports(10, 0)
+        studentReportsAPI.getReports(10, 0),
+        supabase
+          .from('assignments')
+          .select(`
+            id,
+            title,
+            created_at,
+            courses (
+              code,
+              name
+            )
+          `)
+          .order('created_at', { ascending: false })
+          .limit(10)
       ])
 
       // Set basic statistics
@@ -101,6 +120,7 @@ const AdminDashboard = ({ user, profile }) => {
         totalStudents: studentsRes.count || 0,
         totalTeachers: teachersRes.count || 0,
         totalCourses: coursesRes.count || 0,
+        totalAssignments: assignmentsRes.count || 0,
         reportsGenerated: reportsRes.count || 0,
         activeUsers: activeUsersRes.count || 0,
         pendingReports: Math.max(0, (studentsRes.count || 0) - (reportsRes.count || 0))
@@ -129,7 +149,8 @@ const AdminDashboard = ({ user, profile }) => {
 
       // Set recent activity
       const recentReports = recentReportsRes?.data || []
-      if (recentReports.length > 0) {
+      const recentAssignments = recentAssignmentsRes?.data || []
+      if (recentReports.length > 0 || recentAssignments.length > 0) {
         // Get student names for the reports
         const studentIds = recentReports.map(report => report.student_id).filter(Boolean)
         
@@ -143,7 +164,7 @@ const AdminDashboard = ({ user, profile }) => {
           studentProfiles.map(profile => [profile.id, profile])
         )
 
-        const activities = recentReports.map(report => {
+        const reportActivities = recentReports.map(report => {
           const profile = profilesMap.get(report.student_id)
           const studentName = profile 
             ? `${profile.first_name} ${profile.last_name}`
@@ -153,11 +174,27 @@ const AdminDashboard = ({ user, profile }) => {
             id: report.id,
             type: 'report_generated',
             description: `Report generated for ${studentName}`,
-            term: report.term,
+            context: report.term,
             timestamp: report.created_at
           }
         })
-        setRecentActivity(activities)
+
+        const assignmentActivities = recentAssignments.map((assignment) => {
+          const courseCode = assignment.courses?.code || 'Unknown Course'
+          return {
+            id: `assignment-${assignment.id}`,
+            type: 'assignment_created',
+            description: `Assignment created: ${assignment.title}`,
+            context: courseCode,
+            timestamp: assignment.created_at
+          }
+        })
+
+        const merged = [...reportActivities, ...assignmentActivities]
+          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+          .slice(0, 10)
+
+        setRecentActivity(merged)
       } else {
         setRecentActivity([])
       }
@@ -394,6 +431,13 @@ const AdminDashboard = ({ user, profile }) => {
               <p className="admin-dashboard-stat-label">Reports Generated</p>
             </div>
           </div>
+          <div className="admin-dashboard-stat-card">
+            <div className="admin-dashboard-stat-icon"><FaClipboardCheck /></div>
+            <div>
+              <p className="admin-dashboard-stat-value">{stats.totalAssignments}</p>
+              <p className="admin-dashboard-stat-label">Assignments Created</p>
+            </div>
+          </div>
         </div>
 
         <div className="admin-dashboard-grid">
@@ -496,7 +540,7 @@ const AdminDashboard = ({ user, profile }) => {
                     <div key={activity.id} className="admin-dashboard-activity-item">
                       <p className="admin-dashboard-activity-text">{activity.description}</p>
                       <div className="admin-dashboard-activity-meta">
-                        <span className="admin-dashboard-activity-term">{activity.term}</span>
+                        <span className="admin-dashboard-activity-term">{activity.context || 'System'}</span>
                         <span className="admin-dashboard-activity-date">
                           {new Date(activity.timestamp).toLocaleDateString()}
                         </span>
@@ -553,6 +597,8 @@ const AdminDashboard = ({ user, profile }) => {
         return <Reports />
       case 'report-bank':
         return <ReportBankContent />
+      case 'assignments-monitor':
+        return <AssignmentsMonitor />
       case 'classes':
         return <ClassManagement />
       case 'courses':

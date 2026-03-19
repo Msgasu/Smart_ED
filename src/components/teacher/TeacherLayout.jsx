@@ -3,13 +3,10 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   FaChalkboardTeacher, 
   FaBook, 
-  FaUserGraduate, 
   FaClipboardList, 
-  FaChartBar, 
   FaSignOutAlt,
   FaBars,
   FaTimes,
-  FaFileAlt,
   FaCog
 } from 'react-icons/fa';
 import { supabase } from '../../lib/supabase';
@@ -22,8 +19,6 @@ const TeacherLayout = ({ children }) => {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [userName, setUserName] = useState('');
-  const [teacherCourses, setTeacherCourses] = useState([]);
-  const [showAssignmentsDropdown, setShowAssignmentsDropdown] = useState(false);
 
   useEffect(() => {
     const getUserProfile = async () => {
@@ -40,28 +35,6 @@ const TeacherLayout = ({ children }) => {
           if (data) {
             setUserName(`${data.first_name} ${data.last_name}`);
           }
-
-          // Fetch teacher courses for assignments dropdown
-          const { data: coursesData, error: coursesError } = await supabase
-            .from('faculty_courses')
-            .select(`
-              course_id,
-              courses (
-                id,
-                name
-              )
-            `)
-            .eq('faculty_id', user.id);
-            
-          if (coursesError) throw coursesError;
-          
-          // Transform the data to match the expected format
-          const transformedCourses = coursesData?.map(fc => ({
-            id: fc.courses.id,
-            name: fc.courses.name
-          })) || [];
-          
-          setTeacherCourses(transformedCourses);
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -104,8 +77,34 @@ const TeacherLayout = ({ children }) => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  const toggleAssignmentsDropdown = () => {
-    setShowAssignmentsDropdown(!showAssignmentsDropdown);
+  const handleAssignmentsClick = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate('/signin');
+        return;
+      }
+
+      // Assignment management is course-scoped; route to first assigned course.
+      const { data: coursesData, error } = await supabase
+        .from('faculty_courses')
+        .select('course_id')
+        .eq('faculty_id', user.id)
+        .limit(1);
+
+      if (error) throw error;
+
+      const firstCourseId = coursesData?.[0]?.course_id;
+      if (firstCourseId) {
+        navigate(`/teacher/courses/${firstCourseId}/assignments`);
+      } else {
+        // No assigned courses yet; land on course list as safe fallback.
+        navigate('/teacher/courses');
+      }
+    } catch (error) {
+      console.error('Error routing to assignments:', error);
+      navigate('/teacher/courses');
+    }
   };
 
   return (
@@ -141,44 +140,10 @@ const TeacherLayout = ({ children }) => {
                 <FaBook /> <span>My Courses</span>
               </Link>
             </li>
-            <li className={location.pathname === '/teacher/students' ? 'active' : ''}>
-              <Link to="/teacher/students">
-                <FaUserGraduate /> <span> Users </span>
-              </Link>
-            </li>
-            <li className={location.pathname.includes('/teacher/assignments') || location.pathname.includes('/teacher/courses') && location.pathname.includes('/assignments') ? 'active' : ''}>
-              <div className="dropdown-menu">
-                <div className="dropdown-header" onClick={toggleAssignmentsDropdown}>
-                  <FaClipboardList /> <span>Assignments</span>
-                </div>
-                {showAssignmentsDropdown && (
-                  <div className="dropdown-items">
-                    {teacherCourses.length > 0 ? (
-                      teacherCourses.map(course => (
-                        <Link 
-                          key={course.id} 
-                          to={`/teacher/courses/${course.id}/assignments`}
-                          className="dropdown-item"
-                        >
-                          {course.name}
-                        </Link>
-                      ))
-                    ) : (
-                      <div className="dropdown-item disabled">No courses available</div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </li>
-            <li className={location.pathname === '/teacher/analysis' ? 'active' : ''}>
-              <Link to="/teacher/analysis">
-                <FaChartBar /> <span>Student Analysis</span>
-              </Link>
-            </li>
-            <li className={location.pathname.includes('/teacher/reports') || location.pathname.includes('/teacher/report-view') ? 'active' : ''}>
-              <Link to="/teacher/reports">
-                <FaFileAlt /> <span>Reports</span>
-              </Link>
+            <li className={location.pathname.includes('/assignments') ? 'active' : ''}>
+              <button type="button" className="sidebar-link-button" onClick={handleAssignmentsClick}>
+                <FaClipboardList /> <span>Assignments</span>
+              </button>
             </li>
             <li className={location.pathname === '/teacher/settings' ? 'active' : ''}>
               <Link to="/teacher/settings">
