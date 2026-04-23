@@ -78,6 +78,24 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
     }
   }, [userProfile])
 
+  useEffect(() => {
+    const resizeChartsForPrint = () => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          document.querySelectorAll('.chart-wrapper canvas').forEach((canvas) => {
+            const chart = ChartJS.getChart(canvas)
+            if (chart) {
+              chart.resize()
+              chart.update('none')
+            }
+          })
+        })
+      })
+    }
+    window.addEventListener('beforeprint', resizeChartsForPrint)
+    return () => window.removeEventListener('beforeprint', resizeChartsForPrint)
+  }, [])
+
   const fetchUserProfile = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -788,6 +806,9 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
                       options={{
                         responsive: true,
                         maintainAspectRatio: false,
+                        layout: {
+                          padding: { top: 8, right: 8, bottom: 8, left: 8 }
+                        },
                         plugins: {
                           title: {
                             display: true,
@@ -796,8 +817,12 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
                           legend: {
                             display: true,
                             position: 'bottom',
+                            align: 'center',
                             labels: {
-                                                             generateLabels: function(chart) {
+                              padding: 16,
+                              boxWidth: 14,
+                              font: { size: 11 },
+                              generateLabels: function(chart) {
                                  return [
                                    {
                                      text: 'Selected Student',
@@ -826,14 +851,16 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
                             }
                           },
                           x: {
+                            ticks: { maxRotation: 45, minRotation: 0 },
                             title: {
                               display: true,
-                              text: 'Students in Class'
+                              text: 'Students in Class',
+                              padding: { top: 10 }
                             }
                           }
                         }
                       }}
-                      height={400}
+                      height={480}
                     />
                   ) : (
                     <div className="no-chart-data">
@@ -851,6 +878,9 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
                       options={{
                         responsive: true,
                         maintainAspectRatio: false,
+                        layout: {
+                          padding: { top: 8, right: 4, bottom: 28, left: 4 }
+                        },
                         plugins: {
                           title: {
                             display: true,
@@ -859,7 +889,13 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
                           legend: {
                             display: true,
                             position: 'bottom',
+                            align: 'center',
+                            fullSize: true,
                             labels: {
+                              padding: 14,
+                              boxWidth: 12,
+                              font: { size: 10 },
+                              usePointStyle: true,
                               generateLabels: function(chart) {
                                 return [
                                   {
@@ -907,14 +943,21 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
                             }
                           },
                           x: {
+                            ticks: {
+                              maxRotation: 45,
+                              minRotation: 45,
+                              autoSkip: true,
+                              padding: 6
+                            },
                             title: {
                               display: true,
-                              text: 'Subjects'
+                              text: 'Subjects',
+                              padding: { top: 14, bottom: 4 }
                             }
                           }
                         }
                       }}
-                      height={400}
+                      height={520}
                     />
                   ) : (
                     <div className="no-chart-data">

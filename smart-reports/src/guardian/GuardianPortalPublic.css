@@ -262,11 +262,15 @@
   .guardian-portal-public {
     padding: 0 !important;
     background: white !important;
+    overflow: visible !important;
+    max-height: none !important;
+    min-height: 0 !important;
   }
 
   .guardian-portal-container {
     max-width: none !important;
     margin: 0 !important;
+    overflow: visible !important;
   }
 
   .guardian-portal-grid {
@@ -278,11 +282,15 @@
     border: none !important;
     box-shadow: none !important;
     background: white !important;
+    overflow: visible !important;
+    max-height: none !important;
   }
 
   .guardian-report-container {
     margin: 0 !important;
     padding: 0 !important;
+    overflow: visible !important;
+    max-height: none !important;
   }
 
   .pdf-content,
@@ -292,7 +300,16 @@
     visibility: visible !important;
     margin: 0 !important;
     padding: 0 !important;
-    background: white !important;
+    background: #fff !important;
+    overflow: visible !important;
+    max-height: none !important;
+    text-align: left !important;
+  }
+
+  .guardian-report-container .section-header h4,
+  .guardian-report-container .school-info,
+  .guardian-report-container .school-header {
+    text-align: left !important;
   }
 }
 

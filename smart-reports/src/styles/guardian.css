@@ -701,7 +701,7 @@
   }
 
   .report-content {
-    background: white !important;
+    background: #fff !important;
     border: none !important;
     border-radius: 0 !important;
     padding: 1rem !important;
@@ -710,12 +710,24 @@
     line-height: 1.3 !important;
     display: block !important;
     visibility: visible !important;
+    text-align: left !important;
   }
 
-  /* Ensure tables fit on page */
+  .guardian-report-viewer .report-content {
+    text-align: left !important;
+  }
+
+  /* Grades table may span multiple pages; do not force entire table on one page */
+  .grades-table table {
+    font-size: 11px !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+    display: table !important;
+    visibility: visible !important;
+  }
+
   table {
     font-size: 11px !important;
-    page-break-inside: avoid !important;
     display: table !important;
     visibility: visible !important;
   }
@@ -757,11 +769,12 @@
     page-break-before: always !important;
   }
 
-  /* Show and style charts for print */
+  /* Charts: section can span pages; each chart block stays whole */
   .performance-charts-section {
     display: block !important;
-    page-break-before: always !important;
-    page-break-inside: avoid !important;
+    page-break-before: auto !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
   }
 
   .charts-grid {
@@ -773,22 +786,37 @@
   .chart-container {
     page-break-inside: avoid !important;
     margin-bottom: 1.5rem !important;
+    overflow: visible !important;
+    background: #fff !important;
   }
 
   .chart-wrapper {
-    height: 300px !important;
-    min-height: 300px !important;
     page-break-inside: avoid !important;
+    overflow: visible !important;
   }
 
-  /* Prevent all sections from being clipped */
+  /* Keep compact sections together; grades + remarks can flow across pages */
   .student-info-section,
-  .grades-section,
   .performance-section,
   .additional-info-section,
-  .remarks-section,
   .signature-section {
     page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .grades-section {
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  .remarks-section {
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  .remark-item {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   .section-header {
@@ -822,18 +850,22 @@
 
   /* Ensure student information is clearly visible */
   .student-info {
-    background: #f8f9fa !important;
+    background: #fff !important;
     border: 1px solid #dee2e6 !important;
     padding: 1rem !important;
     margin-bottom: 1rem !important;
   }
 
-  /* Ensure remarks section is properly formatted */
+  /* No outer wrapper border; inner .remarks-content keeps its panel border via ReportViewer */
   .remarks-section {
-    border: 1px solid #dee2e6 !important;
-    padding: 1rem !important;
+    border: none !important;
+    padding: 0 !important;
     margin: 1rem 0 !important;
-    background: #f8f9fa !important;
+    background: transparent !important;
+  }
+
+  .remarks-content {
+    border: 1px solid #dee2e6 !important;
   }
 
   /* Ensure generation date is visible */
@@ -1987,8 +2019,8 @@
   }
 }
 
-/* Mobile layout switch */
-@media (max-width: 768px) {
+/* Mobile layout switch (screen only — print/PDF should not use centered mobile school header) */
+@media screen and (max-width: 768px) {
   .desktop-table {
     display: none;
   }

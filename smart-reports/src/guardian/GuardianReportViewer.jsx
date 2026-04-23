@@ -44,49 +44,22 @@ const GuardianReportViewer = ({ report, student, onBack }) => {
             .report-header {
               display: none !important;
             }
-            .guardian-report-container {
-              margin: 0 !important;
-              padding: 0 !important;
-              display: block !important;
-              visibility: visible !important;
-            }
+            .guardian-report-container,
             .pdf-content {
               margin: 0 !important;
               padding: 0 !important;
               display: block !important;
               visibility: visible !important;
+              overflow: visible !important;
+              max-height: none !important;
             }
-            .report-viewer {
-              display: block !important;
-              visibility: visible !important;
-              background: white !important;
-            }
+            .report-viewer,
             .report-content {
               display: block !important;
               visibility: visible !important;
               background: white !important;
-            }
-            /* Show charts */
-            .performance-charts-section {
-              display: block !important;
-              page-break-before: always !important;
-            }
-            .charts-grid {
-              display: grid !important;
-              grid-template-columns: 1fr !important;
-            }
-            .chart-container,
-            .chart-wrapper {
-              page-break-inside: avoid !important;
-            }
-            /* Prevent section clipping */
-            .student-info-section,
-            .grades-section,
-            .performance-section,
-            .additional-info-section,
-            .remarks-section,
-            .signature-section {
-              page-break-inside: avoid !important;
+              overflow: visible !important;
+              max-height: none !important;
             }
           }
         `}</style>
