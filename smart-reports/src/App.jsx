@@ -190,8 +190,7 @@ function App() {
 
   const zoomStyle = {
     width: `${100 / zoomLevel}vw`,
-    height: `${100 / zoomLevel}vh`,
-    minHeight: zoomLevel > 1 ? '100%' : undefined,
+    minHeight: `${100 / zoomLevel}vh`,
     transform: `scale(${zoomLevel})`,
     transformOrigin: 'top left',
     overflow: zoomLevel > 1 ? 'visible' : undefined,
@@ -268,10 +267,7 @@ function App() {
 
   return (
     <div className="App">
-      <div
-        className="App-zoom-container"
-        style={zoomLevel > 1 ? { overflow: 'auto' } : undefined}
-      >
+      <div className="App-zoom-container">
         <div className="App-zoom-wrapper" style={zoomStyle}>
           <div className="App-zoom-inner">
             {mainContent}

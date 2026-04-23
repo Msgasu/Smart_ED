@@ -19,26 +19,26 @@ body {
   height: 100%;
 }
 
-/* Zoom container: fills viewport, clips scaled content */
+/* Zoom container: viewport height, scroll when route content is taller (e.g. guardian report) */
 .App-zoom-container {
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   width: 100vw;
   height: 100vh;
   position: relative;
 }
 
-/* Inner content fills zoom wrapper so at reduced zoom the page still fills viewport height */
+/* Inner content: at least full wrapper height; grow with content (no fixed height — avoids clipping) */
 .App-zoom-inner {
   min-height: 100%;
-  height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-/* Let route content fill height without changing its layout (e.g. admin-layout stays row) */
+/* At least one viewport tall; flex-basis auto so pages can grow beyond the viewport */
 .App-zoom-inner > * {
-  min-height: 100%;
-  flex: 1;
+  min-height: 100vh;
+  flex: 1 0 auto;
 }
 
 .card {
