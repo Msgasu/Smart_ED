@@ -306,10 +306,26 @@
     text-align: left !important;
   }
 
-  .guardian-report-container .section-header h4,
-  .guardian-report-container .school-info,
-  .guardian-report-container .school-header {
+  .guardian-report-container .section-header h4 {
     text-align: left !important;
+  }
+
+  .guardian-report-container .school-header {
+    display: grid !important;
+    grid-template-columns: auto 1fr !important;
+    align-items: center !important;
+    column-gap: 1.25rem !important;
+  }
+
+  .guardian-report-container .school-logo {
+    justify-self: start !important;
+  }
+
+  .guardian-report-container .school-info,
+  .guardian-report-container .school-info h2,
+  .guardian-report-container .school-info h3,
+  .guardian-report-container .school-info p {
+    text-align: center !important;
   }
 }
 

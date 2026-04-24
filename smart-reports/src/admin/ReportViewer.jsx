@@ -762,35 +762,6 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
             </div>
           </div>
 
-          {/* Additional Information */}
-          <div className="additional-info-section">
-            <div className="section-header">
-              <h4>Additional Information</h4>
-            </div>
-            <div className="additional-info-grid">
-              <div className="info-item">
-                <span className="label">Position Held:</span>
-                <span className="value">{report.position_held || 'N/A'}</span>
-              </div>
-              <div className="info-item">
-                <span className="label">Conduct:</span>
-                <span className="value">{report.conduct || 'N/A'}</span>
-              </div>
-              <div className="info-item">
-                <span className="label">Next Class:</span>
-                <span className="value">{report.next_class || 'Not specified'}</span>
-              </div>
-                             <div className="info-item">
-                 <span className="label">Reopening Date:</span>
-                 <span className="value">{report.reopening_date || 'Not specified'}</span>
-               </div>
-               <div className="info-item">
-                 <span className="label">Interest:</span>
-                 <span className="value">{report.interest || 'N/A'}</span>
-               </div>
-            </div>
-          </div>
-
           {/* Performance Comparison Charts */}
           <div className="performance-charts-section">
             <div className="section-header">
@@ -807,7 +778,7 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
                         responsive: true,
                         maintainAspectRatio: false,
                         layout: {
-                          padding: { top: 8, right: 8, bottom: 8, left: 8 }
+                          padding: { top: 8, right: 8, bottom: 18, left: 8 }
                         },
                         plugins: {
                           title: {
@@ -851,16 +822,21 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
                             }
                           },
                           x: {
-                            ticks: { maxRotation: 45, minRotation: 0 },
+                            ticks: {
+                              maxRotation: 45,
+                              minRotation: 0,
+                              autoSkip: true,
+                              autoSkipPadding: 8
+                            },
                             title: {
                               display: true,
                               text: 'Students in Class',
-                              padding: { top: 10 }
+                              padding: { top: 12, bottom: 4 }
                             }
                           }
                         }
                       }}
-                      height={480}
+                      height={460}
                     />
                   ) : (
                     <div className="no-chart-data">
@@ -879,7 +855,7 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
                         responsive: true,
                         maintainAspectRatio: false,
                         layout: {
-                          padding: { top: 8, right: 4, bottom: 28, left: 4 }
+                          padding: { top: 8, right: 4, bottom: 32, left: 4 }
                         },
                         plugins: {
                           title: {
@@ -957,7 +933,7 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
                           }
                         }
                       }}
-                      height={520}
+                      height={500}
                     />
                   ) : (
                     <div className="no-chart-data">
@@ -965,6 +941,35 @@ const ReportViewer = ({ report: propReport, customNavigate, isGuardianView = fal
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Additional Information */}
+          <div className="additional-info-section">
+            <div className="section-header">
+              <h4>Additional Information</h4>
+            </div>
+            <div className="additional-info-grid">
+              <div className="info-item">
+                <span className="label">Position Held:</span>
+                <span className="value">{report.position_held || 'N/A'}</span>
+              </div>
+              <div className="info-item">
+                <span className="label">Conduct:</span>
+                <span className="value">{report.conduct || 'N/A'}</span>
+              </div>
+              <div className="info-item">
+                <span className="label">Next Class:</span>
+                <span className="value">{report.next_class || 'Not specified'}</span>
+              </div>
+              <div className="info-item">
+                <span className="label">Reopening Date:</span>
+                <span className="value">{report.reopening_date || 'Not specified'}</span>
+              </div>
+              <div className="info-item">
+                <span className="label">Interest:</span>
+                <span className="value">{report.interest || 'N/A'}</span>
               </div>
             </div>
           </div>
