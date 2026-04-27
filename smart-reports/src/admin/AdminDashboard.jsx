@@ -9,6 +9,7 @@ import UsersPage from './UsersPage'
 import Reports from './Reports'
 import ReportBankContent from './ReportBankContent'
 import AssignmentsMonitor from './AssignmentsMonitor'
+import NotificationsPage from './NotificationsPage'
 import ClassManagement from './ClassManagement'
 import CourseAssignment from './CourseAssignment'
 import AcademicSettings from './AcademicSettings'
@@ -50,7 +51,7 @@ const AdminDashboard = ({ user, profile }) => {
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search)
     const tabParam = urlParams.get('tab')
-    const nextTab = tabParam && ['users', 'reports', 'report-bank', 'assignments-monitor', 'classes', 'courses', 'settings', 'analytics'].includes(tabParam) ? tabParam : 'dashboard'
+    const nextTab = tabParam && ['users', 'reports', 'report-bank', 'assignments-monitor', 'notifications', 'classes', 'courses', 'settings', 'analytics'].includes(tabParam) ? tabParam : 'dashboard'
     setActiveTab(nextTab)
   }, [location.search])
 
@@ -599,6 +600,8 @@ const AdminDashboard = ({ user, profile }) => {
         return <ReportBankContent />
       case 'assignments-monitor':
         return <AssignmentsMonitor />
+      case 'notifications':
+        return <NotificationsPage />
       case 'classes':
         return <ClassManagement />
       case 'courses':
