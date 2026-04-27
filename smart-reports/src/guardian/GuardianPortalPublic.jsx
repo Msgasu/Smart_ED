@@ -12,6 +12,7 @@ const GuardianPortalPublic = () => {
   const [reportData, setReportData] = useState(null);
   const [selectedTerm, setSelectedTerm] = useState('Term 1');
   const [currentAcademicYear, setCurrentAcademicYear] = useState('');
+  const [reopeningDate, setReopeningDate] = useState(null);
   const [termsAgendaOpen, setTermsAgendaOpen] = useState(true);
   const [welcomeOpen, setWelcomeOpen] = useState(true);
   const [importantInfoOpen, setImportantInfoOpen] = useState(true);
@@ -23,6 +24,7 @@ const GuardianPortalPublic = () => {
         const period = await getCurrentAcademicPeriod();
         setSelectedTerm(period.term);
         setCurrentAcademicYear(period.academicYear);
+        setReopeningDate(period.reopening_date || null);
       } catch (error) {
         console.error('Error loading current academic period:', error);
         // Keep default 'Term 1' if fetch fails
@@ -173,7 +175,7 @@ const GuardianPortalPublic = () => {
         position_held: reportData.position_held || 'N/A',
         interest: reportData.interest || 'N/A',
         next_class: reportData.next_class || 'N/A',
-        reopening_date: reportData.reopening_date || 'N/A',
+        reopening_date: reopeningDate || reportData.reopening_date || 'N/A',
         teacher_remarks: reportData.teacher_remarks || 'No remarks available.',
         headmaster_remarks: reportData.headmaster_remarks || 'No remarks available.',
         house_report: reportData.house_report || 'No house report available.',
