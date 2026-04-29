@@ -33,11 +33,29 @@ const GuardianPortalPublic = () => {
     loadCurrentPeriod();
   }, []);
 
-  // Dummy data for demonstration
-  const dummyTermsAgenda = [
-    { date: '10-01-2026', event: 'Term 1 Begins (2025/2026 academic year)' },
- 
-  ];
+  const formatAgendaDate = (dateValue) => {
+    // Expected: YYYY-MM-DD from system_settings.reopening_date.
+    if (!dateValue) return 'N/A'
+    if (typeof dateValue !== 'string') return String(dateValue)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+      const [y, m, d] = dateValue.split('-')
+      return `${parseInt(d, 10)}/${parseInt(m, 10)}/${y}`
+    }
+    // Fallback: keep whatever format the admin stored.
+    return dateValue
+  }
+
+  const academicYearDisplay = currentAcademicYear
+    ? currentAcademicYear.replace('-', '/')
+    : 'N/A'
+
+  // Sidebar content
+  const termsAgenda = [
+    {
+      date: formatAgendaDate(reopeningDate) || '25/4/2026',
+      event: `Term 1 Begins (${academicYearDisplay} academic year)`,
+    },
+  ]
 
   const dummyAnnouncements = [
     'We\'re excited to welcome all our students, parents, and staff back as we begin a new academic term! We hope everyone had a restful and enjoyable break. As we step into this new chapter, we look forward to a term filled with learning, growth, and new opportunities. Let\'s work together to make this term a successful and inspiring journey for all. Here\'s to a great start and an even greater term ahead!',
@@ -98,6 +116,19 @@ const GuardianPortalPublic = () => {
         return;
       }
 
+      // Refresh the current academic period so changes in admin settings reflect instantly
+      // (especially reopening_date and term selection).
+      const currentPeriod = await getCurrentAcademicPeriod().catch(() => null);
+      const effectiveSelectedTerm = currentPeriod?.term || selectedTerm;
+      const effectiveAcademicYear = currentPeriod?.academicYear || currentAcademicYear;
+      const effectiveReopeningDate = currentPeriod?.reopening_date ?? reopeningDate;
+
+      if (currentPeriod) {
+        setSelectedTerm(currentPeriod.term);
+        setCurrentAcademicYear(currentPeriod.academicYear);
+        setReopeningDate(currentPeriod.reopening_date || null);
+      }
+
       // Step 2: Get selected term report for this student
       let reportQuery = supabase
         .from('student_reports')
@@ -121,11 +152,11 @@ const GuardianPortalPublic = () => {
           principal_signature
         `)
         .eq('student_id', studentData.profile_id)
-        .eq('term', selectedTerm);
+        .eq('term', effectiveSelectedTerm);
       
       // Also filter by academic year if available
-      if (currentAcademicYear) {
-        reportQuery = reportQuery.eq('academic_year', currentAcademicYear);
+      if (effectiveAcademicYear) {
+        reportQuery = reportQuery.eq('academic_year', effectiveAcademicYear);
       }
       
       const { data: reportData, error: reportError } = await reportQuery
@@ -134,7 +165,7 @@ const GuardianPortalPublic = () => {
         .single();
 
       if (reportError || !reportData) {
-        setError(`No ${selectedTerm} report found for this student.`);
+        setError(`No ${effectiveSelectedTerm} report found for this student.`);
         setLoading(false);
         return;
       }
@@ -175,7 +206,7 @@ const GuardianPortalPublic = () => {
         position_held: reportData.position_held || 'N/A',
         interest: reportData.interest || 'N/A',
         next_class: reportData.next_class || 'N/A',
-        reopening_date: reopeningDate || reportData.reopening_date || 'N/A',
+        reopening_date: effectiveReopeningDate || reportData.reopening_date || 'N/A',
         teacher_remarks: reportData.teacher_remarks || 'No remarks available.',
         headmaster_remarks: reportData.headmaster_remarks || 'No remarks available.',
         house_report: reportData.house_report || 'No house report available.',
@@ -321,7 +352,7 @@ const GuardianPortalPublic = () => {
                 </h3>
                 {termsAgendaOpen && (
                   <div className="agenda-list">
-                    {dummyTermsAgenda.map((item, index) => (
+                    {termsAgenda.map((item, index) => (
                       <div key={index} className="agenda-item">
                         <span className="agenda-date">{item.date}</span>
                         <span className="agenda-event">{item.event}</span>
