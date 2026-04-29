@@ -53,7 +53,7 @@ const GuardianPortalPublic = () => {
   const termsAgenda = [
     {
       date: formatAgendaDate(reopeningDate) || '25/4/2026',
-      event: `Term 1 Begins (${academicYearDisplay} academic year)`,
+      event: `${selectedTerm || 'Term 2'} Begins (${academicYearDisplay} academic year)`,
     },
   ]
 
