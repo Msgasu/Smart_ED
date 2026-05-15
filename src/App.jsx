@@ -31,9 +31,8 @@ import TeacherStudents from './pages/teacher/TeacherStudents';
 import TeacherAssignments from './pages/teacher/TeacherAssignments';
 import StudentAnalysis from './pages/teacher/StudentsAnalysis';
 import GradeAssignment from './pages/teacher/GradeAssignment';
-import AssignmentsCourseSelect from './pages/teacher/AssignmentsCourseSelect';
+import TeacherAssignmentsRedirect from './pages/teacher/TeacherAssignmentsRedirect';
 import TeacherReport from './pages/teacher/TeacherReport';
-import ReportsList from './pages/teacher/ReportsList';
 import ReportView from './pages/teacher/ReportView';
 
 
@@ -95,12 +94,12 @@ function App() {
             <Route path="/teacher/courses" element={<TeacherCourses />} />
             <Route path="/teacher/courses/:courseId/students" element={<TeacherStudents />} />
             <Route path="/teacher/courses/:courseId/assignments" element={<TeacherAssignments />} />
-            <Route path="/teacher/assignments" element={<AssignmentsCourseSelect />} />
+            <Route path="/teacher/assignments" element={<TeacherAssignmentsRedirect />} />
             <Route path="/teacher/courses/:courseId/students/:studentId/analysis/:courseId?" element={<StudentAnalysis />} />
             <Route path="/teacher/students/:studentId" element={<StudentAnalysis />} />
             <Route path="/teacher/assignments/:assignmentId/grade" element={<GradeAssignment />} />
             <Route path="/teacher/report/:studentId/:courseId" element={<TeacherReport />} />
-            <Route path="/teacher/reports" element={<ReportsList />} />
+            <Route path="/teacher/reports" element={<Navigate to="/teacher/dashboard" />} />
             <Route path="/teacher/report-view/:reportId" element={<ReportView />} />
             
             {/* Notifications route */}
