@@ -4,6 +4,9 @@ import { Link } from 'react-router-dom';
 import { FaUserGraduate, FaClipboardList, FaCalendarAlt, FaBook } from 'react-icons/fa';
 import './styles/CourseList.css';
 
+/** My Courses: show View Students / Manage Assignments on each card (hidden for now). */
+const SHOW_COURSE_CARD_ACTIONS = false;
+
 const CourseList = ({ courses }) => {
   return (
     <div className="course-container">
@@ -40,20 +43,22 @@ const CourseList = ({ courses }) => {
                   </div>
                 </div>
               </div>
-              <div className="course-actions">
-                <Link 
-                  to={`/teacher/courses/${course.course_id}/students`}
-                  className="course-action-btn students-btn"
-                >
-                  <FaUserGraduate /> View Students
-                </Link>
-                <Link 
-                  to={`/teacher/courses/${course.course_id}/assignments`}
-                  className="course-action-btn assignments-btn"
-                >
-                  <FaClipboardList /> Manage Assignments
-                </Link>
-              </div>
+              {SHOW_COURSE_CARD_ACTIONS && (
+                <div className="course-actions">
+                  <Link
+                    to={`/teacher/courses/${course.course_id}/students`}
+                    className="course-action-btn students-btn"
+                  >
+                    <FaUserGraduate /> View Students
+                  </Link>
+                  <Link
+                    to={`/teacher/courses/${course.course_id}/assignments`}
+                    className="course-action-btn assignments-btn"
+                  >
+                    <FaClipboardList /> Manage Assignments
+                  </Link>
+                </div>
+              )}
             </div>
           ))}
         </div>
