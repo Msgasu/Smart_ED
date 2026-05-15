@@ -7,7 +7,6 @@ import {
   FaSignOutAlt,
   FaBars,
   FaTimes,
-  FaCog
 } from 'react-icons/fa';
 import { supabase } from '../../lib/supabase';
 import './styles/TeacherLayout.css';
@@ -95,11 +94,6 @@ const TeacherLayout = ({ children }) => {
             <li className={location.pathname.startsWith('/teacher/assignments') ? 'active' : ''}>
               <Link to="/teacher/assignments">
                 <FaClipboardList /> <span>Assignments</span>
-              </Link>
-            </li>
-            <li className={location.pathname === '/teacher/settings' ? 'active' : ''}>
-              <Link to="/teacher/settings">
-                <FaCog /> <span>Settings</span>
               </Link>
             </li>
           </ul>
