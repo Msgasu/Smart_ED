@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { getAssignmentDetails } from '../../backend/students/assignments';
 import StudentLayout from '../../components/student/StudentLayout';
 import AssignmentSubmission from '../../components/student/AssignmentSubmission';
-import { FaArrowLeft, FaCalendarAlt, FaBookOpen, FaClipboardList, FaTrophy } from 'react-icons/fa';
+import { FaArrowLeft, FaCalendarAlt, FaBookOpen, FaClipboardList, FaTrophy, FaEdit } from 'react-icons/fa';
 import './styles/StudentAssignmentDetail.css';
 
 const StudentAssignmentDetail = () => {
@@ -133,6 +133,12 @@ const StudentAssignmentDetail = () => {
               <FaClipboardList />
               <span>Type: {assignment.type}</span>
             </div>
+            <div className="assignment-type">
+              <FaEdit />
+              <span>
+                {(assignment.submission_mode || 'online') === 'paper' ? 'On paper' : 'Online submission'}
+              </span>
+            </div>
           </div>
           
           <div className="assignment-meta">
@@ -161,7 +167,8 @@ const StudentAssignmentDetail = () => {
             <h2>Submission</h2>
             <AssignmentSubmission 
               assignmentId={assignmentId} 
-              studentId={userId} 
+              studentId={userId}
+              submissionMode={assignment.submission_mode || 'online'}
             />
           </div>
         </div>
