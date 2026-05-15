@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import TeacherLayout from '../../components/teacher/TeacherLayout.jsx';
 import { getAssignmentDetails } from '../../backend/teachers/assignments';
 import { getSubmissionsByAssignment, bulkGradeSubmissions, getStudentSubmissionFiles } from '../../backend/teachers/grading';
-import { FaSave, FaArrowLeft, FaFilter, FaSearch, FaCheck, FaTimes, FaClock, FaFile, FaFileAlt, FaFilePdf, FaFileImage, FaFileWord, FaFileExcel, FaDownload, FaTimes as FaClose } from 'react-icons/fa';
+import { FaSave, FaFilter, FaSearch, FaCheck, FaTimes, FaClock, FaFile, FaFileAlt, FaFilePdf, FaFileImage, FaFileWord, FaFileExcel, FaDownload, FaTimes as FaClose } from 'react-icons/fa';
 import './styles/GradeAssignment.css';
 import Swal from 'sweetalert2';
 
 const GradeAssignment = () => {
   const { assignmentId } = useParams();
-  const navigate = useNavigate();
   const [assignment, setAssignment] = useState(null);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -341,16 +340,9 @@ const GradeAssignment = () => {
     <TeacherLayout>
       <div className="grading-page">
         <div className="page-header">
-          <div className="title-section">
           <h1 className="page-title">
             {assignment ? `Grade: ${assignment.title}` : 'Grade Assignment'}
           </h1>
-            <div className="back-link">
-              <Link to={`/teacher/assignments/${assignment?.course_id}`}>
-                <FaArrowLeft /> Back to Assignments
-              </Link>
-            </div>
-          </div>
           <button 
             className={`save-grades-btn ${saveStatus.saving ? 'saving' : ''} ${saveStatus.saved ? 'saved' : ''}`}
             onClick={saveGrades}

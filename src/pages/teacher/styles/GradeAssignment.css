@@ -13,35 +13,11 @@
   border-bottom: 1px solid #e2e8f0;
 }
 
-.title-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
 .page-title {
   font-size: 1.75rem;
   font-weight: 700;
   color: #2d3748;
   margin: 0;
-}
-
-.back-link {
-  margin-bottom: 1.5rem;
-}
-
-.back-link a {
-  display: flex;
-  align-items: center;
-  color: #4a5568;
-  font-size: 0.95rem;
-  text-decoration: none;
-  gap: 0.5rem;
-  transition: color 0.2s;
-}
-
-.back-link a:hover {
-  color: #3182ce;
 }
 
 /* Assignment Details Card */
