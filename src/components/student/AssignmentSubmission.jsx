@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { submitAssignment, uploadAssignmentFile, getAssignmentFiles, deleteAssignmentFile } from '../../backend/students/assignments';
-import { FaFileUpload, FaFile, FaFilePdf, FaFileImage, FaFileWord, FaFileExcel, FaFileAlt, FaTimes, FaTrash, FaCheck, FaDownload } from 'react-icons/fa';
+import { FaFileUpload, FaFile, FaFilePdf, FaFileImage, FaFileWord, FaFileExcel, FaFileAlt, FaTimes, FaTrash, FaCheck, FaDownload, FaClock } from 'react-icons/fa';
 import './styles/AssignmentSubmission.css';
 
-const AssignmentSubmission = ({ assignmentId, studentId }) => {
+const AssignmentSubmission = ({ assignmentId, studentId, submissionMode = 'online' }) => {
   const [submission, setSubmission] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -271,6 +271,46 @@ const AssignmentSubmission = ({ assignmentId, studentId }) => {
 
   if (loading) {
     return <div className="loading-submission">Loading...</div>;
+  }
+
+  if (submissionMode === 'paper') {
+    if (!submission) {
+      return (
+        <div className="paper-assignment-notice assignment-submission-container">
+          <p><strong>On-paper assignment</strong></p>
+          <p>Submit your work in class as your teacher directs. You do not upload it here.</p>
+          <p>Your grade will show here after your teacher records it.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="assignment-submission-container">
+        <div className="paper-assignment-banner">
+          <strong>On-paper assignment</strong> — online submission is not used for this task.
+        </div>
+        <div className="submission-details">
+          <div className="submission-status">
+            <span className={`status-badge ${submission.status}`}>
+              {submission.status === 'graded' ? (
+                <><FaCheck /> Graded</>
+              ) : (
+                <><FaClock /> Pending grade</>
+              )}
+            </span>
+            {submission.status === 'graded' && submission.score != null && (
+              <div className="score-display">Score: {submission.score}</div>
+            )}
+          </div>
+          {submission.feedback && (
+            <div className="submission-description">
+              <h4>Teacher feedback</h4>
+              <p>{submission.feedback}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   }
 
   return (

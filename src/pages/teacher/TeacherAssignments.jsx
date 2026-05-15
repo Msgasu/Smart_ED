@@ -30,7 +30,8 @@ const TeacherAssignments = () => {
     type: 'Homework',
     max_score: 100,
     due_date: '',
-    due_time: ''
+    due_time: '',
+    submission_mode: 'online',
   });
   const [loading, setLoading] = useState(true);
   const [formVisible, setFormVisible] = useState(false);
@@ -178,7 +179,8 @@ const TeacherAssignments = () => {
         // description: newAssignment.description,
         type: newAssignment.type,
         max_score: newAssignment.max_score,
-        due_date: dueDateTime
+        due_date: dueDateTime,
+        submission_mode: newAssignment.submission_mode || 'online',
       };
       
       const { data, error } = await createAssignment(assignmentData);
@@ -192,7 +194,8 @@ const TeacherAssignments = () => {
         type: 'Homework',
         max_score: 100,
         due_date: '',
-        due_time: ''
+        due_time: '',
+        submission_mode: 'online',
       });
       
       setFormVisible(false);
@@ -1028,7 +1031,22 @@ const TeacherAssignments = () => {
                         rows="3"
                         placeholder="Provide detailed instructions and requirements for this assignment"
                       ></textarea>
-                      <span className="field-hint">Be specific about your expectations, deliverables, and any resources students should use.</span>
+                        <span className="field-hint">Be specific about your expectations, deliverables, and any resources students should use.</span>
+                    </div>
+                    
+                    <div className="form-group">
+                      <label htmlFor="submission_mode">Submission</label>
+                      <select
+                        id="submission_mode"
+                        name="submission_mode"
+                        value={newAssignment.submission_mode}
+                        onChange={handleInputChange}
+                        className="form-select"
+                      >
+                        <option value="online">Online — students submit in the portal (grade after submission)</option>
+                        <option value="paper">On paper — in-class / handwritten work (teacher can grade without online submission)</option>
+                      </select>
+                      <span className="field-hint">Choose whether this assignment uses portal uploads or is collected on paper.</span>
                     </div>
                     
                     <div className="form-row">
@@ -1166,6 +1184,7 @@ const TeacherAssignments = () => {
                           <th onClick={() => handleSort('type')} className="sortable">
                             Type {sortBy === 'type' && (sortDir === 'asc' ? '↑' : '↓')}
                           </th>
+                          <th>Submission</th>
                           <th onClick={() => handleSort('due_date')} className="sortable">
                             Due Date {sortBy === 'due_date' && (sortDir === 'asc' ? '↑' : '↓')}
                           </th>
@@ -1182,6 +1201,11 @@ const TeacherAssignments = () => {
                           <td>
                             <span className={`badge type-${assignment.type.toLowerCase()}`}>
                               {assignment.type}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`badge submission-mode-${(assignment.submission_mode || 'online')}`}>
+                              {(assignment.submission_mode || 'online') === 'paper' ? 'On paper' : 'Online'}
                             </span>
                           </td>
                           <td>
