@@ -142,6 +142,20 @@ export const submitAssignment = async (assignmentId, studentId, submissionData) 
     if (!assignmentId || !studentId) {
       throw new Error('Assignment ID and Student ID are required');
     }
+
+    const { data: assignMeta, error: assignMetaErr } = await supabase
+      .from('assignments')
+      .select('submission_mode')
+      .eq('id', assignmentId)
+      .single();
+
+    if (assignMetaErr) throw assignMetaErr;
+    if ((assignMeta?.submission_mode || 'online') === 'paper') {
+      return {
+        data: null,
+        error: new Error('This assignment is completed on paper. Your teacher will post your grade here when ready.')
+      };
+    }
     
     // Check if submission already exists
     const { data: existingSubmission, error: checkError } = await supabase

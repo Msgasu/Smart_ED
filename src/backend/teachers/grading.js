@@ -159,6 +159,15 @@ export const gradeSubmission = async (studentId, assignmentId, gradeData) => {
     if (!studentId || !assignmentId) {
       throw new Error('Student ID and Assignment ID are required');
     }
+
+    const { data: assignmentMeta, error: metaErr } = await supabase
+      .from('assignments')
+      .select('submission_mode')
+      .eq('id', assignmentId)
+      .single();
+
+    if (metaErr) throw metaErr;
+    const submissionMode = assignmentMeta?.submission_mode || 'online';
     
     // Check if submission already exists
     const { data: existingSubmission, error: checkError } = await supabase
@@ -169,9 +178,29 @@ export const gradeSubmission = async (studentId, assignmentId, gradeData) => {
       .maybeSingle();
       
     if (checkError) throw checkError;
+
+    if (submissionMode === 'online') {
+      if (!existingSubmission) {
+        return {
+          data: null,
+          error: new Error('Student must submit online before this assignment can be graded.')
+        };
+      }
+      if (!['submitted', 'graded'].includes(existingSubmission.status)) {
+        return {
+          data: null,
+          error: new Error('Student must submit this assignment online before it can be graded.')
+        };
+      }
+    }
     
     let result;
     
+    const feedbackVal =
+      gradeData.feedback !== undefined && gradeData.feedback !== null
+        ? gradeData.feedback
+        : null;
+
     if (existingSubmission) {
       // Update existing submission - remove graded_at if the column doesn't exist
       const { data, error } = await supabase
@@ -179,6 +208,7 @@ export const gradeSubmission = async (studentId, assignmentId, gradeData) => {
         .update({
           score: gradeData.score,
           status: 'graded',
+          feedback: feedbackVal,
         })
         .eq('id', existingSubmission.id)
         .select()
@@ -195,6 +225,7 @@ export const gradeSubmission = async (studentId, assignmentId, gradeData) => {
           student_id: studentId,
           score: gradeData.score,
           status: 'graded',
+          feedback: feedbackVal,
         }])
         .select()
         .single();

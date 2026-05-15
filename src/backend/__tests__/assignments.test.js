@@ -134,13 +134,19 @@ describe('Assignment Backend Functions', () => {
     const mockInsert = vi.fn().mockReturnThis();
     const mockSingle = vi.fn().mockResolvedValue(mockSubmission);
 
-    supabase.from.mockReturnValue({
-      select: mockSelect,
-      eq: mockEq,
-      maybeSingle: mockMaybeSingle,
-      insert: mockInsert,
-      single: mockSingle
-    });
+    supabase.from
+      .mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { submission_mode: 'online' }, error: null })
+      })
+      .mockReturnValue({
+        select: mockSelect,
+        eq: mockEq,
+        maybeSingle: mockMaybeSingle,
+        insert: mockInsert,
+        single: mockSingle
+      });
 
     const result = await submitAssignment(mockAssignmentId, mockStudentId, {
       description: 'Test submission'
