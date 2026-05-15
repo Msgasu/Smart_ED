@@ -228,6 +228,21 @@ const GradeAssignment = () => {
 
   const stats = calculateStats();
 
+  const isPaperAssignment = (assignment?.submission_mode || 'online') === 'paper';
+
+  const canEnterGrade = (student) => {
+    if (isPaperAssignment) return true;
+    const st = student.submission.status;
+    return st === 'submitted' || st === 'graded';
+  };
+
+  const statusLabel = (student) => {
+    if (student.submission.status === 'graded') return 'Graded';
+    if (student.submission.status === 'submitted') return 'Submitted';
+    if (isPaperAssignment) return 'No online submission';
+    return 'Awaiting online submission';
+  };
+
   // Add this function to handle file downloads
   const handleFileDownload = async (file, e) => {
     if (e) e.preventDefault();
@@ -353,6 +368,11 @@ const GradeAssignment = () => {
         
         <div className="assignment-details-card">
           <h2>Assignment Details</h2>
+          <p className="offline-grade-hint" style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#555' }}>
+            {isPaperAssignment
+              ? 'This is an on-paper assignment. Enter scores for any student without requiring an online submission.'
+              : 'Students must submit online before you can enter a score. Use on-paper assignment type for handwritten or in-class work.'}
+          </p>
           {assignment && (
             <div className="assignment-details-grid">
               <div className="detail-item">
@@ -362,6 +382,12 @@ const GradeAssignment = () => {
               <div className="detail-item">
                 <span className="label">Title:</span>
                 <span className="value">{assignment.title}</span>
+              </div>
+              <div className="detail-item">
+                <span className="label">Submission:</span>
+                <span className="value">
+                  {isPaperAssignment ? 'On paper' : 'Online (submit before grading)'}
+                </span>
               </div>
               <div className="detail-item">
                 <span className="label">Type:</span>
@@ -402,7 +428,7 @@ const GradeAssignment = () => {
             </div>
             <div className="stat-item">
               <div className="stat-value">{stats.notSubmitted}</div>
-              <div className="stat-label">Not Submitted</div>
+              <div className="stat-label">No online submission</div>
             </div>
             {stats.graded > 0 && (
               <>
@@ -435,7 +461,7 @@ const GradeAssignment = () => {
               <option value="submitted">Submitted</option>
               <option value="graded">Graded</option>
               <option value="ungraded">Ungraded</option>
-              <option value="not_submitted">Not Submitted</option>
+              <option value="not_submitted">No online submission</option>
             </select>
           </div>
           
@@ -478,8 +504,7 @@ const GradeAssignment = () => {
                     </td>
                     <td>
                       <span className={`status-badge status-${student.submission.status}`}>
-                        {student.submission.status === 'graded' ? 'Graded' : 
-                         student.submission.status === 'submitted' ? 'Submitted' : 'Not Submitted'}
+                        {statusLabel(student)}
                       </span>
                     </td>
                     <td>
@@ -498,11 +523,12 @@ const GradeAssignment = () => {
                         type="number"
                         min="0"
                         max={assignment?.max_score || 100}
-                        value={grades[student.id]?.score || ''}
+                        value={grades[student.id]?.score ?? ''}
                         onChange={(e) => handleScoreChange(student.id, e.target.value)}
                         className="score-input"
                           placeholder="Score"
-                          disabled={student.submission.status === 'not_submitted'}
+                          disabled={!canEnterGrade(student)}
+                          title={!canEnterGrade(student) ? 'Student must submit online first' : ''}
                       />
                       <span className="max-score">/ {assignment?.max_score || 100}</span>
                       </div>
@@ -514,7 +540,8 @@ const GradeAssignment = () => {
                         className="feedback-input"
                         placeholder="Enter feedback"
                         rows="2"
-                        disabled={student.submission.status === 'not_submitted'}
+                        disabled={!canEnterGrade(student)}
+                        title={!canEnterGrade(student) ? 'Student must submit online first' : ''}
                       ></textarea>
                     </td>
                   </tr>
