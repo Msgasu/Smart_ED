@@ -11,6 +11,7 @@ import ReportBankContent from './ReportBankContent'
 import ClassManagement from './ClassManagement'
 import CourseAssignment from './CourseAssignment'
 import AcademicSettings from './AcademicSettings'
+import NotificationsPage from './NotificationsPage'
 import {
   FaGraduationCap,
   FaChalkboardTeacher,
@@ -47,7 +48,7 @@ const AdminDashboard = ({ user, profile }) => {
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search)
     const tabParam = urlParams.get('tab')
-    const nextTab = tabParam && ['users', 'reports', 'report-bank', 'classes', 'courses', 'settings', 'analytics'].includes(tabParam) ? tabParam : 'dashboard'
+    const nextTab = tabParam && ['users', 'reports', 'report-bank', 'notifications', 'classes', 'courses', 'settings', 'analytics'].includes(tabParam) ? tabParam : 'dashboard'
     setActiveTab(nextTab)
   }, [location.search])
 
@@ -553,6 +554,8 @@ const AdminDashboard = ({ user, profile }) => {
         return <Reports />
       case 'report-bank':
         return <ReportBankContent />
+      case 'notifications':
+        return <NotificationsPage />
       case 'classes':
         return <ClassManagement />
       case 'courses':
