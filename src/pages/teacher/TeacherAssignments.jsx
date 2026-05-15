@@ -1248,27 +1248,40 @@ const TeacherAssignments = () => {
                           </td>
                           <td>{assignment.max_score} pts</td>
                           <td>
-                            <div className="action-buttons">
-                              <Link 
-                                to={`/teacher/assignments/${assignment.id}/edit`} 
-                                className="btn-icon"
-                                title="Edit Assignment"
+                            <div className="assignment-actions-cell">
+                              <Link
+                                to={`/teacher/assignments/${assignment.id}/edit`}
+                                className="assignment-action-card"
+                                title="Edit this assignment"
+                                aria-label="Edit assignment"
                               >
-                                <FaEdit />
+                                <span className="assignment-action-card__icon" aria-hidden="true">
+                                  <FaEdit />
+                                </span>
+                                <span className="assignment-action-card__label">Edit</span>
                               </Link>
                               <button
-                                className="btn-icon delete"
+                                type="button"
+                                className="assignment-action-card assignment-action-card--delete"
                                 onClick={() => handleDeleteAssignment(assignment.id)}
-                                title="Delete Assignment"
+                                title="Delete this assignment"
+                                aria-label="Delete assignment"
                               >
-                                <FaTrash />
+                                <span className="assignment-action-card__icon" aria-hidden="true">
+                                  <FaTrash />
+                                </span>
+                                <span className="assignment-action-card__label">Delete</span>
                               </button>
-                              <Link 
-                                to={`/teacher/assignments/${assignment.id}/grade`} 
-                                className="btn-icon grade"
-                                title="Grade Submissions"
+                              <Link
+                                to={`/teacher/assignments/${assignment.id}/grade`}
+                                className="assignment-action-card assignment-action-card--grade"
+                                title="Grade student submissions"
+                                aria-label="Grade submissions"
                               >
-                                <FaFileAlt />
+                                <span className="assignment-action-card__icon" aria-hidden="true">
+                                  <FaFileAlt />
+                                </span>
+                                <span className="assignment-action-card__label">Grade</span>
                               </Link>
                             </div>
                           </td>

@@ -518,6 +518,18 @@ input[type="number"].form-control::-webkit-inner-spin-button {
   border: 1px solid rgba(155, 89, 182, 0.2);
 }
 
+.badge.submission-mode-online {
+  background-color: rgba(52, 152, 219, 0.12);
+  color: var(--primary-color);
+  border: 1px solid rgba(52, 152, 219, 0.25);
+}
+
+.badge.submission-mode-paper {
+  background-color: rgba(149, 165, 166, 0.18);
+  color: #566573;
+  border: 1px solid rgba(127, 140, 141, 0.35);
+}
+
 /* Due date styling */
 .due-date {
   display: flex;
@@ -547,55 +559,85 @@ input[type="number"].form-control::-webkit-inner-spin-button {
   color: #27ae60;
 }
 
-/* Action buttons */
-.action-buttons {
+/* Assignment row actions — icon + label; SVG uses currentColor */
+.assignment-actions-cell {
   display: flex;
-  gap: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: stretch;
 }
 
-.btn-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+a.assignment-action-card {
+  text-decoration: none;
+  color: inherit;
+}
+
+.assignment-action-card {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 52px;
+  padding: 6px 8px 8px;
+  border-radius: 10px;
+  border: 2px solid var(--border-color);
+  background: #fff;
+  color: var(--text-color);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.1;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  font-family: inherit;
+}
+
+.assignment-action-card:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.assignment-action-card__icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: white;
-  color: var(--text-color);
-  border: 2px solid var(--border-color);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.95rem;
+  width: 22px;
+  height: 22px;
 }
 
-.btn-icon:hover {
-  background-color: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-  transform: translateY(-2px);
-  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+.assignment-action-card__icon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+  fill: currentColor;
 }
 
-.btn-icon.delete {
-  color: #e74c3c;
-  border-color: rgba(231, 76, 60, 0.3);
+.assignment-action-card__label {
+  text-align: center;
+  max-width: 72px;
 }
 
-.btn-icon.delete:hover {
-  background-color: #e74c3c;
-  color: white;
+.assignment-action-card--delete {
+  color: #c0392b;
+  border-color: rgba(231, 76, 60, 0.45);
+}
+
+.assignment-action-card--delete:hover {
   border-color: #e74c3c;
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.06);
 }
 
-.btn-icon.grade {
-  color: #f39c12;
-  border-color: rgba(243, 156, 18, 0.3);
+.assignment-action-card--grade {
+  color: #d68910;
+  border-color: rgba(243, 156, 18, 0.45);
 }
 
-.btn-icon.grade:hover {
-  background-color: #f39c12;
-  color: white;
+.assignment-action-card--grade:hover {
   border-color: #f39c12;
+  color: #b9770e;
+  background: rgba(243, 156, 18, 0.1);
 }
 
 /* Empty State */
