@@ -878,6 +878,56 @@ input[type="number"].form-control::-webkit-inner-spin-button {
 .todo-actions {
   display: flex;
   gap: 8px;
+  flex-shrink: 0;
+  align-items: flex-start;
+}
+
+/* Dedicated styles — avoid clashing with global .btn-icon / Tailwind */
+.todo-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 2px solid var(--border-color, #e0e0e0);
+  background-color: #fff;
+  color: #2c3e50;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.todo-action-btn svg {
+  width: 14px !important;
+  height: 14px !important;
+  min-width: 14px;
+  min-height: 14px;
+  flex-shrink: 0;
+  display: block;
+}
+
+.todo-action-btn--edit:hover {
+  background-color: rgba(52, 152, 219, 0.12);
+  border-color: var(--primary-color, #3498db);
+  color: var(--primary-color, #3498db);
+}
+
+.todo-action-btn--delete {
+  color: #c0392b;
+  border-color: rgba(231, 76, 60, 0.35);
+}
+
+.todo-action-btn--delete:hover {
+  background-color: rgba(231, 76, 60, 0.1);
+  border-color: #e74c3c;
+  color: #e74c3c;
+}
+
+.todo-action-btn-label {
+  line-height: 1;
 }
 
 .todo-description {
@@ -889,7 +939,7 @@ input[type="number"].form-control::-webkit-inner-spin-button {
 
 .todo-footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   font-size: 13px;
   color: var(--text-muted, #6c757d);

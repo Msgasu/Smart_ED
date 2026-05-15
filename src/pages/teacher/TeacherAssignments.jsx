@@ -17,6 +17,7 @@ import {
 } from '../../backend/teachers/courses';
 import { getAssignments, createAssignment, deleteAssignment } from '../../backend/teachers/assignments';
 import { uploadFile, downloadFile } from '../../backend/storage';
+import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import './styles/TeacherAssignments.css';
 
@@ -365,6 +366,26 @@ const TeacherAssignments = () => {
       [name]: value
     }));
   };
+
+  /** Whitelist fields for Supabase; empty date strings break Postgres DATE columns */
+  const buildCourseTodoPayload = (courseIdParam, facultyId) => {
+    const weekRaw = parseInt(String(newTodo.week_number ?? '1'), 10);
+    const week_number = Number.isFinite(weekRaw) && weekRaw > 0 ? weekRaw : 1;
+    const start = newTodo.start_date && String(newTodo.start_date).trim();
+    const end = newTodo.end_date && String(newTodo.end_date).trim();
+    const pr = newTodo.priority;
+    const priority = ['low', 'medium', 'high'].includes(pr) ? pr : 'medium';
+    return {
+      course_id: courseIdParam,
+      faculty_id: facultyId,
+      title: String(newTodo.title || '').trim(),
+      description: newTodo.description ? String(newTodo.description).trim() : null,
+      week_number,
+      priority,
+      start_date: start ? start : null,
+      end_date: end ? end : null,
+    };
+  };
   
   const handleCreateOrUpdateTodo = async (e) => {
     e.preventDefault();
@@ -379,20 +400,20 @@ const TeacherAssignments = () => {
         throw new Error('User not authenticated');
       }
       
-      const todoData = {
-        ...newTodo,
-        course_id: courseId,
-        faculty_id: user.id
-      };
+      const basePayload = buildCourseTodoPayload(courseId, user.id);
       
       let data, error;
       
       if (editingTodoId) {
-        // Update existing to-do
-        ({ data, error } = await updateCourseTodo(editingTodoId, todoData));
+        const st = newTodo.status;
+        const allowed = ['active', 'completed', 'archived'];
+        const updatePayload = {
+          ...basePayload,
+          ...(allowed.includes(st) ? { status: st } : {}),
+        };
+        ({ data, error } = await updateCourseTodo(editingTodoId, updatePayload));
       } else {
-        // Create new to-do
-        ({ data, error } = await createCourseTodo(todoData));
+        ({ data, error } = await createCourseTodo({ ...basePayload, status: 'active' }));
       }
       
       if (error) throw error;
@@ -413,7 +434,8 @@ const TeacherAssignments = () => {
       toast.success(editingTodoId ? "To-do updated successfully" : "To-do created successfully");
     } catch (error) {
       console.error('Error with course to-do:', error);
-      toast.error("Failed to save to-do item");
+      const msg = error?.message || error?.error_description || (typeof error === 'string' ? error : null);
+      toast.error(msg ? `Failed to save to-do: ${msg}` : 'Failed to save to-do item');
     } finally {
       setLoadingTodos(false);
     }
@@ -440,8 +462,16 @@ const TeacherAssignments = () => {
     try {
       const todoToUpdate = todos.find(todo => todo.id === todoId);
       if (!todoToUpdate) return;
-      
-      const { error } = await updateCourseTodo(todoId, { status: newStatus });
+
+      // DB allows: active, completed, archived — UI uses pending / in_progress / completed
+      const dbStatus =
+        newStatus === 'completed'
+          ? 'completed'
+          : newStatus === 'pending' || newStatus === 'in_progress'
+            ? 'active'
+            : newStatus;
+
+      const { error } = await updateCourseTodo(todoId, { status: dbStatus });
       
       if (error) throw error;
       
@@ -450,7 +480,8 @@ const TeacherAssignments = () => {
       toast.success("To-do status updated");
     } catch (error) {
       console.error('Error updating to-do status:', error);
-      toast.error("Failed to update to-do status");
+      const msg = error?.message || error?.error_description;
+      toast.error(msg ? `Failed to update status: ${msg}` : "Failed to update to-do status");
     }
   };
 
@@ -827,7 +858,7 @@ const TeacherAssignments = () => {
                               <h3>{todo.title}</h3>
                               <div className="todo-status">
                                 <button 
-                                  className={`status-btn ${todo.status === 'pending' ? 'active' : ''}`}
+                                  className={`status-btn ${todo.status === 'active' || todo.status === 'pending' ? 'active' : ''}`}
                                   onClick={() => handleTodoStatusChange(todo.id, 'pending')}
                                 >
                                   Pending
@@ -848,18 +879,22 @@ const TeacherAssignments = () => {
                             </div>
                             <div className="todo-actions">
                               <button 
-                                className="btn-icon edit"
+                                type="button"
+                                className="todo-action-btn todo-action-btn--edit"
                                 onClick={() => toggleTodoForm(todo.id)}
                                 title="Edit To-Do"
                               >
-                                <FaEdit />
+                                <FaEdit aria-hidden />
+                                <span className="todo-action-btn-label">Edit</span>
                               </button>
                               <button 
-                                className="btn-icon delete"
+                                type="button"
+                                className="todo-action-btn todo-action-btn--delete"
                                 onClick={() => handleDeleteTodo(todo.id)}
                                 title="Delete To-Do"
                               >
-                                <FaTrash />
+                                <FaTrash aria-hidden />
+                                <span className="todo-action-btn-label">Delete</span>
                               </button>
                             </div>
                           </div>
@@ -872,9 +907,6 @@ const TeacherAssignments = () => {
                             <div className="todo-dates">
                               <span>From: {todo.start_date && new Date(todo.start_date).toLocaleDateString()}</span>
                               <span>To: {todo.end_date && new Date(todo.end_date).toLocaleDateString()}</span>
-                            </div>
-                            <div className="todo-priority">
-                              Priority: <span className="priority-label">{todo.priority}</span>
                             </div>
                           </div>
                         </div>
