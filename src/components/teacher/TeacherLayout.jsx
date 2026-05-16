@@ -49,19 +49,12 @@ const TeacherLayout = ({ children }) => {
       if (error) {
         console.warn('Logout warning:', error);
       }
-      
-      localStorage.clear();
-      sessionStorage.clear();
-      
-      navigate('/signin');
-      window.location.reload();
     } catch (error) {
       console.error('Error logging out:', error);
-      
+    } finally {
       localStorage.clear();
       sessionStorage.clear();
-      navigate('/signin');
-      window.location.reload();
+      navigate('/signin', { replace: true });
     }
   };
 

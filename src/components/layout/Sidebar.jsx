@@ -1,9 +1,10 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 
 const Sidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [userRole, setUserRole] = useState(null);
   
   useEffect(() => {
@@ -79,7 +80,9 @@ const Sidebar = () => {
           <button 
             onClick={async () => {
               await supabase.auth.signOut();
-              window.location.href = '/signin';
+              localStorage.clear();
+              sessionStorage.clear();
+              navigate('/signin', { replace: true });
             }}
             className="sidebar-logout"
           >
