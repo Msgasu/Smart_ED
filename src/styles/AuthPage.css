@@ -20,23 +20,18 @@
   background-repeat: no-repeat;
 }
 
-/* Specific styles for sign-in page */
-.signin-page {
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+/* Sign-in layout — see Signin.css */
+.signin-page.auth-page {
+  font-family: inherit;
 }
 
-/* Login card styles */
+/* Login card styles (signup) */
 .login-card {
   background: white;
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   padding: 0;
   overflow: hidden;
-}
-
-/* Sign-in specific card */
-.signin-card {
-  width: 450px;
 }
 
 /* Sign-up specific card */

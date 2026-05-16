@@ -57,10 +57,10 @@ describe('Signin Page', () => {
     );
 
     // Check for main elements
-    expect(screen.getByRole('heading', { name: /login/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /welcome back/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
     expect(screen.getByText(/don't have an account/i)).toBeInTheDocument();
   });
 
@@ -73,7 +73,7 @@ describe('Signin Page', () => {
     );
 
     // Try to submit without filling required fields
-    fireEvent.click(screen.getByRole('button', { name: /login/i }));
+    fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
 
     // Check for validation messages
     expect(screen.getByLabelText(/email/i)).toBeInvalid();
@@ -109,7 +109,7 @@ describe('Signin Page', () => {
       </BrowserRouter>
     );
 
-    const signupLink = screen.getByText(/sign up/i);
+    const signupLink = screen.getByRole('link', { name: /create one/i });
     fireEvent.click(signupLink);
     expect(mockNavigate).toHaveBeenCalledWith('/signup');
   });
