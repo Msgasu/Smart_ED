@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabase';
+import { isAssignmentVisibleToStudent } from '../utils/assignmentClass';
 
 /**
  * Get all submissions for a teacher
@@ -91,7 +92,7 @@ export const getSubmissionsByAssignment = async (assignmentId) => {
       
     if (assignmentError) throw assignmentError;
     
-    // Get students enrolled in this course
+    // Get students enrolled in this course (with class for filtering)
     const { data: enrolledStudents, error: enrollmentError } = await supabase
       .from('student_courses')
       .select(`
@@ -100,12 +101,23 @@ export const getSubmissionsByAssignment = async (assignmentId) => {
           id,
           first_name,
           last_name,
-          email
+          email,
+          students ( class_year )
         )
       `)
-      .eq('course_id', assignment.course_id);
+      .eq('course_id', assignment.course_id)
+      .eq('status', 'enrolled');
       
     if (enrollmentError) throw enrollmentError;
+
+    const filteredEnrollments = (enrolledStudents || []).filter((row) => {
+      const studentClass =
+        row.profiles?.students?.class_year ??
+        (Array.isArray(row.profiles?.students)
+          ? row.profiles.students[0]?.class_year
+          : null);
+      return isAssignmentVisibleToStudent(assignment.class_year, studentClass);
+    });
     
     // Get existing grades for this assignment
     const { data: existingGrades, error: gradesError } = await supabase
@@ -116,7 +128,7 @@ export const getSubmissionsByAssignment = async (assignmentId) => {
     if (gradesError) throw gradesError;
     
     // Combine student data with their submissions
-    const studentsWithSubmissions = enrolledStudents.map(student => {
+    const studentsWithSubmissions = filteredEnrollments.map(student => {
       const submission = existingGrades?.find(grade => grade.student_id === student.student_id);
       
       return {

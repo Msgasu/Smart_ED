@@ -1,4 +1,46 @@
 import { supabase } from '../../lib/supabase';
+import { mergeClassYearOptions } from '../utils/assignmentClass';
+
+/**
+ * Distinct class_year values for students enrolled in a course.
+ * @param {string} courseId
+ */
+export const getCourseClassYears = async (courseId) => {
+  try {
+    if (!courseId) {
+      throw new Error('Course ID is required');
+    }
+
+    const { data: enrollments, error: enrollError } = await supabase
+      .from('student_courses')
+      .select('student_id')
+      .eq('course_id', courseId)
+      .eq('status', 'enrolled');
+
+    if (enrollError) throw enrollError;
+
+    const studentIds = (enrollments || []).map((e) => e.student_id).filter(Boolean);
+    if (studentIds.length === 0) {
+      return { data: mergeClassYearOptions([]), error: null };
+    }
+
+    const { data: studentRows, error: studentsError } = await supabase
+      .from('students')
+      .select('class_year')
+      .in('profile_id', studentIds);
+
+    if (studentsError) throw studentsError;
+
+    const fromCourse = (studentRows || [])
+      .map((s) => s.class_year)
+      .filter(Boolean);
+
+    return { data: mergeClassYearOptions(fromCourse), error: null };
+  } catch (error) {
+    console.error('Error fetching course class years:', error);
+    return { data: mergeClassYearOptions([]), error };
+  }
+};
 
 /**
  * Get all assignments for a course
@@ -74,10 +116,13 @@ export const createAssignment = async (assignmentData) => {
       assignmentData.due_date = new Date(assignmentData.due_date).toISOString();
     }
     
+    const classYear = assignmentData.class_year?.trim() || null;
+
     // Add created_at timestamp
     const assignmentWithTimestamp = {
       ...assignmentData,
-      created_at: new Date().toISOString()
+      class_year: classYear,
+      created_at: new Date().toISOString(),
     };
     
     const { data, error } = await supabase

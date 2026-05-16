@@ -15,7 +15,7 @@ import {
   updateCourseTodo, 
   deleteCourseTodo 
 } from '../../backend/teachers/courses';
-import { getAssignments, createAssignment, deleteAssignment } from '../../backend/teachers/assignments';
+import { getAssignments, createAssignment, deleteAssignment, getCourseClassYears } from '../../backend/teachers/assignments';
 import { uploadFile, downloadFile } from '../../backend/storage';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
@@ -33,7 +33,9 @@ const TeacherAssignments = () => {
     due_date: '',
     due_time: '',
     submission_mode: 'online',
+    class_year: '',
   });
+  const [courseClassYears, setCourseClassYears] = useState([]);
   const [loading, setLoading] = useState(true);
   const [formVisible, setFormVisible] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -104,6 +106,7 @@ const TeacherAssignments = () => {
       try {
         setLoading(true);
         await fetchCourse();
+        await fetchCourseClasses();
         await fetchAssignments();
         await fetchSyllabus();
         await fetchTodos();
@@ -126,6 +129,17 @@ const TeacherAssignments = () => {
       setCourse(data);
     } catch (error) {
       console.error('Error fetching course:', error);
+    }
+  };
+
+  const fetchCourseClasses = async () => {
+    try {
+      const { data, error } = await getCourseClassYears(courseId);
+      if (error) throw error;
+      setCourseClassYears(data || []);
+    } catch (error) {
+      console.error('Error fetching course classes:', error);
+      setCourseClassYears([]);
     }
   };
 
@@ -182,11 +196,18 @@ const TeacherAssignments = () => {
         max_score: newAssignment.max_score,
         due_date: dueDateTime,
         submission_mode: newAssignment.submission_mode || 'online',
+        class_year: newAssignment.class_year?.trim() || null,
       };
       
       const { data, error } = await createAssignment(assignmentData);
       
       if (error) throw error;
+      
+      toast.success(
+        assignmentData.class_year
+          ? `Assignment created for ${assignmentData.class_year}`
+          : 'Assignment created for all classes'
+      );
       
       // Reset form and refresh assignments
       setNewAssignment({
@@ -197,12 +218,14 @@ const TeacherAssignments = () => {
         due_date: '',
         due_time: '',
         submission_mode: 'online',
+        class_year: '',
       });
       
       setFormVisible(false);
       await fetchAssignments();
     } catch (error) {
       console.error('Error creating assignment:', error);
+      toast.error(error.message || 'Failed to create assignment');
     }
   };
 
@@ -1065,6 +1088,27 @@ const TeacherAssignments = () => {
                       ></textarea>
                         <span className="field-hint">Be specific about your expectations, deliverables, and any resources students should use.</span>
                     </div>
+
+                    <div className="form-group">
+                      <label htmlFor="class_year">Assign to class</label>
+                      <select
+                        id="class_year"
+                        name="class_year"
+                        value={newAssignment.class_year}
+                        onChange={handleInputChange}
+                        className="form-select"
+                      >
+                        <option value="">All classes in this course</option>
+                        {courseClassYears.map((className) => (
+                          <option key={className} value={className}>
+                            {className}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="field-hint">
+                        Only students in the selected class will see this assignment. Choose “All classes” for everyone enrolled in the course.
+                      </span>
+                    </div>
                     
                     <div className="form-group">
                       <label htmlFor="submission_mode">Submission</label>
@@ -1216,6 +1260,7 @@ const TeacherAssignments = () => {
                           <th onClick={() => handleSort('type')} className="sortable">
                             Type {sortBy === 'type' && (sortDir === 'asc' ? '↑' : '↓')}
                           </th>
+                          <th>Class</th>
                           <th>Submission</th>
                           <th onClick={() => handleSort('due_date')} className="sortable">
                             Due Date {sortBy === 'due_date' && (sortDir === 'asc' ? '↑' : '↓')}
@@ -1233,6 +1278,11 @@ const TeacherAssignments = () => {
                           <td>
                             <span className={`badge type-${assignment.type.toLowerCase()}`}>
                               {assignment.type}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`badge ${assignment.class_year ? 'submission-mode-paper' : 'submission-mode-online'}`}>
+                              {assignment.class_year || 'All classes'}
                             </span>
                           </td>
                           <td>

@@ -376,6 +376,10 @@ const GradeAssignment = () => {
                 <span className="value">{assignment.title}</span>
               </div>
               <div className="detail-item">
+                <span className="label">Class:</span>
+                <span className="value">{assignment.class_year || 'All classes'}</span>
+              </div>
+              <div className="detail-item">
                 <span className="label">Submission:</span>
                 <span className="value">
                   {isPaperAssignment ? 'On paper' : 'Online (submit before grading)'}

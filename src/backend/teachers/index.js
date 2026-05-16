@@ -9,7 +9,7 @@ import {
   updateCourseTodo,
   deleteCourseTodo
 } from './courses';
-import { getAssignments, createAssignment, deleteAssignment, getAssignmentDetails } from './assignments';
+import { getAssignments, createAssignment, deleteAssignment, getAssignmentDetails, getCourseClassYears } from './assignments';
 import { getStudents, getStudentDetails, getStudentAnalytics, getClassPerformanceStats } from './students';
 import { getSubmissions, gradeSubmission, getSubmissionsByAssignment } from './grading';
 import { 
@@ -33,6 +33,7 @@ export {
   createAssignment,
   deleteAssignment,
   getAssignmentDetails,
+  getCourseClassYears,
   getStudents,
   getStudentDetails,
   getStudentAnalytics,

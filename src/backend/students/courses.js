@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabase';
+import { isAssignmentVisibleToStudent } from '../utils/assignmentClass';
 import { getCurrentAcademicYear, getCurrentTerm } from '../../lib/courseManagement';
 
 /**
@@ -140,9 +141,20 @@ export const getCourseDetails = async (courseId) => {
     
     if (assignmentsResponse.error) throw assignmentsResponse.error;
     if (submissionsResponse.error) throw submissionsResponse.error;
+
+    const { data: studentRow } = await supabase
+      .from('students')
+      .select('class_year')
+      .eq('profile_id', user.id)
+      .maybeSingle();
+
+    const studentClassYear = studentRow?.class_year || null;
+    const visibleAssignments = (assignmentsResponse.data || []).filter((assignment) =>
+      isAssignmentVisibleToStudent(assignment.class_year, studentClassYear)
+    );
     
     // Combine assignments with their submissions
-    const assignmentsWithSubmissions = assignmentsResponse.data.map(assignment => {
+    const assignmentsWithSubmissions = visibleAssignments.map(assignment => {
       const submission = submissionsResponse.data.find(
         sub => sub.assignment_id === assignment.id
       );

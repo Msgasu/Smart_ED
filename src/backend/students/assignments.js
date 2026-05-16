@@ -1,4 +1,15 @@
 import { supabase } from '../../lib/supabase';
+import { isAssignmentVisibleToStudent } from '../utils/assignmentClass';
+
+async function getStudentClassYear(studentId) {
+  const { data, error } = await supabase
+    .from('students')
+    .select('class_year')
+    .eq('profile_id', studentId)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.class_year || null;
+}
 
 /**
  * Get all assignments for a student
@@ -46,9 +57,14 @@ export const getStudentAssignments = async (studentId) => {
       .order('due_date', { ascending: false });
       
     if (assignmentsError) throw assignmentsError;
+
+    const studentClassYear = await getStudentClassYear(studentId);
+    const visibleAssignments = (assignmentsData || []).filter((assignment) =>
+      isAssignmentVisibleToStudent(assignment.class_year, studentClassYear)
+    );
     
     // Process assignments to include student submission status
-    const processedAssignments = assignmentsData.map(assignment => {
+    const processedAssignments = visibleAssignments.map(assignment => {
       // Find student's submission for this assignment
       const studentSubmission = assignment.student_assignments.find(
         sa => sa.student_id === studentId
@@ -102,6 +118,14 @@ export const getAssignmentDetails = async (assignmentId, studentId) => {
       .single();
       
     if (assignmentError) throw assignmentError;
+
+    const studentClassYear = await getStudentClassYear(studentId);
+    if (!isAssignmentVisibleToStudent(assignment.class_year, studentClassYear)) {
+      return {
+        data: null,
+        error: new Error('This assignment is not assigned to your class'),
+      };
+    }
     
     // Fetch student's submission for this assignment
     const { data: submission, error: submissionError } = await supabase
