@@ -14,7 +14,7 @@ function getActiveKeyFromPath(pathname) {
 function getActiveKeyFromLocation(pathname, search) {
   if (pathname === '/' || pathname === '/dashboard') {
     const tab = new URLSearchParams(search).get('tab')
-    const valid = ['users', 'reports', 'report-bank', 'notifications', 'classes', 'courses', 'settings', 'analytics']
+    const valid = ['users', 'reports', 'report-bank', 'notifications', 'assignments', 'classes', 'courses', 'settings', 'analytics']
     return tab && valid.includes(tab) ? tab : 'dashboard'
   }
   return getActiveKeyFromPath(pathname)
