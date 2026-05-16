@@ -1137,6 +1137,7 @@ const TeacherAssignments = () => {
                         >
                           <option value="Homework">Homework</option>
                           <option value="Quiz">Quiz</option>
+                          <option value="Classwork">Classwork</option>
                           <option value="Exam">Exam</option>
                           <option value="Project">Project</option>
                         </select>
